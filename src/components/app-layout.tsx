@@ -1,7 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Waves } from "lucide-react";
+import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Waves, Shield } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { useIsStaff } from "@/hooks/use-auth";
 
 const navItems = [
   { to: "/", label: "Feed", icon: Home },
@@ -19,6 +20,10 @@ const sideExtra = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isStaff = useIsStaff();
+  const extra = isStaff
+    ? [...sideExtra, { to: "/admin", label: "Admin", icon: Shield }]
+    : sideExtra;
 
   return (
     <div className="min-h-screen flex w-full">
@@ -34,7 +39,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </Link>
         <nav className="flex flex-col gap-1">
-          {[...navItems, ...sideExtra].map((it) => {
+          {[...navItems, ...extra].map((it) => {
             const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
             return (
               <Link
