@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { getTournament, getArena, getDupla, getPlayer, duplas as allDuplas } from "@/lib/mock-data";
+import { formatDateBR } from "@/lib/date-format";
 import { ArrowLeft, Calendar, MapPin, Trophy, Crown } from "lucide-react";
 
 export const Route = createFileRoute("/torneios/$id")({
@@ -34,7 +35,7 @@ function TournamentDetail() {
             <h1 className="text-4xl font-display">{t.name}</h1>
             <div className="flex flex-wrap gap-3 text-sm mt-2 opacity-90">
               <span className="flex items-center gap-1"><MapPin className="size-4"/>{arena?.name}</span>
-              <span className="flex items-center gap-1"><Calendar className="size-4"/>{new Date(t.startDate).toLocaleDateString("pt-BR")}</span>
+              <span className="flex items-center gap-1"><Calendar className="size-4"/>{formatDateBR(t.startDate)}</span>
               <span className="flex items-center gap-1"><Trophy className="size-4"/>{t.prize}</span>
             </div>
           </div>
