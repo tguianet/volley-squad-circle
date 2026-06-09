@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as H2hRouteImport } from './routes/h2h'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TorneiosIndexRouteImport } from './routes/torneios.index'
 import { Route as RankingIndexRouteImport } from './routes/ranking.index'
@@ -21,6 +22,15 @@ import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
 import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
+import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
+import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
+import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
+import { Route as AuthenticatedAdminRelatoriosRouteImport } from './routes/_authenticated/admin/relatorios'
+import { Route as AuthenticatedAdminNotificacoesRouteImport } from './routes/_authenticated/admin/notificacoes'
+import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
+import { Route as AuthenticatedAdminBannersRouteImport } from './routes/_authenticated/admin/banners'
+import { Route as AuthenticatedAdminAuditoriaRouteImport } from './routes/_authenticated/admin/auditoria'
 
 const NotificacoesRoute = NotificacoesRouteImport.update({
   id: '/notificacoes',
@@ -35,6 +45,10 @@ const H2hRoute = H2hRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -82,12 +96,65 @@ const ArenasIdRoute = ArenasIdRouteImport.update({
   path: '/arenas/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedAdminRouteRoute,
+} as any)
+const AuthenticatedAdminUsuariosRoute =
+  AuthenticatedAdminUsuariosRouteImport.update({
+    id: '/usuarios',
+    path: '/usuarios',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminReportsRoute =
+  AuthenticatedAdminReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminRelatoriosRoute =
+  AuthenticatedAdminRelatoriosRouteImport.update({
+    id: '/relatorios',
+    path: '/relatorios',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminNotificacoesRoute =
+  AuthenticatedAdminNotificacoesRouteImport.update({
+    id: '/notificacoes',
+    path: '/notificacoes',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminConfiguracoesRoute =
+  AuthenticatedAdminConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminBannersRoute =
+  AuthenticatedAdminBannersRouteImport.update({
+    id: '/banners',
+    path: '/banners',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
+const AuthenticatedAdminAuditoriaRoute =
+  AuthenticatedAdminAuditoriaRouteImport.update({
+    id: '/auditoria',
+    path: '/auditoria',
+    getParentRoute: () => AuthenticatedAdminRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
@@ -96,6 +163,14 @@ export interface FileRoutesByFullPath {
   '/perfil/': typeof PerfilIndexRoute
   '/ranking/': typeof RankingIndexRoute
   '/torneios/': typeof TorneiosIndexRoute
+  '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
+  '/admin/banners': typeof AuthenticatedAdminBannersRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
+  '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,13 +185,23 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilIndexRoute
   '/ranking': typeof RankingIndexRoute
   '/torneios': typeof TorneiosIndexRoute
+  '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
+  '/admin/banners': typeof AuthenticatedAdminBannersRoute
+  '/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
+  '/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/admin': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
   '/notificacoes': typeof NotificacoesRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
@@ -125,6 +210,14 @@ export interface FileRoutesById {
   '/perfil/': typeof PerfilIndexRoute
   '/ranking/': typeof RankingIndexRoute
   '/torneios/': typeof TorneiosIndexRoute
+  '/_authenticated/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
+  '/_authenticated/admin/banners': typeof AuthenticatedAdminBannersRoute
+  '/_authenticated/admin/configuracoes': typeof AuthenticatedAdminConfiguracoesRoute
+  '/_authenticated/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
+  '/_authenticated/admin/relatorios': typeof AuthenticatedAdminRelatoriosRoute
+  '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
+  '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
+  '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,6 +226,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/h2h'
     | '/notificacoes'
+    | '/admin'
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
@@ -141,6 +235,14 @@ export interface FileRouteTypes {
     | '/perfil/'
     | '/ranking/'
     | '/torneios/'
+    | '/admin/auditoria'
+    | '/admin/banners'
+    | '/admin/configuracoes'
+    | '/admin/notificacoes'
+    | '/admin/relatorios'
+    | '/admin/reports'
+    | '/admin/usuarios'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,12 +257,22 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/ranking'
     | '/torneios'
+    | '/admin/auditoria'
+    | '/admin/banners'
+    | '/admin/configuracoes'
+    | '/admin/notificacoes'
+    | '/admin/relatorios'
+    | '/admin/reports'
+    | '/admin/usuarios'
+    | '/admin'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/auth'
     | '/h2h'
     | '/notificacoes'
+    | '/_authenticated/admin'
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
@@ -169,10 +281,19 @@ export interface FileRouteTypes {
     | '/perfil/'
     | '/ranking/'
     | '/torneios/'
+    | '/_authenticated/admin/auditoria'
+    | '/_authenticated/admin/banners'
+    | '/_authenticated/admin/configuracoes'
+    | '/_authenticated/admin/notificacoes'
+    | '/_authenticated/admin/relatorios'
+    | '/_authenticated/admin/reports'
+    | '/_authenticated/admin/usuarios'
+    | '/_authenticated/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   H2hRoute: typeof H2hRoute
   NotificacoesRoute: typeof NotificacoesRoute
@@ -207,6 +328,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -272,11 +400,114 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ArenasIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin/': {
+      id: '/_authenticated/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/usuarios': {
+      id: '/_authenticated/admin/usuarios'
+      path: '/usuarios'
+      fullPath: '/admin/usuarios'
+      preLoaderRoute: typeof AuthenticatedAdminUsuariosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/reports': {
+      id: '/_authenticated/admin/reports'
+      path: '/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AuthenticatedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/relatorios': {
+      id: '/_authenticated/admin/relatorios'
+      path: '/relatorios'
+      fullPath: '/admin/relatorios'
+      preLoaderRoute: typeof AuthenticatedAdminRelatoriosRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/notificacoes': {
+      id: '/_authenticated/admin/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/admin/notificacoes'
+      preLoaderRoute: typeof AuthenticatedAdminNotificacoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/configuracoes': {
+      id: '/_authenticated/admin/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/admin/configuracoes'
+      preLoaderRoute: typeof AuthenticatedAdminConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/banners': {
+      id: '/_authenticated/admin/banners'
+      path: '/banners'
+      fullPath: '/admin/banners'
+      preLoaderRoute: typeof AuthenticatedAdminBannersRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
+    '/_authenticated/admin/auditoria': {
+      id: '/_authenticated/admin/auditoria'
+      path: '/auditoria'
+      fullPath: '/admin/auditoria'
+      preLoaderRoute: typeof AuthenticatedAdminAuditoriaRouteImport
+      parentRoute: typeof AuthenticatedAdminRouteRoute
+    }
   }
 }
 
+interface AuthenticatedAdminRouteRouteChildren {
+  AuthenticatedAdminAuditoriaRoute: typeof AuthenticatedAdminAuditoriaRoute
+  AuthenticatedAdminBannersRoute: typeof AuthenticatedAdminBannersRoute
+  AuthenticatedAdminConfiguracoesRoute: typeof AuthenticatedAdminConfiguracoesRoute
+  AuthenticatedAdminNotificacoesRoute: typeof AuthenticatedAdminNotificacoesRoute
+  AuthenticatedAdminRelatoriosRoute: typeof AuthenticatedAdminRelatoriosRoute
+  AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
+  AuthenticatedAdminUsuariosRoute: typeof AuthenticatedAdminUsuariosRoute
+  AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
+}
+
+const AuthenticatedAdminRouteRouteChildren: AuthenticatedAdminRouteRouteChildren =
+  {
+    AuthenticatedAdminAuditoriaRoute: AuthenticatedAdminAuditoriaRoute,
+    AuthenticatedAdminBannersRoute: AuthenticatedAdminBannersRoute,
+    AuthenticatedAdminConfiguracoesRoute: AuthenticatedAdminConfiguracoesRoute,
+    AuthenticatedAdminNotificacoesRoute: AuthenticatedAdminNotificacoesRoute,
+    AuthenticatedAdminRelatoriosRoute: AuthenticatedAdminRelatoriosRoute,
+    AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
+    AuthenticatedAdminUsuariosRoute: AuthenticatedAdminUsuariosRoute,
+    AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,
+  }
+
+const AuthenticatedAdminRouteRouteWithChildren =
+  AuthenticatedAdminRouteRoute._addFileChildren(
+    AuthenticatedAdminRouteRouteChildren,
+  )
+
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   H2hRoute: H2hRoute,
   NotificacoesRoute: NotificacoesRoute,
@@ -292,13 +523,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

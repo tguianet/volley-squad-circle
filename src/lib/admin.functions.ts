@@ -158,7 +158,10 @@ export const setUserFlag = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    const patch: Record<string, any> = { [data.field]: data.value };
+    const patch =
+      data.field === "is_verified"
+        ? { is_verified: data.value }
+        : { is_suspended: data.value };
     const { error } = await context.supabase.from("profiles").update(patch).eq("id", data.userId);
     if (error) throw error;
     await audit(context, `user.${data.field}`, "user", data.userId, { value: data.value });
