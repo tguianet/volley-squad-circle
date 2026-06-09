@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { matches, getArena, getPlayer } from "@/lib/mock-data";
-import { Calendar, Clock, MapPin, Users, Plus } from "lucide-react";
+import { matches as initialMatches, getArena, getPlayer } from "@/lib/mock-data";
+import { Calendar, Clock, MapPin, Users, Plus, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/partidas/")({
   head: () => ({ meta: [{ title: "Partidas abertas — BeachPlay Arena" }] }),
@@ -19,6 +21,25 @@ const levelColor: Record<string, string> = {
 };
 
 function MatchesPage() {
+  const [matches, setMatches] = useState(initialMatches);
+  const [joined, setJoined] = useState<Record<string, boolean>>({});
+
+  const handleJoin = (id: string) => {
+    if (joined[id]) return;
+    const match = matches.find((x) => x.id === id);
+    if (!match || match.slotsTaken >= match.slotsTotal) return;
+    setJoined((j) => ({ ...j, [id]: true }));
+    setMatches((prev) =>
+      prev.map((m) =>
+        m.id === id ? { ...m, slotsTaken: m.slotsTaken + 1 } : m
+      )
+    );
+    const a = getArena(match.arenaId);
+    toast.success("Você entrou no grupo!", {
+      description: a ? `Partida em ${a.name}` : undefined,
+    });
+  };
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6">
@@ -37,6 +58,7 @@ function MatchesPage() {
             const a = getArena(m.arenaId);
             const host = getPlayer(m.hostId);
             const full = m.slotsTaken >= m.slotsTotal;
+            const isJoined = !!joined[m.id];
             return (
               <Card key={m.id} className="overflow-hidden shadow-card group hover:shadow-glow transition-shadow">
                 <div className="relative h-32">
@@ -60,8 +82,13 @@ function MatchesPage() {
                   <p className="text-xs text-muted-foreground">{m.notes}</p>
                   <div className="flex items-center justify-between pt-2 border-t">
                     <div className="text-xs text-muted-foreground">Host: <span className="font-semibold text-foreground">{host?.name.split(" ")[0]}</span></div>
-                    <Button size="sm" disabled={full} className={full ? "" : "gradient-beach text-white border-0"}>
-                      {full ? "Lotada" : "Quero jogar"}
+                    <Button
+                      size="sm"
+                      disabled={full || isJoined}
+                      onClick={() => handleJoin(m.id)}
+                      className={full ? "" : isJoined ? "bg-success text-success-foreground border-0" : "gradient-beach text-white border-0"}
+                    >
+                      {full ? "Lotada" : isJoined ? (<><Check className="size-4 mr-1"/>No grupo</>) : "Quero jogar"}
                     </Button>
                   </div>
                 </div>
