@@ -39,7 +39,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
         </Link>
         <nav className="flex flex-col gap-1">
-          {[...navItems, ...sideExtra].map((it) => {
+          {[...navItems, ...extra].map((it) => {
             const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
             return (
               <Link
