@@ -55,7 +55,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           <div className="font-display text-lg leading-none">Pronto pra jogar?</div>
           <p className="text-xs text-muted-foreground mt-1">Crie ou entre numa partida aberta agora.</p>
           <Link to="/partidas/nova" className="mt-3 inline-flex items-center justify-center w-full rounded-lg bg-accent text-accent-foreground px-3 py-2 text-xs font-semibold shadow-glow">
-            Criar partida
+            Criar partida amistosa
           </Link>
         </div>
       </aside>
