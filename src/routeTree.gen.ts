@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
+import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -28,34 +29,43 @@ const PartidasIndexRoute = PartidasIndexRouteImport.update({
   path: '/partidas/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartidasNovaRoute = PartidasNovaRouteImport.update({
+  id: '/partidas/nova',
+  path: '/partidas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/partidas/nova': typeof PartidasNovaRoute
   '/partidas/': typeof PartidasIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/partidas/nova': typeof PartidasNovaRoute
   '/partidas': typeof PartidasIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/partidas/nova': typeof PartidasNovaRoute
   '/partidas/': typeof PartidasIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/partidas/'
+  fullPaths: '/' | '/auth' | '/partidas/nova' | '/partidas/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/partidas'
-  id: '__root__' | '/' | '/auth' | '/partidas/'
+  to: '/' | '/auth' | '/partidas/nova' | '/partidas'
+  id: '__root__' | '/' | '/auth' | '/partidas/nova' | '/partidas/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  PartidasNovaRoute: typeof PartidasNovaRoute
   PartidasIndexRoute: typeof PartidasIndexRoute
 }
 
@@ -82,12 +92,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartidasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partidas/nova': {
+      id: '/partidas/nova'
+      path: '/partidas/nova'
+      fullPath: '/partidas/nova'
+      preLoaderRoute: typeof PartidasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  PartidasNovaRoute: PartidasNovaRoute,
   PartidasIndexRoute: PartidasIndexRoute,
 }
 export const routeTree = rootRouteImport
