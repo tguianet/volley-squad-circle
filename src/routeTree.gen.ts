@@ -19,6 +19,7 @@ import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
 import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
 import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
+import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
 
 const H2hRoute = H2hRouteImport.update({
   id: '/h2h',
@@ -70,11 +71,17 @@ const PartidasNovaRoute = PartidasNovaRouteImport.update({
   path: '/partidas/nova',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ArenasIdRoute = ArenasIdRouteImport.update({
+  id: '/arenas/$id',
+  path: '/arenas/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/arenas/': typeof ArenasIndexRoute
@@ -87,6 +94,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/arenas': typeof ArenasIndexRoute
@@ -100,6 +108,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/arenas/': typeof ArenasIndexRoute
@@ -114,6 +123,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
     | '/arenas/'
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
     | '/arenas'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
     | '/arenas/'
@@ -151,6 +163,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   H2hRoute: typeof H2hRoute
+  ArenasIdRoute: typeof ArenasIdRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
   TorneiosIdRoute: typeof TorneiosIdRoute
   ArenasIndexRoute: typeof ArenasIndexRoute
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartidasNovaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/arenas/$id': {
+      id: '/arenas/$id'
+      path: '/arenas/$id'
+      fullPath: '/arenas/$id'
+      preLoaderRoute: typeof ArenasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -239,6 +259,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   H2hRoute: H2hRoute,
+  ArenasIdRoute: ArenasIdRoute,
   PartidasNovaRoute: PartidasNovaRoute,
   TorneiosIdRoute: TorneiosIdRoute,
   ArenasIndexRoute: ArenasIndexRoute,
