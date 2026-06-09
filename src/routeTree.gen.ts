@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as H2hRouteImport } from './routes/h2h'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,6 +22,11 @@ import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
 
+const NotificacoesRoute = NotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const H2hRoute = H2hRouteImport.update({
   id: '/h2h',
   path: '/h2h',
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/notificacoes': typeof NotificacoesRoute
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
@@ -123,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/notificacoes'
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
@@ -136,6 +146,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/notificacoes'
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
@@ -149,6 +160,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/notificacoes'
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
@@ -163,6 +175,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   H2hRoute: typeof H2hRoute
+  NotificacoesRoute: typeof NotificacoesRoute
   ArenasIdRoute: typeof ArenasIdRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
   TorneiosIdRoute: typeof TorneiosIdRoute
@@ -175,6 +188,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notificacoes': {
+      id: '/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof NotificacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/h2h': {
       id: '/h2h'
       path: '/h2h'
@@ -259,6 +279,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   H2hRoute: H2hRoute,
+  NotificacoesRoute: NotificacoesRoute,
   ArenasIdRoute: ArenasIdRoute,
   PartidasNovaRoute: PartidasNovaRoute,
   TorneiosIdRoute: TorneiosIdRoute,
