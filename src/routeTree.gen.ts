@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as H2hRouteImport } from './routes/h2h'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TorneiosIndexRouteImport } from './routes/torneios.index'
@@ -18,6 +19,11 @@ import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
 import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 
+const H2hRoute = H2hRouteImport.update({
+  id: '/h2h',
+  path: '/h2h',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -62,6 +68,7 @@ const PartidasNovaRoute = PartidasNovaRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/h2h': typeof H2hRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/partidas/': typeof PartidasIndexRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/h2h': typeof H2hRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/partidas': typeof PartidasIndexRoute
@@ -83,6 +91,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/h2h': typeof H2hRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/partidas/': typeof PartidasIndexRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/h2h'
     | '/partidas/nova'
     | '/torneios/$id'
     | '/partidas/'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/h2h'
     | '/partidas/nova'
     | '/torneios/$id'
     | '/partidas'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/h2h'
     | '/partidas/nova'
     | '/torneios/$id'
     | '/partidas/'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  H2hRoute: typeof H2hRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
   TorneiosIdRoute: typeof TorneiosIdRoute
   PartidasIndexRoute: typeof PartidasIndexRoute
@@ -136,6 +149,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/h2h': {
+      id: '/h2h'
+      path: '/h2h'
+      fullPath: '/h2h'
+      preLoaderRoute: typeof H2hRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  H2hRoute: H2hRoute,
   PartidasNovaRoute: PartidasNovaRoute,
   TorneiosIdRoute: TorneiosIdRoute,
   PartidasIndexRoute: PartidasIndexRoute,
