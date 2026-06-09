@@ -75,7 +75,7 @@ function MatchesPage() {
                 </div>
                 <div className="p-4 space-y-3">
                   <div className="flex items-center gap-3 text-sm">
-                    <span className="flex items-center gap-1.5"><Calendar className="size-4 text-primary"/>{new Date(m.date).toLocaleDateString("pt-BR", {day:"2-digit", month:"short"})}</span>
+                    <span className="flex items-center gap-1.5"><Calendar className="size-4 text-primary"/>{new Date(m.date).toISOString().slice(8,10)}/{new Date(m.date).toISOString().slice(5,7)}</span>
                     <span className="flex items-center gap-1.5"><Clock className="size-4 text-primary"/>{m.time}</span>
                     <span className="flex items-center gap-1.5 ml-auto text-xs text-muted-foreground"><Users className="size-3.5"/>{m.slotsTaken}/{m.slotsTotal}</span>
                   </div>
