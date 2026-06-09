@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getAdminStats } from "@/lib/admin.functions";
+import { formatDateTimeBR } from "@/lib/date-format";
 import { Card } from "@/components/ui/card";
 import {
   LineChart,
@@ -100,7 +101,7 @@ function AdminDashboard() {
             {data.recentAudit.map((a: any) => (
               <li key={a.id} className="flex justify-between border-b border-white/5 pb-2">
                 <span className="font-mono text-xs text-white/70">{a.id.slice(0, 8)}</span>
-                <span className="text-xs text-white/50">{new Date(a.created_at).toLocaleString("pt-BR")}</span>
+                <span className="text-xs text-white/50">{formatDateTimeBR(a.created_at)}</span>
               </li>
             ))}
           </ul>
