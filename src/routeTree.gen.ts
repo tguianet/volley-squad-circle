@@ -9,38 +9,206 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificacoesRouteImport } from './routes/notificacoes'
+import { Route as H2hRouteImport } from './routes/h2h'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TorneiosIndexRouteImport } from './routes/torneios.index'
+import { Route as RankingIndexRouteImport } from './routes/ranking.index'
+import { Route as PerfilIndexRouteImport } from './routes/perfil.index'
+import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
+import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
+import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
+import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
+import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
 
+const NotificacoesRoute = NotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const H2hRoute = H2hRouteImport.update({
+  id: '/h2h',
+  path: '/h2h',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TorneiosIndexRoute = TorneiosIndexRouteImport.update({
+  id: '/torneios/',
+  path: '/torneios/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingIndexRoute = RankingIndexRouteImport.update({
+  id: '/ranking/',
+  path: '/ranking/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilIndexRoute = PerfilIndexRouteImport.update({
+  id: '/perfil/',
+  path: '/perfil/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartidasIndexRoute = PartidasIndexRouteImport.update({
+  id: '/partidas/',
+  path: '/partidas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArenasIndexRoute = ArenasIndexRouteImport.update({
+  id: '/arenas/',
+  path: '/arenas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TorneiosIdRoute = TorneiosIdRouteImport.update({
+  id: '/torneios/$id',
+  path: '/torneios/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartidasNovaRoute = PartidasNovaRouteImport.update({
+  id: '/partidas/nova',
+  path: '/partidas/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ArenasIdRoute = ArenasIdRouteImport.update({
+  id: '/arenas/$id',
+  path: '/arenas/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/h2h': typeof H2hRoute
+  '/notificacoes': typeof NotificacoesRoute
+  '/arenas/$id': typeof ArenasIdRoute
+  '/partidas/nova': typeof PartidasNovaRoute
+  '/torneios/$id': typeof TorneiosIdRoute
+  '/arenas/': typeof ArenasIndexRoute
+  '/partidas/': typeof PartidasIndexRoute
+  '/perfil/': typeof PerfilIndexRoute
+  '/ranking/': typeof RankingIndexRoute
+  '/torneios/': typeof TorneiosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/h2h': typeof H2hRoute
+  '/notificacoes': typeof NotificacoesRoute
+  '/arenas/$id': typeof ArenasIdRoute
+  '/partidas/nova': typeof PartidasNovaRoute
+  '/torneios/$id': typeof TorneiosIdRoute
+  '/arenas': typeof ArenasIndexRoute
+  '/partidas': typeof PartidasIndexRoute
+  '/perfil': typeof PerfilIndexRoute
+  '/ranking': typeof RankingIndexRoute
+  '/torneios': typeof TorneiosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/h2h': typeof H2hRoute
+  '/notificacoes': typeof NotificacoesRoute
+  '/arenas/$id': typeof ArenasIdRoute
+  '/partidas/nova': typeof PartidasNovaRoute
+  '/torneios/$id': typeof TorneiosIdRoute
+  '/arenas/': typeof ArenasIndexRoute
+  '/partidas/': typeof PartidasIndexRoute
+  '/perfil/': typeof PerfilIndexRoute
+  '/ranking/': typeof RankingIndexRoute
+  '/torneios/': typeof TorneiosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/h2h'
+    | '/notificacoes'
+    | '/arenas/$id'
+    | '/partidas/nova'
+    | '/torneios/$id'
+    | '/arenas/'
+    | '/partidas/'
+    | '/perfil/'
+    | '/ranking/'
+    | '/torneios/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/h2h'
+    | '/notificacoes'
+    | '/arenas/$id'
+    | '/partidas/nova'
+    | '/torneios/$id'
+    | '/arenas'
+    | '/partidas'
+    | '/perfil'
+    | '/ranking'
+    | '/torneios'
+  id:
+    | '__root__'
+    | '/'
+    | '/auth'
+    | '/h2h'
+    | '/notificacoes'
+    | '/arenas/$id'
+    | '/partidas/nova'
+    | '/torneios/$id'
+    | '/arenas/'
+    | '/partidas/'
+    | '/perfil/'
+    | '/ranking/'
+    | '/torneios/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthRoute: typeof AuthRoute
+  H2hRoute: typeof H2hRoute
+  NotificacoesRoute: typeof NotificacoesRoute
+  ArenasIdRoute: typeof ArenasIdRoute
+  PartidasNovaRoute: typeof PartidasNovaRoute
+  TorneiosIdRoute: typeof TorneiosIdRoute
+  ArenasIndexRoute: typeof ArenasIndexRoute
+  PartidasIndexRoute: typeof PartidasIndexRoute
+  PerfilIndexRoute: typeof PerfilIndexRoute
+  RankingIndexRoute: typeof RankingIndexRoute
+  TorneiosIndexRoute: typeof TorneiosIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notificacoes': {
+      id: '/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/notificacoes'
+      preLoaderRoute: typeof NotificacoesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/h2h': {
+      id: '/h2h'
+      path: '/h2h'
+      fullPath: '/h2h'
+      preLoaderRoute: typeof H2hRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +216,79 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/torneios/': {
+      id: '/torneios/'
+      path: '/torneios'
+      fullPath: '/torneios/'
+      preLoaderRoute: typeof TorneiosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking/': {
+      id: '/ranking/'
+      path: '/ranking'
+      fullPath: '/ranking/'
+      preLoaderRoute: typeof RankingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil/': {
+      id: '/perfil/'
+      path: '/perfil'
+      fullPath: '/perfil/'
+      preLoaderRoute: typeof PerfilIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partidas/': {
+      id: '/partidas/'
+      path: '/partidas'
+      fullPath: '/partidas/'
+      preLoaderRoute: typeof PartidasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arenas/': {
+      id: '/arenas/'
+      path: '/arenas'
+      fullPath: '/arenas/'
+      preLoaderRoute: typeof ArenasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/torneios/$id': {
+      id: '/torneios/$id'
+      path: '/torneios/$id'
+      fullPath: '/torneios/$id'
+      preLoaderRoute: typeof TorneiosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partidas/nova': {
+      id: '/partidas/nova'
+      path: '/partidas/nova'
+      fullPath: '/partidas/nova'
+      preLoaderRoute: typeof PartidasNovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/arenas/$id': {
+      id: '/arenas/$id'
+      path: '/arenas/$id'
+      fullPath: '/arenas/$id'
+      preLoaderRoute: typeof ArenasIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthRoute: AuthRoute,
+  H2hRoute: H2hRoute,
+  NotificacoesRoute: NotificacoesRoute,
+  ArenasIdRoute: ArenasIdRoute,
+  PartidasNovaRoute: PartidasNovaRoute,
+  TorneiosIdRoute: TorneiosIdRoute,
+  ArenasIndexRoute: ArenasIndexRoute,
+  PartidasIndexRoute: PartidasIndexRoute,
+  PerfilIndexRoute: PerfilIndexRoute,
+  RankingIndexRoute: RankingIndexRoute,
+  TorneiosIndexRoute: TorneiosIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
