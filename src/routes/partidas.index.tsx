@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { matches, getArena, getPlayer } from "@/lib/mock-data";
-import { Calendar, Clock, MapPin, Users, Plus } from "lucide-react";
+import { matches as initialMatches, getArena, getPlayer } from "@/lib/mock-data";
+import { Calendar, Clock, MapPin, Users, Plus, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/partidas/")({
   head: () => ({ meta: [{ title: "Partidas abertas — BeachPlay Arena" }] }),
