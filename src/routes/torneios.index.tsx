@@ -3,6 +3,7 @@ import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { tournaments, getArena } from "@/lib/mock-data";
+import { formatDateBR } from "@/lib/date-format";
 import { Calendar, MapPin, Trophy, Users } from "lucide-react";
 
 export const Route = createFileRoute("/torneios/")({
@@ -39,7 +40,7 @@ function TournamentsPage() {
                       <h3 className="font-display text-2xl leading-tight">{t.name}</h3>
                       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><MapPin className="size-3.5"/>{a?.name}</span>
-                        <span className="flex items-center gap-1"><Calendar className="size-3.5"/>{new Date(t.startDate).toLocaleDateString("pt-BR")}</span>
+                        <span className="flex items-center gap-1"><Calendar className="size-3.5"/>{formatDateBR(t.startDate)}</span>
                         <span className="flex items-center gap-1"><Users className="size-3.5"/>{t.duplas.length} duplas</span>
                       </div>
                       <div className="flex items-center gap-2 pt-2">

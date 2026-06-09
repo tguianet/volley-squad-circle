@@ -5,6 +5,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { currentUser, duplas, getPlayer, recentMatches } from "@/lib/mock-data";
+import { formatDateBR } from "@/lib/date-format";
 import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/perfil/")({
@@ -70,7 +71,7 @@ function ProfilePage() {
               </div>
               <div className="flex-1">
                 <div className="font-display text-xl">{dupla.name}</div>
-                <div className="text-xs text-muted-foreground">Desde {new Date(dupla.formedAt).toLocaleDateString("pt-BR")}</div>
+                <div className="text-xs text-muted-foreground">Desde {formatDateBR(dupla.formedAt)}</div>
               </div>
               <div className="grid grid-cols-3 gap-3 text-center text-xs">
                 <div><div className="font-display text-lg text-success">{dupla.wins}</div><div className="text-muted-foreground">V</div></div>

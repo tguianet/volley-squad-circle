@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { listAudit } from "@/lib/admin.functions";
+import { formatDateTimeBR } from "@/lib/date-format";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
@@ -38,7 +39,7 @@ function AuditPage() {
             <tbody>
               {data!.map((a: any) => (
                 <tr key={a.id} className="border-t border-white/5">
-                  <td className="p-3 text-xs text-white/60">{new Date(a.created_at).toLocaleString("pt-BR")}</td>
+                  <td className="p-3 text-xs text-white/60">{formatDateTimeBR(a.created_at)}</td>
                   <td className="p-3 font-mono text-xs">{a.action}</td>
                   <td className="p-3 text-xs text-white/70">
                     {a.target_type ?? "—"} {a.target_id ? `· ${a.target_id.slice(0, 10)}` : ""}

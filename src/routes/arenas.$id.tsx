@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getArena, getPlayer, tournaments, matches } from "@/lib/mock-data";
+import { formatDateBR } from "@/lib/date-format";
 import { ArrowLeft, MapPin, Star, Calendar, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/arenas/$id")({
@@ -52,7 +53,7 @@ function ArenaDetail() {
               <div key={m.id} className="p-4 flex items-center gap-3">
                 <Calendar className="size-4 text-primary"/>
                 <div className="flex-1 text-sm">
-                  <div className="font-medium">{new Date(m.date).toLocaleDateString("pt-BR")} • {m.time}</div>
+                  <div className="font-medium">{formatDateBR(m.date)} • {m.time}</div>
                   <div className="text-xs text-muted-foreground">{m.type} • {m.level}</div>
                 </div>
                 <Badge variant="secondary">{m.slotsTaken}/{m.slotsTotal}</Badge>
