@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RankingIndexRouteImport } from './routes/ranking.index'
 import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 
@@ -22,6 +23,11 @@ const AuthRoute = AuthRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RankingIndexRoute = RankingIndexRouteImport.update({
+  id: '/ranking/',
+  path: '/ranking/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartidasIndexRoute = PartidasIndexRouteImport.update({
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/partidas/': typeof PartidasIndexRoute
+  '/ranking/': typeof RankingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/partidas': typeof PartidasIndexRoute
+  '/ranking': typeof RankingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/partidas/': typeof PartidasIndexRoute
+  '/ranking/': typeof RankingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/partidas/nova' | '/partidas/'
+  fullPaths: '/' | '/auth' | '/partidas/nova' | '/partidas/' | '/ranking/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/partidas/nova' | '/partidas'
-  id: '__root__' | '/' | '/auth' | '/partidas/nova' | '/partidas/'
+  to: '/' | '/auth' | '/partidas/nova' | '/partidas' | '/ranking'
+  id: '__root__' | '/' | '/auth' | '/partidas/nova' | '/partidas/' | '/ranking/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +76,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
   PartidasIndexRoute: typeof PartidasIndexRoute
+  RankingIndexRoute: typeof RankingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -83,6 +93,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranking/': {
+      id: '/ranking/'
+      path: '/ranking'
+      fullPath: '/ranking/'
+      preLoaderRoute: typeof RankingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partidas/': {
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PartidasNovaRoute: PartidasNovaRoute,
   PartidasIndexRoute: PartidasIndexRoute,
+  RankingIndexRoute: RankingIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
