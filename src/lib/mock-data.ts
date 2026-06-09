@@ -124,6 +124,13 @@ export const arenas: Arena[] = [
     photos: [img("1576267423048-15c0040fec78"), img("1592656094267-764a45160876")],
     courts: 8, rating: 4.8, frequentPlayers: ["p8", "p3", "p6"],
   },
+  {
+    id: "a4", name: "Copacabana", city: "Rio de Janeiro, RJ",
+    address: "Av. Atlântica, s/n — Posto 6",
+    cover: img("1483729558449-99ef09a8c325"),
+    photos: [img("1483729558449-99ef09a8c325"), img("1519046904684-a3e8a03d6110")],
+    courts: 10, rating: 4.9, frequentPlayers: ["p3", "p5", "p7"],
+  },
 ];
 
 export const posts: Post[] = [
