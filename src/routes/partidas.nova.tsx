@@ -19,7 +19,7 @@ function NewMatchPage() {
     <AppLayout>
       <div className="max-w-xl mx-auto px-4 py-6">
         <button onClick={() => navigate({ to: "/partidas" })} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground"><ArrowLeft className="size-4"/> Voltar</button>
-        <h1 className="text-3xl mb-1">Criar partida</h1>
+        <h1 className="text-3xl mb-1">Criar partida amistosa</h1>
         <p className="text-sm text-muted-foreground mb-6">Monte sua partida e convoque a galera.</p>
 
         <Card className="p-6 shadow-card">
