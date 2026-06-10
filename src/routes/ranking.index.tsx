@@ -4,8 +4,10 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { players, duplas, quartetos, getPlayer } from "@/lib/mock-data";
-import { Crown, Trophy, Medal, TrendingUp, Users } from "lucide-react";
+import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus } from "lucide-react";
+import { useState } from "react";
 
 
 export const Route = createFileRoute("/ranking/")({
@@ -14,15 +16,37 @@ export const Route = createFileRoute("/ranking/")({
 });
 
 function RankingPage() {
-  const rankedPlayers = [...players].sort((a,b) => b.rankingPoints - a.rankingPoints);
-  const rankedDuplas = [...duplas].sort((a,b) => b.rankingPoints - a.rankingPoints);
-  const rankedQuartetos = [...quartetos].sort((a,b) => b.rankingPoints - a.rankingPoints);
+  const [gender, setGender] = useState<string>("M");
+
+  const filteredPlayers = players.filter(p => p.gender === gender);
+  const filteredDuplas = duplas.filter(d => d.gender === gender);
+  const filteredQuartetos = quartetos.filter(q => q.gender === gender);
+
+  const rankedPlayers = [...filteredPlayers].sort((a,b) => b.rankingPoints - a.rankingPoints);
+  const rankedDuplas = [...filteredDuplas].sort((a,b) => b.rankingPoints - a.rankingPoints);
+  const rankedQuartetos = [...filteredQuartetos].sort((a,b) => b.rankingPoints - a.rankingPoints);
 
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-3xl">Ranking</h1>
-        <p className="text-sm text-muted-foreground mb-6">Os melhores na areia.</p>
+        <p className="text-sm text-muted-foreground mb-4">Os melhores na areia.</p>
+
+        <ToggleGroup
+          type="single"
+          value={gender}
+          onValueChange={(v) => v && setGender(v)}
+          className="mb-4 justify-start"
+        >
+          <ToggleGroupItem value="M" aria-label="Masculino" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <Mars className="size-4" />
+            Masculino
+          </ToggleGroupItem>
+          <ToggleGroupItem value="F" aria-label="Feminino" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <Venus className="size-4" />
+            Feminino
+          </ToggleGroupItem>
+        </ToggleGroup>
 
         <Tabs defaultValue="ind">
           <TabsList className="bg-secondary">
