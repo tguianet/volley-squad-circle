@@ -275,6 +275,19 @@ function DesafiosPage() {
       .filter(t => t.id !== fChallenger);
   }, [teamsInCategory, fChallenger]);
 
+  // Pontos em jogo calculados a partir das posições no ranking.
+  const stakes = useMemo(() => {
+    if (!fChallenger || !fChallenged) return { win: 0, loss: 0 };
+    const ci = teamsInCategory.findIndex(t => t.id === fChallenger);
+    const oi = teamsInCategory.findIndex(t => t.id === fChallenged);
+    return computeStakes(ci, oi);
+  }, [teamsInCategory, fChallenger, fChallenged]);
+
+  // Sincroniza fStake com o cálculo automático.
+  if (fStake !== stakes.win && stakes.win > 0) {
+    // setState durante render é ok se condicional e estável; preferimos efeito.
+  }
+
   // Disponibilidade de quadras na agenda para o slot escolhido.
   const formattedDate = useMemo(
     () => fDate ? new Date(fDate).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }) : "",
