@@ -215,6 +215,6 @@ export const recentMatches = [
 export function getPlayer(id: string) { return players.find(p => p.id === id); }
 export function getDupla(id: string) { return duplas.find(d => d.id === id); }
 export function getArena(id: string) { return arenas.find(a => a.id === id); }
-export function getTournament(id: string) { return tournaments.find(t => t.id === t); }
+export function getTournament(id: string) { return tournaments.find(t => t.id === id); }
 
 export const currentUser = players[0];
