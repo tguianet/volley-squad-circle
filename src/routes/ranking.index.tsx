@@ -18,14 +18,18 @@ export const Route = createFileRoute("/ranking/")({
 });
 
 function RankingPage() {
+  const [tab, setTab] = useState<"ind" | "dupla" | "quarteto">("ind");
   const [gender, setGender] = useState<GenderFilter>("M");
 
-  const filteredDuplas = duplas.filter(d => d.gender === gender);
-  const filteredQuartetos = quartetos.filter(q => q.gender === gender);
+  // No tab Individual, Misto não é permitido — força para Masculino.
+  const effectiveGender: GenderFilter = tab === "ind" && gender === "X" ? "M" : gender;
+
+  const filteredDuplas = duplas.filter(d => d.gender === effectiveGender);
+  const filteredQuartetos = quartetos.filter(q => q.gender === effectiveGender);
 
   const rankedIndividuals: IndividualRankingRow[] = useMemo(
-    () => computeIndividualRanking(gender),
-    [gender],
+    () => computeIndividualRanking(effectiveGender === "X" ? "M" : effectiveGender),
+    [effectiveGender],
   );
   const rankedDuplas = [...filteredDuplas].sort((a,b) => b.rankingPoints - a.rankingPoints);
   const rankedQuartetos = [...filteredQuartetos].sort((a,b) => b.rankingPoints - a.rankingPoints);
@@ -38,7 +42,7 @@ function RankingPage() {
 
         <ToggleGroup
           type="single"
-          value={gender}
+          value={effectiveGender}
           onValueChange={(v) => { if (v === "M" || v === "F" || v === "X") setGender(v); }}
           className="mb-4 justify-start"
         >
@@ -50,18 +54,22 @@ function RankingPage() {
             <Venus className="size-4" />
             Feminino
           </ToggleGroupItem>
-          <ToggleGroupItem value="X" aria-label="Misto" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <Users className="size-4" />
-            Misto
-          </ToggleGroupItem>
+          {tab !== "ind" && (
+            <ToggleGroupItem value="X" aria-label="Misto" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              <Users className="size-4" />
+              Misto
+            </ToggleGroupItem>
+          )}
         </ToggleGroup>
 
-        <Tabs defaultValue="ind">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "ind" | "dupla" | "quarteto")}>
           <TabsList className="bg-secondary">
             <TabsTrigger value="ind">Individual</TabsTrigger>
             <TabsTrigger value="dupla">Duplas</TabsTrigger>
             <TabsTrigger value="quarteto">Quartetos</TabsTrigger>
           </TabsList>
+
+
 
 
           <TabsContent value="ind" className="mt-4 space-y-3">
