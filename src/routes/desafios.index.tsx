@@ -35,6 +35,7 @@ interface Challenge {
   challengerId: string;
   challengedId: string;
   arena: string;
+  court: number; // 1..7
   date: string;
   time: string;
   stake: number;
@@ -42,6 +43,22 @@ interface Challenge {
   result?: "vitoria" | "derrota";
   delta?: number;
 }
+
+const COURTS = [1, 2, 3, 4, 5, 6, 7];
+const TIME_SLOTS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+
+// Ocupação determinística (mock da agenda) — algumas quadras já estão reservadas
+// por jogos do ranking. Combina com desafios já criados.
+function preBookedCourts(arena: string, date: string, time: string): number[] {
+  let h = 0;
+  const s = `${arena}|${date}|${time}`;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const a = (h % 7) + 1;
+  const b = ((h >> 3) % 7) + 1;
+  const c = ((h >> 6) % 7) + 1;
+  return Array.from(new Set([a, b, c]));
+}
+
 
 interface TeamInfo {
   id: string;
@@ -80,20 +97,21 @@ function makeChallenges(): Challenge[] {
 
   return [
     // pendentes
-    { id: "c1", type: "dupla", challengerId: pick(dM, 0).id, challengedId: pick(dM, 1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
-    { id: "c2", type: "dupla", challengerId: pick(dF, 0).id, challengedId: pick(dF, 1).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 50, status: "pendente" },
-    { id: "c3", type: "quarteto", challengerId: pick(qX, 0).id, challengedId: pick(qX, 1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
+    { id: "c1", type: "dupla", challengerId: pick(dM, 0).id, challengedId: pick(dM, 1).id, arena: arenas[0], court: 1, date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
+    { id: "c2", type: "dupla", challengerId: pick(dF, 0).id, challengedId: pick(dF, 1).id, arena: arenas[1], court: 2, date: "Dom, 14/06", time: "11:00", stake: 50, status: "pendente" },
+    { id: "c3", type: "quarteto", challengerId: pick(qX, 0).id, challengedId: pick(qX, 1).id, arena: arenas[2], court: 4, date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
 
     // aceitos
-    { id: "c4", type: "dupla", challengerId: pick(dX, 0).id, challengedId: pick(dX, 1).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
-    { id: "c5", type: "quarteto", challengerId: pick(qM, 0).id, challengedId: pick(qM, 1).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 100, status: "aceito" },
+    { id: "c4", type: "dupla", challengerId: pick(dX, 0).id, challengedId: pick(dX, 1).id, arena: arenas[3], court: 3, date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
+    { id: "c5", type: "quarteto", challengerId: pick(qM, 0).id, challengedId: pick(qM, 1).id, arena: arenas[0], court: 5, date: "Dom, 14/06", time: "15:00", stake: 100, status: "aceito" },
 
     // concluídos
-    { id: "c6", type: "dupla", challengerId: pick(dM, 2).id, challengedId: pick(dM, 3).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
-    { id: "c7", type: "dupla", challengerId: pick(dF, 2).id, challengedId: pick(dF, 3).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
-    { id: "c8", type: "quarteto", challengerId: pick(qF, 0).id, challengedId: pick(qF, 1).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
+    { id: "c6", type: "dupla", challengerId: pick(dM, 2).id, challengedId: pick(dM, 3).id, arena: arenas[1], court: 1, date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
+    { id: "c7", type: "dupla", challengerId: pick(dF, 2).id, challengedId: pick(dF, 3).id, arena: arenas[2], court: 2, date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
+    { id: "c8", type: "quarteto", challengerId: pick(qF, 0).id, challengedId: pick(qF, 1).id, arena: arenas[3], court: 6, date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
   ];
 }
+
 
 
 function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, action: "aceitar" | "recusar") => void }) {
@@ -160,7 +178,7 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-muted-foreground text-center">{c.arena}</div>
+      <div className="mt-3 text-xs text-muted-foreground text-center">{c.arena} • Quadra {c.court}</div>
 
       {c.status === "pendente" && (
         <div className="mt-3 grid grid-cols-2 gap-2">
@@ -209,6 +227,7 @@ function DesafiosPage() {
   const [fDate, setFDate] = useState<string>("");
   const [fTime, setFTime] = useState<string>("10:00");
   const [fStake, setFStake] = useState<number>(50);
+  const [fCourt, setFCourt] = useState<number | null>(null);
 
   const teamsInCategory = useMemo(() => {
     const source = fType === "dupla" ? duplas : quartetos;
@@ -230,6 +249,20 @@ function DesafiosPage() {
       .filter(t => t.id !== fChallenger);
   }, [teamsInCategory, fChallenger]);
 
+  // Disponibilidade de quadras na agenda para o slot escolhido.
+  const formattedDate = useMemo(
+    () => fDate ? new Date(fDate).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }) : "",
+    [fDate],
+  );
+
+  const occupiedCourts = useMemo(() => {
+    if (!fDate || !fTime) return new Set<number>();
+    const pre = preBookedCourts(fArena, formattedDate, fTime);
+    const fromList = list
+      .filter(c => c.arena === fArena && c.date === formattedDate && c.time === fTime && c.status !== "recusado")
+      .map(c => c.court);
+    return new Set<number>([...pre, ...fromList]);
+  }, [fArena, formattedDate, fTime, fDate, list]);
 
   const resetForm = () => {
     setFType("dupla");
@@ -240,6 +273,7 @@ function DesafiosPage() {
     setFDate("");
     setFTime("10:00");
     setFStake(50);
+    setFCourt(null);
   };
 
   const handleCreate = () => {
@@ -255,22 +289,32 @@ function DesafiosPage() {
       toast.error("Escolha uma data.");
       return;
     }
+    if (fCourt === null) {
+      toast.error("Selecione uma quadra disponível.");
+      return;
+    }
+    if (occupiedCourts.has(fCourt)) {
+      toast.error("Esta quadra já está ocupada neste horário.");
+      return;
+    }
     const newChallenge: Challenge = {
       id: `c${Date.now()}`,
       type: fType,
       challengerId: fChallenger,
       challengedId: fChallenged,
       arena: fArena,
-      date: new Date(fDate).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }),
+      court: fCourt,
+      date: formattedDate,
       time: fTime,
       stake: fStake,
       status: "pendente",
     };
     setList(prev => [newChallenge, ...prev]);
-    toast.success("Desafio criado!");
+    toast.success(`Desafio criado na Quadra ${fCourt}!`);
     setOpen(false);
     resetForm();
   };
+
 
   const pendentes = useMemo(() => list.filter(c => c.status === "pendente"), [list]);
   const aceitos = useMemo(() => list.filter(c => c.status === "aceito"), [list]);
@@ -374,7 +418,7 @@ function DesafiosPage() {
 
                 <div>
                   <Label className="text-xs">Arena</Label>
-                  <Select value={fArena} onValueChange={setFArena}>
+                  <Select value={fArena} onValueChange={(v) => { setFArena(v); setFCourt(null); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {arenaOptions.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
@@ -385,17 +429,60 @@ function DesafiosPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Data</Label>
-                    <Input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} />
+                    <Input type="date" value={fDate} onChange={(e) => { setFDate(e.target.value); setFCourt(null); }} />
                   </div>
                   <div>
                     <Label className="text-xs">Hora</Label>
-                    <Input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} />
+                    <Select value={fTime} onValueChange={(v) => { setFTime(v); setFCourt(null); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label className="text-xs">Pts em jogo</Label>
                     <Input type="number" min={10} max={200} value={fStake} onChange={(e) => setFStake(Number(e.target.value))} />
                   </div>
                 </div>
+
+                <div>
+                  <Label className="text-xs">Quadras disponíveis</Label>
+                  {!fDate ? (
+                    <p className="text-[11px] text-muted-foreground mt-1">Escolha data e hora para ver a agenda.</p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-7 gap-1.5 mt-1">
+                        {COURTS.map(n => {
+                          const busy = occupiedCourts.has(n);
+                          const selected = fCourt === n;
+                          return (
+                            <button
+                              key={n}
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setFCourt(n)}
+                              className={`h-12 rounded-md text-xs font-semibold flex flex-col items-center justify-center transition-all border ${
+                                busy
+                                  ? "bg-destructive/10 text-destructive/60 border-destructive/20 cursor-not-allowed line-through"
+                                  : selected
+                                  ? "gradient-beach text-white border-transparent shadow-glow"
+                                  : "bg-success/10 text-success border-success/30 hover:bg-success/20"
+                              }`}
+                            >
+                              <span>Q{n}</span>
+                              <span className="text-[9px] font-normal opacity-80">{busy ? "ocupada" : "livre"}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {fArena} • {formattedDate} • {fTime}
+                      </p>
+                    </>
+                  )}
+                </div>
+
               </div>
 
               <DialogFooter>
