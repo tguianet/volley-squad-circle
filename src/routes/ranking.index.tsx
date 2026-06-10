@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { players, duplas, getPlayer } from "@/lib/mock-data";
-import { Crown, Trophy, Medal, TrendingUp } from "lucide-react";
+import { players, duplas, quartetos, getPlayer } from "@/lib/mock-data";
+import { Crown, Trophy, Medal, TrendingUp, Users } from "lucide-react";
+
 
 export const Route = createFileRoute("/ranking/")({
   head: () => ({ meta: [{ title: "Ranking — BeachPlay Arena" }] }),
@@ -15,6 +16,8 @@ export const Route = createFileRoute("/ranking/")({
 function RankingPage() {
   const rankedPlayers = [...players].sort((a,b) => b.rankingPoints - a.rankingPoints);
   const rankedDuplas = [...duplas].sort((a,b) => b.rankingPoints - a.rankingPoints);
+  const rankedQuartetos = [...quartetos].sort((a,b) => b.rankingPoints - a.rankingPoints);
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6">
@@ -25,7 +28,9 @@ function RankingPage() {
           <TabsList className="bg-secondary">
             <TabsTrigger value="ind">Individual</TabsTrigger>
             <TabsTrigger value="dupla">Duplas</TabsTrigger>
+            <TabsTrigger value="quarteto">Quartetos</TabsTrigger>
           </TabsList>
+
 
           <TabsContent value="ind" className="mt-4 space-y-3">
             {rankedPlayers.map((p, i) => {
@@ -83,7 +88,39 @@ function RankingPage() {
               );
             })}
           </TabsContent>
+
+          <TabsContent value="quarteto" className="mt-4 space-y-3">
+            {rankedQuartetos.map((q, i) => {
+              const ps = q.playerIds.map(id => getPlayer(id)!).filter(Boolean);
+              const total = q.wins + q.losses;
+              const winRate = total ? ((q.wins / total) * 100).toFixed(0) : "0";
+              return (
+                <Card key={q.id} className="p-4 flex items-center gap-4 shadow-card">
+                  <div className={`size-10 rounded-full flex items-center justify-center font-display text-lg shrink-0 ${
+                    i === 0 ? "gradient-beach text-white shadow-glow" : "bg-secondary"
+                  }`}>{i === 0 ? <Users className="size-5"/> : i+1}</div>
+                  <div className="flex -space-x-3">
+                    {ps.map(p => (
+                      <Avatar key={p.id} className="size-10 ring-2 ring-background">
+                        <AvatarImage src={p.avatar}/>
+                        <AvatarFallback>{p.name[0]}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold truncate">{q.name}</div>
+                    <Badge variant="secondary" className="text-[10px] mt-0.5">{q.wins}V — {q.losses}D • {winRate}%</Badge>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-display text-2xl text-gradient">{q.rankingPoints}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><TrendingUp className="size-3"/>pts</div>
+                  </div>
+                </Card>
+              );
+            })}
+          </TabsContent>
         </Tabs>
+
       </div>
     </AppLayout>
   );
