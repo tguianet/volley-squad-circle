@@ -16,6 +16,7 @@ export type Player = {
   rankingPoints: number;
   mvps: number;
   bio: string;
+  gender: "M" | "F";
 };
 
 export type Dupla = {
