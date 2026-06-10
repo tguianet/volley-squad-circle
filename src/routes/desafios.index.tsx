@@ -9,11 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { duplas, quartetos, getPlayer } from "@/lib/mock-data";
 import type { Dupla, Quarteto, Player } from "@/lib/mock-data";
-import { Swords, Flame, Trophy, ArrowUp, ArrowDown, Clock, CheckCircle2, XCircle, Plus } from "lucide-react";
+import { Swords, Flame, Trophy, ArrowUp, ArrowDown, Clock, CheckCircle2, XCircle, Plus, CalendarIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 
 export const Route = createFileRoute("/desafios/")({
@@ -429,7 +433,32 @@ function DesafiosPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Data</Label>
-                    <Input type="date" value={fDate} onChange={(e) => { setFDate(e.target.value); setFCourt(null); }} />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn("w-full justify-start text-left font-normal text-xs", !fDate && "text-muted-foreground")}
+                        >
+                          <CalendarIcon className="size-3 mr-2" />
+                          {fDate ? format(new Date(fDate + "T00:00:00"), "dd/MM/yyyy") : <span>Domingo...</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={fDate ? new Date(fDate + "T00:00:00") : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setFDate(format(date, "yyyy-MM-dd"));
+                              setFCourt(null);
+                            }
+                          }}
+                          disabled={(date) => date.getDay() !== 0}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div>
                     <Label className="text-xs">Hora</Label>
