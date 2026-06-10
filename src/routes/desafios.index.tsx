@@ -340,7 +340,7 @@ function DesafiosPage() {
       court: fCourt,
       date: formattedDate,
       time: fTime,
-      stake: fStake,
+      stake: stakes.win,
       status: "pendente",
     };
     setList(prev => [newChallenge, ...prev]);
