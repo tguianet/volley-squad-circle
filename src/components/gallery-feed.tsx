@@ -156,21 +156,22 @@ function CommentSection({ photoId, userId }: { photoId: string; userId: string |
     queryFn: async (): Promise<CommentRow[]> => {
       const { data, error } = await supabase
         .from("gallery_comments")
-        .select("id, user_id, content, created_at, profiles:profiles!gallery_comments_user_id_fkey(display_name, username, avatar_url)")
+        .select("id, user_id, content, created_at")
         .eq("photo_id", photoId)
         .order("created_at", { ascending: true });
-      if (error) {
-        const { data: d2, error: e2 } = await supabase
-          .from("gallery_comments")
-          .select("id, user_id, content, created_at")
-          .eq("photo_id", photoId)
-          .order("created_at", { ascending: true });
-        if (e2) throw e2;
-        return (d2 ?? []).map((c) => ({ ...c, profiles: null })) as CommentRow[];
-      }
-      return (data as unknown as CommentRow[]) ?? [];
+      if (error) throw error;
+      const rows = (data ?? []) as Omit<CommentRow, "profiles">[];
+      const ids = Array.from(new Set(rows.map((c) => c.user_id)));
+      if (ids.length === 0) return [];
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name, username, avatar_url")
+        .in("id", ids);
+      const map = new Map((profs ?? []).map((p) => [p.id, p]));
+      return rows.map((c) => ({ ...c, profiles: map.get(c.user_id) ?? null })) as CommentRow[];
     },
   });
+
 
   const addMut = useMutation({
     mutationFn: async () => {
