@@ -460,6 +460,36 @@ function DesafiosPage() {
                   </Select>
                 </div>
 
+                <div>
+                  <Label className="text-xs">Data</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn("w-full justify-start text-left font-normal text-xs", !fDate && "text-muted-foreground")}
+                      >
+                        <CalendarIcon className="size-3 mr-2" />
+                        {fDate ? format(new Date(fDate + "T00:00:00"), "dd/MM/yyyy") : <span>Domingo...</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={fDate ? new Date(fDate + "T00:00:00") : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setFDate(format(date, "yyyy-MM-dd"));
+                            setFCourt(null);
+                          }
+                        }}
+                        disabled={(date) => date.getDay() !== 0}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Hora</Label>
@@ -488,47 +518,12 @@ function DesafiosPage() {
                     </div>
                   </div>
                 </div>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn("w-full justify-start text-left font-normal text-xs", !fDate && "text-muted-foreground")}
-                        >
-                          <CalendarIcon className="size-3 mr-2" />
-                          {fDate ? format(new Date(fDate + "T00:00:00"), "dd/MM/yyyy") : <span>Domingo...</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={fDate ? new Date(fDate + "T00:00:00") : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              setFDate(format(date, "yyyy-MM-dd"));
-                              setFCourt(null);
-                            }
-                          }}
-                          disabled={(date) => date.getDay() !== 0}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Hora</Label>
-                    <Select value={fTime} onValueChange={(v) => { setFTime(v); setFCourt(null); }}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {TIME_SLOTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Pts em jogo</Label>
-                    <Input type="number" min={10} max={200} value={fStake} onChange={(e) => setFStake(Number(e.target.value))} />
-                  </div>
-                </div>
+
+                {fChallenger && fChallenged && (
+                  <p className="text-[10px] text-muted-foreground -mt-1">
+                    Pontuação calculada pela diferença de posição no ranking (inclui bônus de partida +5 e vitória +15).
+                  </p>
+                )}
 
                 <div>
                   <Label className="text-xs">Quadras disponíveis</Label>
