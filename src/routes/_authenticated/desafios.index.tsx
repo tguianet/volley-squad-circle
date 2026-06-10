@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/desafios/")({
+export const Route = createFileRoute("/_authenticated/desafios/")({
   head: () => ({
     meta: [
       { title: "Desafios — BeachPlay Arena" },

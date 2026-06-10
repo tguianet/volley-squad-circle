@@ -19,13 +19,13 @@ import { Route as RegrasIndexRouteImport } from './routes/regras.index'
 import { Route as RankingIndexRouteImport } from './routes/ranking.index'
 import { Route as PerfilIndexRouteImport } from './routes/perfil.index'
 import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
-import { Route as DesafiosIndexRouteImport } from './routes/desafios.index'
 import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
 import { Route as AgendaIndexRouteImport } from './routes/agenda.index'
 import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedDesafiosIndexRouteImport } from './routes/_authenticated/desafios.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
@@ -85,11 +85,6 @@ const PartidasIndexRoute = PartidasIndexRouteImport.update({
   path: '/partidas/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DesafiosIndexRoute = DesafiosIndexRouteImport.update({
-  id: '/desafios/',
-  path: '/desafios/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ArenasIndexRoute = ArenasIndexRouteImport.update({
   id: '/arenas/',
   path: '/arenas/',
@@ -120,6 +115,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDesafiosIndexRoute =
+  AuthenticatedDesafiosIndexRouteImport.update({
+    id: '/desafios/',
+    path: '/desafios/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -185,7 +186,6 @@ export interface FileRoutesByFullPath {
   '/torneios/$id': typeof TorneiosIdRoute
   '/agenda/': typeof AgendaIndexRoute
   '/arenas/': typeof ArenasIndexRoute
-  '/desafios/': typeof DesafiosIndexRoute
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
   '/ranking/': typeof RankingIndexRoute
@@ -199,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/desafios/': typeof AuthenticatedDesafiosIndexRoute
   '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRoutesByTo {
@@ -211,7 +212,6 @@ export interface FileRoutesByTo {
   '/torneios/$id': typeof TorneiosIdRoute
   '/agenda': typeof AgendaIndexRoute
   '/arenas': typeof ArenasIndexRoute
-  '/desafios': typeof DesafiosIndexRoute
   '/partidas': typeof PartidasIndexRoute
   '/perfil': typeof PerfilIndexRoute
   '/ranking': typeof RankingIndexRoute
@@ -225,6 +225,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/desafios': typeof AuthenticatedDesafiosIndexRoute
   '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRoutesById {
@@ -240,7 +241,6 @@ export interface FileRoutesById {
   '/torneios/$id': typeof TorneiosIdRoute
   '/agenda/': typeof AgendaIndexRoute
   '/arenas/': typeof ArenasIndexRoute
-  '/desafios/': typeof DesafiosIndexRoute
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
   '/ranking/': typeof RankingIndexRoute
@@ -254,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/desafios/': typeof AuthenticatedDesafiosIndexRoute
   '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRouteTypes {
@@ -269,7 +270,6 @@ export interface FileRouteTypes {
     | '/torneios/$id'
     | '/agenda/'
     | '/arenas/'
-    | '/desafios/'
     | '/partidas/'
     | '/perfil/'
     | '/ranking/'
@@ -283,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/usuarios'
     | '/admin/'
+    | '/desafios/'
     | '/api/public/hooks/monthly-rollover'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -295,7 +296,6 @@ export interface FileRouteTypes {
     | '/torneios/$id'
     | '/agenda'
     | '/arenas'
-    | '/desafios'
     | '/partidas'
     | '/perfil'
     | '/ranking'
@@ -309,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/usuarios'
     | '/admin'
+    | '/desafios'
     | '/api/public/hooks/monthly-rollover'
   id:
     | '__root__'
@@ -323,7 +324,6 @@ export interface FileRouteTypes {
     | '/torneios/$id'
     | '/agenda/'
     | '/arenas/'
-    | '/desafios/'
     | '/partidas/'
     | '/perfil/'
     | '/ranking/'
@@ -337,6 +337,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/admin/'
+    | '/_authenticated/desafios/'
     | '/api/public/hooks/monthly-rollover'
   fileRoutesById: FileRoutesById
 }
@@ -351,7 +352,6 @@ export interface RootRouteChildren {
   TorneiosIdRoute: typeof TorneiosIdRoute
   AgendaIndexRoute: typeof AgendaIndexRoute
   ArenasIndexRoute: typeof ArenasIndexRoute
-  DesafiosIndexRoute: typeof DesafiosIndexRoute
   PartidasIndexRoute: typeof PartidasIndexRoute
   PerfilIndexRoute: typeof PerfilIndexRoute
   RankingIndexRoute: typeof RankingIndexRoute
@@ -432,13 +432,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartidasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/desafios/': {
-      id: '/desafios/'
-      path: '/desafios'
-      fullPath: '/desafios/'
-      preLoaderRoute: typeof DesafiosIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/arenas/': {
       id: '/arenas/'
       path: '/arenas'
@@ -479,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/desafios/': {
+      id: '/_authenticated/desafios/'
+      path: '/desafios'
+      fullPath: '/desafios/'
+      preLoaderRoute: typeof AuthenticatedDesafiosIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin/': {
@@ -577,10 +577,12 @@ const AuthenticatedAdminRouteRouteWithChildren =
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
+  AuthenticatedDesafiosIndexRoute: typeof AuthenticatedDesafiosIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
+  AuthenticatedDesafiosIndexRoute: AuthenticatedDesafiosIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -597,7 +599,6 @@ const rootRouteChildren: RootRouteChildren = {
   TorneiosIdRoute: TorneiosIdRoute,
   AgendaIndexRoute: AgendaIndexRoute,
   ArenasIndexRoute: ArenasIndexRoute,
-  DesafiosIndexRoute: DesafiosIndexRoute,
   PartidasIndexRoute: PartidasIndexRoute,
   PerfilIndexRoute: PerfilIndexRoute,
   RankingIndexRoute: RankingIndexRoute,
@@ -608,3 +609,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
