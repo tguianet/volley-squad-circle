@@ -178,7 +178,7 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
         </div>
       </div>
 
-      <div className="mt-3 text-xs text-muted-foreground text-center">{c.arena}</div>
+      <div className="mt-3 text-xs text-muted-foreground text-center">{c.arena} • Quadra {c.court}</div>
 
       {c.status === "pendente" && (
         <div className="mt-3 grid grid-cols-2 gap-2">
