@@ -307,7 +307,7 @@ function DesafiosPage() {
     setFArena("Arena Praia Grande");
     setFDate("");
     setFTime("10:00");
-    setFStake(50);
+    setFCourt(null);
     setFCourt(null);
   };
 
