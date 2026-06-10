@@ -84,13 +84,13 @@ function AgendaPage() {
                       {m ? (
                         <div className="space-y-1">
                           <div className="font-semibold truncate">
-                            {getPlayer(m.dupla1.playerIds[0])?.name.split(" ")[0]} /{" "}
-                            {getPlayer(m.dupla1.playerIds[1])?.name.split(" ")[0]}
+                            {getPlayer(m.dupla1.player1Id)?.name.split(" ")[0]} /{" "}
+                            {getPlayer(m.dupla1.player2Id)?.name.split(" ")[0]}
                           </div>
                           <div className="text-muted-foreground text-center text-[10px]">vs</div>
                           <div className="font-semibold truncate">
-                            {getPlayer(m.dupla2.playerIds[0])?.name.split(" ")[0]} /{" "}
-                            {getPlayer(m.dupla2.playerIds[1])?.name.split(" ")[0]}
+                            {getPlayer(m.dupla2.player1Id)?.name.split(" ")[0]} /{" "}
+                            {getPlayer(m.dupla2.player2Id)?.name.split(" ")[0]}
                           </div>
                         </div>
                       ) : (
@@ -121,13 +121,13 @@ function AgendaPage() {
                       {m ? (
                         <div className="flex-1 text-xs">
                           <div className="font-semibold truncate">
-                            {getPlayer(m.dupla1.playerIds[0])?.name.split(" ")[0]} /{" "}
-                            {getPlayer(m.dupla1.playerIds[1])?.name.split(" ")[0]}
+                            {getPlayer(m.dupla1.player1Id)?.name.split(" ")[0]} /{" "}
+                            {getPlayer(m.dupla1.player2Id)?.name.split(" ")[0]}
                           </div>
                           <div className="text-muted-foreground">vs</div>
                           <div className="font-semibold truncate">
-                            {getPlayer(m.dupla2.playerIds[0])?.name.split(" ")[0]} /{" "}
-                            {getPlayer(m.dupla2.playerIds[1])?.name.split(" ")[0]}
+                            {getPlayer(m.dupla2.player1Id)?.name.split(" ")[0]} /{" "}
+                            {getPlayer(m.dupla2.player2Id)?.name.split(" ")[0]}
                           </div>
                         </div>
                       ) : (
