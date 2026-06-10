@@ -19,6 +19,7 @@ import { Route as RankingIndexRouteImport } from './routes/ranking.index'
 import { Route as PerfilIndexRouteImport } from './routes/perfil.index'
 import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
 import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
+import { Route as AgendaIndexRouteImport } from './routes/agenda.index'
 import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
@@ -79,6 +80,11 @@ const PartidasIndexRoute = PartidasIndexRouteImport.update({
 const ArenasIndexRoute = ArenasIndexRouteImport.update({
   id: '/arenas/',
   path: '/arenas/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgendaIndexRoute = AgendaIndexRouteImport.update({
+  id: '/agenda/',
+  path: '/agenda/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TorneiosIdRoute = TorneiosIdRouteImport.update({
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
+  '/agenda/': typeof AgendaIndexRoute
   '/arenas/': typeof ArenasIndexRoute
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
+  '/agenda': typeof AgendaIndexRoute
   '/arenas': typeof ArenasIndexRoute
   '/partidas': typeof PartidasIndexRoute
   '/perfil': typeof PerfilIndexRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/torneios/$id': typeof TorneiosIdRoute
+  '/agenda/': typeof AgendaIndexRoute
   '/arenas/': typeof ArenasIndexRoute
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
@@ -230,6 +239,7 @@ export interface FileRouteTypes {
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
+    | '/agenda/'
     | '/arenas/'
     | '/partidas/'
     | '/perfil/'
@@ -252,6 +262,7 @@ export interface FileRouteTypes {
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
+    | '/agenda'
     | '/arenas'
     | '/partidas'
     | '/perfil'
@@ -276,6 +287,7 @@ export interface FileRouteTypes {
     | '/arenas/$id'
     | '/partidas/nova'
     | '/torneios/$id'
+    | '/agenda/'
     | '/arenas/'
     | '/partidas/'
     | '/perfil/'
@@ -300,6 +312,7 @@ export interface RootRouteChildren {
   ArenasIdRoute: typeof ArenasIdRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
   TorneiosIdRoute: typeof TorneiosIdRoute
+  AgendaIndexRoute: typeof AgendaIndexRoute
   ArenasIndexRoute: typeof ArenasIndexRoute
   PartidasIndexRoute: typeof PartidasIndexRoute
   PerfilIndexRoute: typeof PerfilIndexRoute
@@ -377,6 +390,13 @@ declare module '@tanstack/react-router' {
       path: '/arenas'
       fullPath: '/arenas/'
       preLoaderRoute: typeof ArenasIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agenda/': {
+      id: '/agenda/'
+      path: '/agenda'
+      fullPath: '/agenda/'
+      preLoaderRoute: typeof AgendaIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/torneios/$id': {
@@ -514,6 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   ArenasIdRoute: ArenasIdRoute,
   PartidasNovaRoute: PartidasNovaRoute,
   TorneiosIdRoute: TorneiosIdRoute,
+  AgendaIndexRoute: AgendaIndexRoute,
   ArenasIndexRoute: ArenasIndexRoute,
   PartidasIndexRoute: PartidasIndexRoute,
   PerfilIndexRoute: PerfilIndexRoute,

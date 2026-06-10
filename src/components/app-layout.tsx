@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Waves, Shield } from "lucide-react";
+import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Waves, Shield, CalendarDays } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useIsStaff } from "@/hooks/use-auth";
@@ -8,6 +8,7 @@ const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
   { to: "/", label: "Feed", icon: Home },
   { to: "/ranking", label: "Ranking", icon: Medal },
+  { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/partidas", label: "Partidas", icon: Calendar },
   { to: "/torneios", label: "Torneios", icon: Trophy },
 ];
