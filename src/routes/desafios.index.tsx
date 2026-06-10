@@ -35,6 +35,7 @@ interface Challenge {
   challengerId: string;
   challengedId: string;
   arena: string;
+  court: number; // 1..7
   date: string;
   time: string;
   stake: number;
@@ -42,6 +43,22 @@ interface Challenge {
   result?: "vitoria" | "derrota";
   delta?: number;
 }
+
+const COURTS = [1, 2, 3, 4, 5, 6, 7];
+const TIME_SLOTS = ["08:00","09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"];
+
+// Ocupação determinística (mock da agenda) — algumas quadras já estão reservadas
+// por jogos do ranking. Combina com desafios já criados.
+function preBookedCourts(arena: string, date: string, time: string): number[] {
+  let h = 0;
+  const s = `${arena}|${date}|${time}`;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const a = (h % 7) + 1;
+  const b = ((h >> 3) % 7) + 1;
+  const c = ((h >> 6) % 7) + 1;
+  return Array.from(new Set([a, b, c]));
+}
+
 
 interface TeamInfo {
   id: string;
