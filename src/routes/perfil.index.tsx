@@ -20,10 +20,17 @@ export const Route = createFileRoute("/perfil/")({
 });
 
 function ProfilePage() {
-  const p = currentUser;
+  const [p, setP] = useState(currentUser);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio, city: p.city, height: p.height });
   const dupla = duplas.find(d => d.player1Id === p.id || d.player2Id === p.id);
   const partner = dupla ? getPlayer(dupla.player1Id === p.id ? dupla.player2Id : dupla.player1Id) : null;
   const winRate = ((p.wins / p.matches) * 100).toFixed(0);
+  const onSave = () => {
+    setP({ ...p, ...form, height: Number(form.height) });
+    setOpen(false);
+    toast.success("Perfil atualizado");
+  };
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
