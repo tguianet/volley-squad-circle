@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { currentUser, duplas, getPlayer, recentMatches } from "@/lib/mock-data";
 import { formatDateBR } from "@/lib/date-format";
-import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
+import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings, ImagePlus, X } from "lucide-react";
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
