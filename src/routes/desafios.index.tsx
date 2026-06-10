@@ -532,39 +532,34 @@ function DesafiosPage() {
 
                 <div>
                   <Label className="text-xs">Quadras disponíveis</Label>
-                  {!fDate ? (
-                    <p className="text-[11px] text-muted-foreground mt-1">Escolha data e hora para ver a agenda.</p>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-7 gap-1.5 mt-1">
-                        {COURTS.map(n => {
-                          const busy = occupiedCourts.has(n);
-                          const selected = fCourt === n;
-                          return (
-                            <button
-                              key={n}
-                              type="button"
-                              disabled={busy}
-                              onClick={() => setFCourt(n)}
-                              className={`h-12 rounded-md text-xs font-semibold flex flex-col items-center justify-center transition-all border ${
-                                busy
-                                  ? "bg-destructive/10 text-destructive/60 border-destructive/20 cursor-not-allowed line-through"
-                                  : selected
-                                  ? "gradient-beach text-white border-transparent shadow-glow"
-                                  : "bg-success/10 text-success border-success/30 hover:bg-success/20"
-                              }`}
-                            >
-                              <span>Q{n}</span>
-                              <span className="text-[9px] font-normal opacity-80">{busy ? "ocupada" : "livre"}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <p className="text-[10px] text-muted-foreground mt-1">
-                        {fArena} • {formattedDate} • {fTime}
-                      </p>
-                    </>
-                  )}
+                  <div className="grid grid-cols-7 gap-1.5 mt-1">
+                    {COURTS.map(n => {
+                      const busy = !!fDate && !!fTime && occupiedCourts.has(n);
+                      const selected = fCourt === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setFCourt(n)}
+                          className={`h-12 rounded-md text-xs font-semibold flex flex-col items-center justify-center transition-all border ${
+                            busy
+                              ? "bg-destructive/10 text-destructive/60 border-destructive/20 cursor-not-allowed line-through"
+                              : selected
+                              ? "gradient-beach text-white border-transparent shadow-glow"
+                              : "bg-success/10 text-success border-success/30 hover:bg-success/20"
+                          }`}
+                        >
+                          <span>Q{n}</span>
+                          <span className="text-[9px] font-normal opacity-80">{busy ? "ocupada" : "livre"}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {fArena}{fDate ? ` • ${formattedDate}` : ""}{fTime ? ` • ${fTime}` : ""}
+                    {(!fDate || !fTime) && " — selecione data e hora para conferir ocupação"}
+                  </p>
                 </div>
 
               </div>
