@@ -5,7 +5,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { players, duplas, getPlayer } from "@/lib/mock-data";
+import { duplas, quartetos, getPlayer } from "@/lib/mock-data";
+import type { Dupla, Quarteto, Player } from "@/lib/mock-data";
 import { Swords, Flame, Trophy, ArrowUp, ArrowDown, Clock, CheckCircle2, XCircle, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -14,74 +15,87 @@ export const Route = createFileRoute("/desafios/")({
   head: () => ({
     meta: [
       { title: "Desafios — BeachPlay Arena" },
-      { name: "description", content: "Desafie jogadores e duplas para subir no ranking." },
+      { name: "description", content: "Desafie duplas e quartetos para movimentar o ranking." },
     ],
   }),
   component: DesafiosPage,
 });
 
 type ChallengeStatus = "pendente" | "aceito" | "concluido" | "recusado";
-type Challenge = {
+type ChallengeType = "dupla" | "quarteto";
+
+interface Challenge {
   id: string;
-  type: "individual" | "dupla";
+  type: ChallengeType;
   challengerId: string;
   challengedId: string;
   arena: string;
   date: string;
   time: string;
-  stake: number; // pontos em disputa
+  stake: number;
   status: ChallengeStatus;
   result?: "vitoria" | "derrota";
   delta?: number;
-};
-
-function makeChallenges(): Challenge[] {
-  const mens = players.filter(p => p.gender === "M");
-  const wmns = players.filter(p => p.gender === "F");
-  const ds = duplas;
-  const m = (i: number) => mens[i % mens.length];
-  const w = (i: number) => wmns[i % wmns.length];
-  const d = (i: number) => ds[i % ds.length];
-  const arenas = ["Arena Praia Grande", "Beach Club Norte", "Costa Verde", "Arena Sul"];
-  const items: Challenge[] = [];
-
-  // pendentes
-  items.push({ id: "c1", type: "individual", challengerId: m(0).id, challengedId: m(1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 50, status: "pendente" });
-  items.push({ id: "c2", type: "individual", challengerId: w(0).id, challengedId: w(1).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 40, status: "pendente" });
-  items.push({ id: "c3", type: "dupla", challengerId: d(0).id, challengedId: d(1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 75, status: "pendente" });
-
-  // aceitos
-  items.push({ id: "c4", type: "individual", challengerId: m(2).id, challengedId: m(3).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 60, status: "aceito" });
-  items.push({ id: "c5", type: "dupla", challengerId: d(2).id, challengedId: d(3).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 80, status: "aceito" });
-
-  // concluídos
-  items.push({ id: "c6", type: "individual", challengerId: m(0).id, challengedId: m(2).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 50, status: "concluido", result: "vitoria", delta: 50 });
-  items.push({ id: "c7", type: "individual", challengerId: m(1).id, challengedId: m(3).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 });
-  items.push({ id: "c8", type: "dupla", challengerId: d(4).id, challengedId: d(5).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 70, status: "concluido", result: "vitoria", delta: 70 });
-
-  return items;
 }
 
+interface TeamInfo {
+  id: string;
+  name: string;
+  players: Player[];
+}
+
+function getTeam(type: ChallengeType, id: string): TeamInfo | null {
+  if (type === "dupla") {
+    const d: Dupla | undefined = duplas.find(x => x.id === id);
+    if (!d) return null;
+    const ps = [getPlayer(d.player1Id), getPlayer(d.player2Id)].filter(
+      (p): p is Player => Boolean(p),
+    );
+    return { id: d.id, name: d.name, players: ps };
+  }
+  const q: Quarteto | undefined = quartetos.find(x => x.id === id);
+  if (!q) return null;
+  const ps = q.playerIds
+    .map(pid => getPlayer(pid))
+    .filter((p): p is Player => Boolean(p));
+  return { id: q.id, name: q.name, players: ps };
+}
+
+function makeChallenges(): Challenge[] {
+  const ds = duplas;
+  const qs = quartetos;
+  const d = (i: number) => ds[i % ds.length];
+  const q = (i: number) => qs[i % qs.length];
+  const arenas = ["Arena Praia Grande", "Beach Club Norte", "Costa Verde", "Arena Sul"];
+
+  return [
+    // pendentes
+    { id: "c1", type: "dupla", challengerId: d(0).id, challengedId: d(1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
+    { id: "c2", type: "dupla", challengerId: d(2).id, challengedId: d(3).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 50, status: "pendente" },
+    { id: "c3", type: "quarteto", challengerId: q(0).id, challengedId: q(1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
+
+    // aceitos
+    { id: "c4", type: "dupla", challengerId: d(4).id, challengedId: d(5).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
+    { id: "c5", type: "quarteto", challengerId: q(2).id, challengedId: q(3).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 100, status: "aceito" },
+
+    // concluídos
+    { id: "c6", type: "dupla", challengerId: d(6).id, challengedId: d(7).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
+    { id: "c7", type: "dupla", challengerId: d(8).id, challengedId: d(9).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
+    { id: "c8", type: "quarteto", challengerId: q(4).id, challengedId: q(5).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
+  ];
+}
 
 function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, action: "aceitar" | "recusar") => void }) {
-  const isDupla = c.type === "dupla";
-  const a = isDupla ? duplas.find(d => d.id === c.challengerId) : getPlayer(c.challengerId);
-  const b = isDupla ? duplas.find(d => d.id === c.challengedId) : getPlayer(c.challengedId);
+  const a = getTeam(c.type, c.challengerId);
+  const b = getTeam(c.type, c.challengedId);
   if (!a || !b) return null;
-
-  const aAvatars = isDupla
-    ? [getPlayer((a as any).player1Id), getPlayer((a as any).player2Id)]
-    : [a as any];
-  const bAvatars = isDupla
-    ? [getPlayer((b as any).player1Id), getPlayer((b as any).player2Id)]
-    : [b as any];
 
   return (
     <Card className="p-4 shadow-card">
       <div className="flex items-center justify-between mb-3">
         <Badge variant="secondary" className="gap-1">
           <Swords className="size-3" />
-          {isDupla ? "Dupla" : "Individual"}
+          {c.type === "dupla" ? "Dupla" : "Quarteto"}
         </Badge>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="size-3" /> {c.date} • {c.time}
@@ -91,14 +105,14 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
       <div className="flex items-center gap-3">
         <div className="flex-1 text-center">
           <div className="flex -space-x-3 justify-center mb-1">
-            {aAvatars.map((p: any) => p && (
+            {a.players.map(p => (
               <Avatar key={p.id} className="size-10 ring-2 ring-background">
                 <AvatarImage src={p.avatar} />
                 <AvatarFallback>{p.name[0]}</AvatarFallback>
               </Avatar>
             ))}
           </div>
-          <div className="text-sm font-semibold truncate">{(a as any).name}</div>
+          <div className="text-sm font-semibold truncate">{a.name}</div>
         </div>
 
         <div className="flex flex-col items-center px-2">
@@ -110,14 +124,14 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
 
         <div className="flex-1 text-center">
           <div className="flex -space-x-3 justify-center mb-1">
-            {bAvatars.map((p: any) => p && (
+            {b.players.map(p => (
               <Avatar key={p.id} className="size-10 ring-2 ring-background">
                 <AvatarImage src={p.avatar} />
                 <AvatarFallback>{p.name[0]}</AvatarFallback>
               </Avatar>
             ))}
           </div>
-          <div className="text-sm font-semibold truncate">{(b as any).name}</div>
+          <div className="text-sm font-semibold truncate">{b.name}</div>
         </div>
       </div>
 
@@ -179,7 +193,7 @@ function DesafiosPage() {
             <h1 className="text-3xl flex items-center gap-2">
               <Swords className="size-7 text-primary" /> Desafios
             </h1>
-            <p className="text-sm text-muted-foreground">Vença para subir no ranking. Perca e caia posições.</p>
+            <p className="text-sm text-muted-foreground">Apenas Duplas e Quartetos. O Individual é apenas ranking agregado.</p>
           </div>
           <Button className="gradient-beach text-white shadow-glow shrink-0">
             <Plus className="size-4" /> Novo desafio
@@ -210,7 +224,7 @@ function DesafiosPage() {
             </div>
             <div className="text-xs">
               <div className="font-semibold text-sm">Como funciona</div>
-              <p className="text-muted-foreground">Cada desafio vale pontos em disputa. O vencedor soma; o perdedor desconta. Quanto mais alto o oponente no ranking, mais pontos em jogo.</p>
+              <p className="text-muted-foreground">Desafios acontecem apenas em Duplas e Quartetos. Os pontos da equipe vencedora também são somados ao Ranking Individual de cada jogador participante.</p>
             </div>
           </div>
         </Card>

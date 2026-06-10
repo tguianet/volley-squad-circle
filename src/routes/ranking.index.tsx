@@ -5,10 +5,12 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { players, duplas, quartetos, getPlayer } from "@/lib/mock-data";
+import { duplas, quartetos, getPlayer, computeIndividualRanking } from "@/lib/mock-data";
+import type { IndividualRankingRow } from "@/lib/mock-data";
 import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
+type GenderFilter = "M" | "F" | "X";
 
 export const Route = createFileRoute("/ranking/")({
   head: () => ({ meta: [{ title: "Ranking — BeachPlay Arena" }] }),
@@ -16,13 +18,15 @@ export const Route = createFileRoute("/ranking/")({
 });
 
 function RankingPage() {
-  const [gender, setGender] = useState<string>("M");
+  const [gender, setGender] = useState<GenderFilter>("M");
 
-  const filteredPlayers = players.filter(p => p.gender === gender);
   const filteredDuplas = duplas.filter(d => d.gender === gender);
   const filteredQuartetos = quartetos.filter(q => q.gender === gender);
 
-  const rankedPlayers = [...filteredPlayers].sort((a,b) => b.rankingPoints - a.rankingPoints);
+  const rankedIndividuals: IndividualRankingRow[] = useMemo(
+    () => computeIndividualRanking(gender),
+    [gender],
+  );
   const rankedDuplas = [...filteredDuplas].sort((a,b) => b.rankingPoints - a.rankingPoints);
   const rankedQuartetos = [...filteredQuartetos].sort((a,b) => b.rankingPoints - a.rankingPoints);
 
@@ -35,7 +39,7 @@ function RankingPage() {
         <ToggleGroup
           type="single"
           value={gender}
-          onValueChange={(v) => v && setGender(v)}
+          onValueChange={(v) => { if (v === "M" || v === "F" || v === "X") setGender(v); }}
           className="mb-4 justify-start"
         >
           <ToggleGroupItem value="M" aria-label="Masculino" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
@@ -61,8 +65,15 @@ function RankingPage() {
 
 
           <TabsContent value="ind" className="mt-4 space-y-3">
-            {rankedPlayers.map((p, i) => {
-              const winRate = ((p.wins / p.matches) * 100).toFixed(0);
+            <p className="text-xs text-muted-foreground px-1">
+              Pontos agregados das modalidades coletivas (Duplas e Quartetos). Não há partidas individuais.
+            </p>
+            {rankedIndividuals.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">Nenhum jogador nesta categoria ainda.</p>
+            )}
+            {rankedIndividuals.map((row, i) => {
+              const p = row.player;
+              const winRate = (row.winRate * 100).toFixed(0);
               return (
                 <Card key={p.id} className="p-4 flex items-center gap-4 shadow-card hover:shadow-glow transition-shadow">
                   <div className={`size-10 rounded-full flex items-center justify-center font-display text-lg shrink-0 ${
@@ -75,21 +86,24 @@ function RankingPage() {
                   <Avatar className="size-12 ring-2 ring-primary/30"><AvatarImage src={p.avatar}/><AvatarFallback>{p.name[0]}</AvatarFallback></Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{p.name}</div>
-                    <div className="text-xs text-muted-foreground">{p.city} • {p.level}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {row.modalities.length > 0 ? row.modalities.join(" • ") : "Sem modalidades"}
+                    </div>
                   </div>
                   <div className="hidden sm:grid grid-cols-3 gap-3 text-center text-xs">
-                    <div><div className="font-display text-base text-success">{p.wins}</div><div className="text-muted-foreground">V</div></div>
-                    <div><div className="font-display text-base text-destructive">{p.losses}</div><div className="text-muted-foreground">D</div></div>
+                    <div><div className="font-display text-base text-success">{row.wins}</div><div className="text-muted-foreground">V</div></div>
+                    <div><div className="font-display text-base text-destructive">{row.losses}</div><div className="text-muted-foreground">D</div></div>
                     <div><div className="font-display text-base text-primary">{winRate}%</div><div className="text-muted-foreground">Apr.</div></div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-display text-2xl text-gradient">{p.rankingPoints}</div>
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><Medal className="size-3"/>{p.mvps} MVPs</div>
+                    <div className="font-display text-2xl text-gradient">{row.points}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><Medal className="size-3"/>pts agregados</div>
                   </div>
                 </Card>
               );
             })}
           </TabsContent>
+
 
           <TabsContent value="dupla" className="mt-4 space-y-3">
             {rankedDuplas.map((d, i) => {
