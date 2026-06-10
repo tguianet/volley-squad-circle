@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Waves, Shield, CalendarDays } from "lucide-react";
+import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Shield, CalendarDays } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useIsStaff } from "@/hooks/use-auth";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
