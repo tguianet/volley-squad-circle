@@ -46,6 +46,10 @@ function RankingPage() {
             <Venus className="size-4" />
             Feminino
           </ToggleGroupItem>
+          <ToggleGroupItem value="X" aria-label="Misto" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <Users className="size-4" />
+            Misto
+          </ToggleGroupItem>
         </ToggleGroup>
 
         <Tabs defaultValue="ind">

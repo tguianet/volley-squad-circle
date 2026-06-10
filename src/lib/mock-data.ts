@@ -28,7 +28,7 @@ export type Dupla = {
   losses: number;
   rankingPoints: number;
   formedAt: string;
-  gender: "M" | "F";
+  gender: "M" | "F" | "X";
 };
 
 export type Quarteto = {
@@ -39,7 +39,7 @@ export type Quarteto = {
   losses: number;
   rankingPoints: number;
   formedAt: string;
-  gender: "M" | "F";
+  gender: "M" | "F" | "X";
 };
 
 
@@ -114,13 +114,103 @@ export const duplas: Dupla[] = [
   { id: "d2", player1Id: "p3", player2Id: "p6", name: "Carol & Ágatha", wins: 58, losses: 14, rankingPoints: 3050, formedAt: "2024-01-05", gender: "F" },
   { id: "d3", player1Id: "p5", player2Id: "p7", name: "Pedro & Evandro", wins: 41, losses: 20, rankingPoints: 2480, formedAt: "2024-03-12", gender: "M" },
   { id: "d4", player1Id: "p4", player2Id: "p8", name: "Maria & Duda", wins: 47, losses: 18, rankingPoints: 2710, formedAt: "2024-02-25", gender: "F" },
+  { id: "d5", player1Id: "p5", player2Id: "p1", name: "Trovão Pires", wins: 49, losses: 15, rankingPoints: 1800, formedAt: "2024-10-11", gender: "M" },
+  { id: "d6", player1Id: "p7", player2Id: "p5", name: "Tubarões Rocha", wins: 32, losses: 27, rankingPoints: 3326, formedAt: "2024-01-09", gender: "M" },
+  { id: "d7", player1Id: "p5", player2Id: "p2", name: "Maré Ramos", wins: 65, losses: 41, rankingPoints: 2739, formedAt: "2024-08-06", gender: "M" },
+  { id: "d8", player1Id: "p2", player2Id: "p7", name: "Sol Mendes", wins: 45, losses: 39, rankingPoints: 2935, formedAt: "2024-02-25", gender: "M" },
+  { id: "d9", player1Id: "p1", player2Id: "p7", name: "Estrela Barbosa", wins: 33, losses: 8, rankingPoints: 2630, formedAt: "2024-09-20", gender: "M" },
+  { id: "d10", player1Id: "p7", player2Id: "p5", name: "Areia Mendes", wins: 43, losses: 17, rankingPoints: 2803, formedAt: "2024-01-13", gender: "M" },
+  { id: "d11", player1Id: "p2", player2Id: "p1", name: "Praia Barbosa", wins: 19, losses: 7, rankingPoints: 1636, formedAt: "2024-01-19", gender: "M" },
+  { id: "d12", player1Id: "p7", player2Id: "p2", name: "Norte Rocha", wins: 67, losses: 34, rankingPoints: 1811, formedAt: "2024-01-08", gender: "M" },
+  { id: "d13", player1Id: "p5", player2Id: "p1", name: "Furacão Lima", wins: 45, losses: 39, rankingPoints: 3192, formedAt: "2024-09-11", gender: "M" },
+  { id: "d14", player1Id: "p7", player2Id: "p1", name: "Mar Teixeira", wins: 37, losses: 30, rankingPoints: 3288, formedAt: "2024-05-23", gender: "M" },
+  { id: "d15", player1Id: "p7", player2Id: "p1", name: "Onda Teixeira", wins: 20, losses: 33, rankingPoints: 3411, formedAt: "2024-02-27", gender: "M" },
+  { id: "d16", player1Id: "p5", player2Id: "p2", name: "Furacão Costa", wins: 50, losses: 31, rankingPoints: 1696, formedAt: "2024-09-06", gender: "M" },
+  { id: "d17", player1Id: "p2", player2Id: "p1", name: "Onda Moura", wins: 24, losses: 37, rankingPoints: 2155, formedAt: "2024-05-20", gender: "M" },
+  { id: "d18", player1Id: "p1", player2Id: "p5", name: "Sul Cruz", wins: 22, losses: 38, rankingPoints: 3492, formedAt: "2024-03-21", gender: "M" },
+  { id: "d19", player1Id: "p7", player2Id: "p1", name: "Atlântico Teixeira", wins: 50, losses: 33, rankingPoints: 1625, formedAt: "2024-03-21", gender: "M" },
+  { id: "d20", player1Id: "p8", player2Id: "p4", name: "Trovão Rocha", wins: 25, losses: 33, rankingPoints: 2897, formedAt: "2024-03-21", gender: "F" },
+  { id: "d21", player1Id: "p3", player2Id: "p6", name: "Furacão Ramos", wins: 35, losses: 39, rankingPoints: 1773, formedAt: "2024-04-14", gender: "F" },
+  { id: "d22", player1Id: "p8", player2Id: "p6", name: "Tropical Vieira", wins: 30, losses: 24, rankingPoints: 2080, formedAt: "2024-07-04", gender: "F" },
+  { id: "d23", player1Id: "p4", player2Id: "p6", name: "Tubarões Cruz", wins: 15, losses: 43, rankingPoints: 1927, formedAt: "2024-08-02", gender: "F" },
+  { id: "d24", player1Id: "p4", player2Id: "p6", name: "Praia Mendes", wins: 11, losses: 29, rankingPoints: 2431, formedAt: "2024-07-12", gender: "F" },
+  { id: "d25", player1Id: "p6", player2Id: "p4", name: "Maré Barbosa", wins: 52, losses: 27, rankingPoints: 2024, formedAt: "2024-05-02", gender: "F" },
+  { id: "d26", player1Id: "p4", player2Id: "p3", name: "Sul Teixeira", wins: 56, losses: 26, rankingPoints: 1529, formedAt: "2024-02-09", gender: "F" },
+  { id: "d27", player1Id: "p8", player2Id: "p4", name: "Norte Freitas", wins: 39, losses: 14, rankingPoints: 2728, formedAt: "2024-02-21", gender: "F" },
+  { id: "d28", player1Id: "p8", player2Id: "p4", name: "Mar Barbosa", wins: 40, losses: 42, rankingPoints: 3018, formedAt: "2024-06-08", gender: "F" },
+  { id: "d29", player1Id: "p4", player2Id: "p8", name: "Estrela Barbosa", wins: 44, losses: 28, rankingPoints: 2611, formedAt: "2024-03-03", gender: "F" },
+  { id: "d30", player1Id: "p6", player2Id: "p3", name: "Praia Lima", wins: 67, losses: 38, rankingPoints: 1701, formedAt: "2024-02-04", gender: "F" },
+  { id: "d31", player1Id: "p4", player2Id: "p6", name: "Maré Cruz", wins: 37, losses: 35, rankingPoints: 1657, formedAt: "2024-05-07", gender: "F" },
+  { id: "d32", player1Id: "p3", player2Id: "p6", name: "Litoral Mendes", wins: 56, losses: 19, rankingPoints: 2115, formedAt: "2024-05-27", gender: "F" },
+  { id: "d33", player1Id: "p3", player2Id: "p4", name: "Sol Cruz", wins: 56, losses: 28, rankingPoints: 2385, formedAt: "2024-03-26", gender: "F" },
+  { id: "d34", player1Id: "p6", player2Id: "p8", name: "Litoral Cruz", wins: 59, losses: 44, rankingPoints: 1729, formedAt: "2024-09-22", gender: "F" },
+  { id: "d35", player1Id: "p1", player2Id: "p6", name: "Trovão Teixeira", wins: 10, losses: 11, rankingPoints: 2738, formedAt: "2024-05-10", gender: "X" },
+  { id: "d36", player1Id: "p5", player2Id: "p3", name: "Tubarões Mendes", wins: 46, losses: 24, rankingPoints: 1886, formedAt: "2024-07-26", gender: "X" },
+  { id: "d37", player1Id: "p1", player2Id: "p4", name: "Coqueiros Lima", wins: 13, losses: 14, rankingPoints: 2384, formedAt: "2024-04-24", gender: "X" },
+  { id: "d38", player1Id: "p1", player2Id: "p6", name: "Praia Ramos", wins: 54, losses: 40, rankingPoints: 1836, formedAt: "2024-03-18", gender: "X" },
+  { id: "d39", player1Id: "p7", player2Id: "p8", name: "Litoral Aragão", wins: 62, losses: 32, rankingPoints: 1759, formedAt: "2024-03-27", gender: "X" },
+  { id: "d40", player1Id: "p7", player2Id: "p4", name: "Areia Mendes", wins: 58, losses: 30, rankingPoints: 2145, formedAt: "2024-10-19", gender: "X" },
+  { id: "d41", player1Id: "p1", player2Id: "p6", name: "Brisa Cardoso", wins: 13, losses: 38, rankingPoints: 3133, formedAt: "2024-05-11", gender: "X" },
+  { id: "d42", player1Id: "p5", player2Id: "p3", name: "Costa Freitas", wins: 53, losses: 38, rankingPoints: 1982, formedAt: "2024-09-22", gender: "X" },
+  { id: "d43", player1Id: "p5", player2Id: "p8", name: "Furacão Barbosa", wins: 60, losses: 38, rankingPoints: 1979, formedAt: "2024-01-24", gender: "X" },
+  { id: "d44", player1Id: "p5", player2Id: "p4", name: "Estrela Lima", wins: 55, losses: 13, rankingPoints: 2498, formedAt: "2024-08-17", gender: "X" },
+  { id: "d45", player1Id: "p1", player2Id: "p6", name: "Litoral Mendes", wins: 37, losses: 32, rankingPoints: 2757, formedAt: "2024-03-19", gender: "X" },
+  { id: "d46", player1Id: "p2", player2Id: "p4", name: "Litoral Barbosa", wins: 58, losses: 27, rankingPoints: 3197, formedAt: "2024-02-16", gender: "X" },
+  { id: "d47", player1Id: "p5", player2Id: "p6", name: "Areia Costa", wins: 28, losses: 7, rankingPoints: 2883, formedAt: "2024-04-18", gender: "X" },
+  { id: "d48", player1Id: "p5", player2Id: "p8", name: "Vento Mendes", wins: 56, losses: 28, rankingPoints: 1658, formedAt: "2024-04-27", gender: "X" },
+  { id: "d49", player1Id: "p1", player2Id: "p8", name: "Sol Cardoso", wins: 53, losses: 41, rankingPoints: 2121, formedAt: "2024-06-13", gender: "X" },
 ];
 
 export const quartetos: Quarteto[] = [
   { id: "q1", playerIds: ["p1","p2","p5","p7"], name: "Titãs da Areia", wins: 38, losses: 6, rankingPoints: 4120, formedAt: "2024-04-02", gender: "M" },
   { id: "q2", playerIds: ["p3","p4","p6","p8"], name: "Fênix Costeira", wins: 31, losses: 11, rankingPoints: 3680, formedAt: "2024-03-18", gender: "F" },
-  { id: "q3", playerIds: ["p1","p3","p5","p8"], name: "Brisa Atlântica", wins: 27, losses: 13, rankingPoints: 3410, formedAt: "2024-05-09", gender: "M" },
-  { id: "q4", playerIds: ["p2","p4","p6","p7"], name: "Ondas do Sul", wins: 22, losses: 17, rankingPoints: 2980, formedAt: "2024-05-22", gender: "F" },
+  { id: "q3", playerIds: ["p1","p3","p5","p8"], name: "Brisa Atlântica", wins: 27, losses: 13, rankingPoints: 3410, formedAt: "2024-05-09", gender: "X" },
+  { id: "q4", playerIds: ["p2","p4","p6","p7"], name: "Ondas do Sul", wins: 22, losses: 17, rankingPoints: 2980, formedAt: "2024-05-22", gender: "X" },
+  { id: "q5", playerIds: ["p2","p7","p5","p1"], name: "Sol Tropical", wins: 42, losses: 18, rankingPoints: 4040, formedAt: "2024-06-09", gender: "M" },
+  { id: "q6", playerIds: ["p1","p2","p5","p7"], name: "Areia do Mar", wins: 58, losses: 10, rankingPoints: 4268, formedAt: "2024-03-03", gender: "M" },
+  { id: "q7", playerIds: ["p1","p2","p5","p7"], name: "Trovão Veloz", wins: 58, losses: 8, rankingPoints: 4155, formedAt: "2024-08-18", gender: "M" },
+  { id: "q8", playerIds: ["p1","p2","p5","p7"], name: "Mar do Mar", wins: 37, losses: 24, rankingPoints: 4033, formedAt: "2024-08-04", gender: "M" },
+  { id: "q9", playerIds: ["p1","p2","p5","p7"], name: "Coqueiros Tropical", wins: 29, losses: 10, rankingPoints: 3231, formedAt: "2024-06-06", gender: "M" },
+  { id: "q10", playerIds: ["p7","p5","p2","p1"], name: "Norte Tropical", wins: 24, losses: 26, rankingPoints: 3279, formedAt: "2024-10-03", gender: "M" },
+  { id: "q11", playerIds: ["p2","p1","p7","p5"], name: "Mar da Praia", wins: 58, losses: 12, rankingPoints: 3439, formedAt: "2024-04-09", gender: "M" },
+  { id: "q12", playerIds: ["p1","p7","p2","p5"], name: "Sol Atlântico", wins: 15, losses: 28, rankingPoints: 4139, formedAt: "2024-06-20", gender: "M" },
+  { id: "q13", playerIds: ["p1","p2","p7","p5"], name: "Furacão da Praia", wins: 11, losses: 11, rankingPoints: 2871, formedAt: "2024-08-07", gender: "M" },
+  { id: "q14", playerIds: ["p1","p7","p2","p5"], name: "Mar Tropical", wins: 19, losses: 15, rankingPoints: 3965, formedAt: "2024-02-15", gender: "M" },
+  { id: "q15", playerIds: ["p5","p2","p7","p1"], name: "Onda da Praia", wins: 14, losses: 25, rankingPoints: 3617, formedAt: "2024-08-07", gender: "M" },
+  { id: "q16", playerIds: ["p5","p7","p2","p1"], name: "Tropical Imbatível", wins: 36, losses: 26, rankingPoints: 2993, formedAt: "2024-02-11", gender: "M" },
+  { id: "q17", playerIds: ["p1","p2","p5","p7"], name: "Mar Tropical", wins: 16, losses: 25, rankingPoints: 3857, formedAt: "2024-08-14", gender: "M" },
+  { id: "q18", playerIds: ["p1","p5","p2","p7"], name: "Maré da Praia", wins: 23, losses: 6, rankingPoints: 2683, formedAt: "2024-03-03", gender: "M" },
+  { id: "q19", playerIds: ["p1","p7","p2","p5"], name: "Brisa do Litoral", wins: 17, losses: 3, rankingPoints: 3753, formedAt: "2024-11-08", gender: "M" },
+  { id: "q20", playerIds: ["p6","p4","p8","p3"], name: "Atlântico Atlântico", wins: 59, losses: 23, rankingPoints: 4045, formedAt: "2024-01-12", gender: "F" },
+  { id: "q21", playerIds: ["p3","p8","p6","p4"], name: "Norte Atlântico", wins: 33, losses: 25, rankingPoints: 4483, formedAt: "2024-05-20", gender: "F" },
+  { id: "q22", playerIds: ["p6","p3","p8","p4"], name: "Norte do Litoral", wins: 52, losses: 23, rankingPoints: 2097, formedAt: "2024-04-03", gender: "F" },
+  { id: "q23", playerIds: ["p3","p4","p6","p8"], name: "Praia Costeiro", wins: 18, losses: 3, rankingPoints: 3370, formedAt: "2024-08-26", gender: "F" },
+  { id: "q24", playerIds: ["p8","p3","p4","p6"], name: "Mar Imbatível", wins: 48, losses: 16, rankingPoints: 4162, formedAt: "2024-07-01", gender: "F" },
+  { id: "q25", playerIds: ["p6","p4","p8","p3"], name: "Onda Atlântico", wins: 10, losses: 14, rankingPoints: 2253, formedAt: "2024-11-16", gender: "F" },
+  { id: "q26", playerIds: ["p3","p4","p6","p8"], name: "Mar Atlântico", wins: 35, losses: 17, rankingPoints: 3680, formedAt: "2024-04-06", gender: "F" },
+  { id: "q27", playerIds: ["p3","p4","p8","p6"], name: "Trovão do Litoral", wins: 26, losses: 9, rankingPoints: 2035, formedAt: "2024-01-03", gender: "F" },
+  { id: "q28", playerIds: ["p3","p8","p4","p6"], name: "Sol da Praia", wins: 52, losses: 11, rankingPoints: 3760, formedAt: "2024-01-05", gender: "F" },
+  { id: "q29", playerIds: ["p3","p4","p6","p8"], name: "Sol do Mar", wins: 17, losses: 3, rankingPoints: 4405, formedAt: "2024-11-04", gender: "F" },
+  { id: "q30", playerIds: ["p3","p8","p4","p6"], name: "Estrela do Mar", wins: 10, losses: 18, rankingPoints: 2552, formedAt: "2024-09-20", gender: "F" },
+  { id: "q31", playerIds: ["p4","p6","p3","p8"], name: "Sul Imbatível", wins: 34, losses: 13, rankingPoints: 3066, formedAt: "2024-09-02", gender: "F" },
+  { id: "q32", playerIds: ["p4","p6","p3","p8"], name: "Onda do Litoral", wins: 23, losses: 18, rankingPoints: 2154, formedAt: "2024-11-23", gender: "F" },
+  { id: "q33", playerIds: ["p8","p6","p4","p3"], name: "Norte do Litoral", wins: 18, losses: 11, rankingPoints: 4024, formedAt: "2024-03-02", gender: "F" },
+  { id: "q34", playerIds: ["p8","p3","p4","p6"], name: "Onda Selvagem", wins: 56, losses: 28, rankingPoints: 2915, formedAt: "2024-09-15", gender: "F" },
+  { id: "q35", playerIds: ["p1","p5","p4","p3"], name: "Tubarões Atlântico", wins: 25, losses: 24, rankingPoints: 3642, formedAt: "2024-03-23", gender: "X" },
+  { id: "q36", playerIds: ["p7","p2","p4","p8"], name: "Tubarões da Areia", wins: 33, losses: 20, rankingPoints: 2717, formedAt: "2024-06-25", gender: "X" },
+  { id: "q37", playerIds: ["p5","p2","p6","p4"], name: "Costa Imbatível", wins: 44, losses: 12, rankingPoints: 3691, formedAt: "2024-06-21", gender: "X" },
+  { id: "q38", playerIds: ["p2","p5","p4","p3"], name: "Onda do Litoral", wins: 23, losses: 25, rankingPoints: 3865, formedAt: "2024-09-04", gender: "X" },
+  { id: "q39", playerIds: ["p2","p5","p8","p3"], name: "Litoral da Areia", wins: 20, losses: 5, rankingPoints: 3163, formedAt: "2024-05-14", gender: "X" },
+  { id: "q40", playerIds: ["p2","p7","p4","p8"], name: "Águias da Areia", wins: 58, losses: 31, rankingPoints: 2415, formedAt: "2024-03-09", gender: "X" },
+  { id: "q41", playerIds: ["p1","p7","p6","p4"], name: "Litoral Selvagem", wins: 37, losses: 15, rankingPoints: 2609, formedAt: "2024-02-07", gender: "X" },
+  { id: "q42", playerIds: ["p5","p2","p4","p8"], name: "Vento Atlântico", wins: 14, losses: 6, rankingPoints: 2233, formedAt: "2024-05-18", gender: "X" },
+  { id: "q43", playerIds: ["p5","p7","p3","p8"], name: "Águias da Praia", wins: 16, losses: 26, rankingPoints: 2280, formedAt: "2024-10-11", gender: "X" },
+  { id: "q44", playerIds: ["p1","p5","p3","p8"], name: "Estrela Tropical", wins: 42, losses: 16, rankingPoints: 3587, formedAt: "2024-04-06", gender: "X" },
+  { id: "q45", playerIds: ["p1","p5","p8","p4"], name: "Tubarões Veloz", wins: 38, losses: 18, rankingPoints: 2743, formedAt: "2024-02-01", gender: "X" },
+  { id: "q46", playerIds: ["p2","p7","p3","p6"], name: "Trovão Costeiro", wins: 47, losses: 26, rankingPoints: 4113, formedAt: "2024-06-15", gender: "X" },
+  { id: "q47", playerIds: ["p7","p5","p6","p8"], name: "Atlântico Imbatível", wins: 40, losses: 6, rankingPoints: 3541, formedAt: "2024-11-02", gender: "X" },
+  { id: "q48", playerIds: ["p7","p2","p4","p3"], name: "Costa Costeiro", wins: 16, losses: 22, rankingPoints: 3266, formedAt: "2024-02-15", gender: "X" },
+  { id: "q49", playerIds: ["p7","p5","p6","p8"], name: "Tropical Selvagem", wins: 13, losses: 22, rankingPoints: 2259, formedAt: "2024-08-07", gender: "X" },
 ];
 
 
