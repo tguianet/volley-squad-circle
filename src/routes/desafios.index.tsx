@@ -212,13 +212,24 @@ function DesafiosPage() {
 
   const teamsInCategory = useMemo(() => {
     const source = fType === "dupla" ? duplas : quartetos;
-    return source.filter(t => t.gender === fCategory);
+    return source
+      .filter(t => t.gender === fCategory)
+      .slice()
+      .sort((a, b) => b.rankingPoints - a.rankingPoints);
   }, [fType, fCategory]);
 
-  const opponentOptions = useMemo(
-    () => teamsInCategory.filter(t => t.id !== fChallenger),
-    [teamsInCategory, fChallenger],
-  );
+  // Pode desafiar até 4 posições acima e 2 posições abaixo no ranking.
+  const opponentOptions = useMemo(() => {
+    if (!fChallenger) return [];
+    const idx = teamsInCategory.findIndex(t => t.id === fChallenger);
+    if (idx === -1) return [];
+    const min = Math.max(0, idx - 4);
+    const max = Math.min(teamsInCategory.length - 1, idx + 2);
+    return teamsInCategory
+      .slice(min, max + 1)
+      .filter(t => t.id !== fChallenger);
+  }, [teamsInCategory, fChallenger]);
+
 
   const resetForm = () => {
     setFType("dupla");
