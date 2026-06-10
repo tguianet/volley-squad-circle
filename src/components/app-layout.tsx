@@ -16,7 +16,7 @@ const navItems = [
 
 const sideExtra = [
   { to: "/h2h", label: "H2H", icon: Swords },
-  { to: "/arenas", label: "Arenas", icon: MapPin },
+  { to: "/regras", label: "Regras do Ranking", icon: MapPin },
   { to: "/notificacoes", label: "Notificações", icon: Bell },
 ];
 
