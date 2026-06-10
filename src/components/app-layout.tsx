@@ -33,8 +33,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r bg-card/60 backdrop-blur sticky top-0 h-screen p-6 gap-2">
         <Link to="/" className="flex items-center gap-2 mb-8">
-          <div className="size-10 rounded-xl gradient-beach flex items-center justify-center shadow-glow">
-            <Waves className="size-5 text-white" />
+          <div className="size-10 rounded-xl overflow-hidden flex items-center justify-center shadow-glow bg-card">
+            <img src={logoAsset.url} alt="BeachPlay Arena" className="size-full object-contain" />
           </div>
           <div>
             <div className="font-display text-xl leading-none">BeachPlay</div>
