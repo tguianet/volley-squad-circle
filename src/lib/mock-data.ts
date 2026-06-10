@@ -29,6 +29,17 @@ export type Dupla = {
   formedAt: string;
 };
 
+export type Quarteto = {
+  id: string;
+  playerIds: [string, string, string, string];
+  name: string;
+  wins: number;
+  losses: number;
+  rankingPoints: number;
+  formedAt: string;
+};
+
+
 export type Arena = {
   id: string;
   name: string;
@@ -101,6 +112,14 @@ export const duplas: Dupla[] = [
   { id: "d3", player1Id: "p5", player2Id: "p7", name: "Pedro & Evandro", wins: 41, losses: 20, rankingPoints: 2480, formedAt: "2024-03-12" },
   { id: "d4", player1Id: "p4", player2Id: "p8", name: "Maria & Duda", wins: 47, losses: 18, rankingPoints: 2710, formedAt: "2024-02-25" },
 ];
+
+export const quartetos: Quarteto[] = [
+  { id: "q1", playerIds: ["p1","p2","p3","p6"], name: "Titãs da Areia", wins: 38, losses: 6, rankingPoints: 4120, formedAt: "2024-04-02" },
+  { id: "q2", playerIds: ["p4","p8","p5","p7"], name: "Fênix Costeira", wins: 31, losses: 11, rankingPoints: 3680, formedAt: "2024-03-18" },
+  { id: "q3", playerIds: ["p1","p3","p5","p8"], name: "Brisa Atlântica", wins: 27, losses: 13, rankingPoints: 3410, formedAt: "2024-05-09" },
+  { id: "q4", playerIds: ["p2","p4","p6","p7"], name: "Ondas do Sul", wins: 22, losses: 17, rankingPoints: 2980, formedAt: "2024-05-22" },
+];
+
 
 export const arenas: Arena[] = [
   {
