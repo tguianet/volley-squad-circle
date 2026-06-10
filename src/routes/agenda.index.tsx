@@ -2,8 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { duplas, getPlayer } from "@/lib/mock-data";
-import { CalendarDays, Clock, MapPin } from "lucide-react";
+import { CalendarDays, Clock, MapPin, CalendarIcon } from "lucide-react";
+import { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/agenda/")({
   head: () => ({ meta: [{ title: "Agenda — BeachPlay Arena" }] }),
@@ -13,26 +18,39 @@ export const Route = createFileRoute("/agenda/")({
 const HOURS = Array.from({ length: 9 }, (_, i) => 8 + i); // 8..16 (jogos das 8h às 17h)
 const COURTS = Array.from({ length: 7 }, (_, i) => i + 1);
 
-// Distribui duplas em jogos pseudo-aleatórios mas estáveis
-function getMatch(hour: number, court: number) {
-  const seed = (hour * 13 + court * 7) % duplas.length;
+function getMatch(hour: number, court: number, dayKey: number) {
+  const seed = (hour * 13 + court * 7 + dayKey * 3) % duplas.length;
   const dupla1 = duplas[seed];
   const dupla2 = duplas[(seed + 3) % duplas.length];
   if (!dupla1 || !dupla2 || dupla1.id === dupla2.id) return null;
-  // deixa algumas quadras vagas
-  if ((hour + court) % 5 === 0) return null;
+  if ((hour + court + dayKey) % 5 === 0) return null;
   return { dupla1, dupla2 };
 }
 
-function nextSunday() {
+function firstSundayOfCurrentMonth() {
   const d = new Date();
-  const day = d.getDay();
-  const diff = day === 0 ? 0 : 7 - day;
-  d.setDate(d.getDate() + diff);
+  d.setDate(1);
+  const diff = (7 - d.getDay()) % 7;
+  d.setDate(1 + diff);
+  return d;
+}
+
+function formatLong(d: Date) {
   return d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
 }
 
 function AgendaPage() {
+  const [date, setDate] = useState<Date>(firstSundayOfCurrentMonth());
+
+  const monthBounds = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    return { start, end };
+  }, []);
+
+  const dayKey = date.getDate();
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto px-4 py-6">
@@ -43,8 +61,35 @@ function AgendaPage() {
           <h1 className="text-3xl">Agenda</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-4 capitalize">
-          Próximo domingo · {nextSunday()} · 08:00 às 17:00 · 7 quadras
+          {formatLong(date)} · 08:00 às 17:00 · 7 quadras
         </p>
+
+        <div className="mb-5">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <CalendarIcon className="size-4" />
+                Escolher domingo
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(d) => d && setDate(d)}
+                fromDate={monthBounds.start}
+                toDate={monthBounds.end}
+                disabled={(d) => d.getDay() !== 0}
+                defaultMonth={monthBounds.start}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+              <div className="px-3 pb-3 text-[11px] text-muted-foreground">
+                Apenas domingos do mês atual estão liberados.
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
 
         {/* Desktop: grid de quadras x horários */}
         <div className="hidden md:block overflow-x-auto">
@@ -72,7 +117,7 @@ function AgendaPage() {
                   {String(h).padStart(2, "0")}:00
                 </div>
                 {COURTS.map((c) => {
-                  const m = getMatch(h, c);
+                  const m = getMatch(h, c, dayKey);
                   return (
                     <Card
                       key={c}
@@ -114,7 +159,7 @@ function AgendaPage() {
               </div>
               <div className="space-y-2">
                 {COURTS.map((c) => {
-                  const m = getMatch(h, c);
+                  const m = getMatch(h, c, dayKey);
                   return (
                     <Card key={c} className="p-3 flex items-center justify-between gap-3">
                       <Badge variant="secondary" className="shrink-0">Q{c}</Badge>
