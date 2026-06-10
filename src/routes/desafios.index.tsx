@@ -283,10 +283,6 @@ function DesafiosPage() {
     return computeStakes(ci, oi);
   }, [teamsInCategory, fChallenger, fChallenged]);
 
-  // Sincroniza fStake com o cálculo automático.
-  if (fStake !== stakes.win && stakes.win > 0) {
-    // setState durante render é ok se condicional e estável; preferimos efeito.
-  }
 
   // Disponibilidade de quadras na agenda para o slot escolhido.
   const formattedDate = useMemo(
