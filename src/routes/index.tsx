@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
+import { GalleryFeed } from "@/components/gallery-feed";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,9 @@ function Feed() {
             </div>
           </div>
         </Card>
+
+        <GalleryFeed />
+
 
         {posts.map((p) => {
           const a = authorInfo(p);
