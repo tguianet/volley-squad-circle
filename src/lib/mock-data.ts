@@ -308,3 +308,113 @@ export function getArena(id: string) { return arenas.find(a => a.id === id); }
 export function getTournament(id: string) { return tournaments.find(t => t.id === id); }
 
 export const currentUser = players[0];
+
+// ===== Ranking Individual (agregado a partir de Duplas e Quartetos) =====
+
+export type ModalityCategory = "M" | "F" | "X";
+export type ModalityLabel =
+  | "Dupla Masculina"
+  | "Dupla Feminina"
+  | "Dupla Mista"
+  | "Quarteto Masculino"
+  | "Quarteto Feminino"
+  | "Quarteto Misto";
+
+export interface IndividualRankingRow {
+  player: Player;
+  points: number;
+  wins: number;
+  losses: number;
+  matchesPlayed: number;
+  winRate: number; // 0..1
+  modalities: ModalityLabel[];
+}
+
+const duplaLabel: Record<ModalityCategory, ModalityLabel> = {
+  M: "Dupla Masculina",
+  F: "Dupla Feminina",
+  X: "Dupla Mista",
+};
+const quartetoLabel: Record<ModalityCategory, ModalityLabel> = {
+  M: "Quarteto Masculino",
+  F: "Quarteto Feminino",
+  X: "Quarteto Misto",
+};
+
+export function computeIndividualRanking(
+  filter: "M" | "F" | "X",
+): IndividualRankingRow[] {
+  const acc = new Map<string, IndividualRankingRow>();
+
+  const ensure = (player: Player): IndividualRankingRow => {
+    const existing = acc.get(player.id);
+    if (existing) return existing;
+    const row: IndividualRankingRow = {
+      player,
+      points: 0,
+      wins: 0,
+      losses: 0,
+      matchesPlayed: 0,
+      winRate: 0,
+      modalities: [],
+    };
+    acc.set(player.id, row);
+    return row;
+  };
+
+  const addModality = (row: IndividualRankingRow, label: ModalityLabel) => {
+    if (!row.modalities.includes(label)) row.modalities.push(label);
+  };
+
+  const shouldInclude = (playerGender: "M" | "F", teamGender: ModalityCategory) => {
+    if (filter === "X") return true; // ranking geral
+    if (teamGender === filter) return true; // mesma categoria
+    if (teamGender === "X" && playerGender === filter) return true; // misto, mas jogador é do gênero filtrado
+    return false;
+  };
+
+  for (const d of duplas) {
+    const ids = [d.player1Id, d.player2Id];
+    for (const pid of ids) {
+      const p = getPlayer(pid);
+      if (!p) continue;
+      if (!shouldInclude(p.gender, d.gender)) continue;
+      const row = ensure(p);
+      row.points += d.rankingPoints;
+      row.wins += d.wins;
+      row.losses += d.losses;
+      row.matchesPlayed += d.wins + d.losses;
+      addModality(row, duplaLabel[d.gender]);
+    }
+  }
+
+  for (const q of quartetos) {
+    for (const pid of q.playerIds) {
+      const p = getPlayer(pid);
+      if (!p) continue;
+      if (!shouldInclude(p.gender, q.gender)) continue;
+      const row = ensure(p);
+      row.points += q.rankingPoints;
+      row.wins += q.wins;
+      row.losses += q.losses;
+      row.matchesPlayed += q.wins + q.losses;
+      addModality(row, quartetoLabel[q.gender]);
+    }
+  }
+
+  const rows = Array.from(acc.values()).map(r => ({
+    ...r,
+    winRate: r.matchesPlayed > 0 ? r.wins / r.matchesPlayed : 0,
+  }));
+
+  rows.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+    if (a.losses !== b.losses) return a.losses - b.losses;
+    return a.player.name.localeCompare(b.player.name);
+  });
+
+  return rows;
+}
+
