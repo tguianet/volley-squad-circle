@@ -97,20 +97,21 @@ function makeChallenges(): Challenge[] {
 
   return [
     // pendentes
-    { id: "c1", type: "dupla", challengerId: pick(dM, 0).id, challengedId: pick(dM, 1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
-    { id: "c2", type: "dupla", challengerId: pick(dF, 0).id, challengedId: pick(dF, 1).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 50, status: "pendente" },
-    { id: "c3", type: "quarteto", challengerId: pick(qX, 0).id, challengedId: pick(qX, 1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
+    { id: "c1", type: "dupla", challengerId: pick(dM, 0).id, challengedId: pick(dM, 1).id, arena: arenas[0], court: 1, date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
+    { id: "c2", type: "dupla", challengerId: pick(dF, 0).id, challengedId: pick(dF, 1).id, arena: arenas[1], court: 2, date: "Dom, 14/06", time: "11:00", stake: 50, status: "pendente" },
+    { id: "c3", type: "quarteto", challengerId: pick(qX, 0).id, challengedId: pick(qX, 1).id, arena: arenas[2], court: 4, date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
 
     // aceitos
-    { id: "c4", type: "dupla", challengerId: pick(dX, 0).id, challengedId: pick(dX, 1).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
-    { id: "c5", type: "quarteto", challengerId: pick(qM, 0).id, challengedId: pick(qM, 1).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 100, status: "aceito" },
+    { id: "c4", type: "dupla", challengerId: pick(dX, 0).id, challengedId: pick(dX, 1).id, arena: arenas[3], court: 3, date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
+    { id: "c5", type: "quarteto", challengerId: pick(qM, 0).id, challengedId: pick(qM, 1).id, arena: arenas[0], court: 5, date: "Dom, 14/06", time: "15:00", stake: 100, status: "aceito" },
 
     // concluídos
-    { id: "c6", type: "dupla", challengerId: pick(dM, 2).id, challengedId: pick(dM, 3).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
-    { id: "c7", type: "dupla", challengerId: pick(dF, 2).id, challengedId: pick(dF, 3).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
-    { id: "c8", type: "quarteto", challengerId: pick(qF, 0).id, challengedId: pick(qF, 1).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
+    { id: "c6", type: "dupla", challengerId: pick(dM, 2).id, challengedId: pick(dM, 3).id, arena: arenas[1], court: 1, date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
+    { id: "c7", type: "dupla", challengerId: pick(dF, 2).id, challengedId: pick(dF, 3).id, arena: arenas[2], court: 2, date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
+    { id: "c8", type: "quarteto", challengerId: pick(qF, 0).id, challengedId: pick(qF, 1).id, arena: arenas[3], court: 6, date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
   ];
 }
+
 
 
 function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, action: "aceitar" | "recusar") => void }) {
