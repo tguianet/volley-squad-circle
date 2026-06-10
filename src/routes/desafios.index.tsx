@@ -63,6 +63,28 @@ function preBookedCourts(arena: string, date: string, time: string): number[] {
   return Array.from(new Set([a, b, c]));
 }
 
+// Regras de pontuação do ranking:
+// - Vitória contra equipe ACIMA: 1 pos=+20, 2=+30, 3=+40, 4+=+50
+// - Vitória contra equipe ABAIXO: 1 pos=+10, 2+ pos=+5
+// - Derrota: perde metade do que o vencedor ganharia (arredondado p/ cima)
+// - Bônus de atividade já incluso: +5 partida registrada + +15 vitória
+function computeStakes(challengerIdx: number, challengedIdx: number): { win: number; loss: number } {
+  if (challengerIdx < 0 || challengedIdx < 0) return { win: 0, loss: 0 };
+  const diff = challengerIdx - challengedIdx; // >0 = adversário está acima
+  let base: number;
+  if (diff > 0) {
+    base = diff === 1 ? 20 : diff === 2 ? 30 : diff === 3 ? 40 : 50;
+  } else {
+    const d = Math.abs(diff);
+    base = d === 1 ? 10 : 5;
+  }
+  const win = base + 15 + 5; // base + vitória + partida registrada
+  const loss = -(Math.ceil(base / 2) - 5); // perde metade do base, mas ainda ganha +5 por registrar
+  return { win, loss };
+}
+
+
+
 
 interface TeamInfo {
   id: string;
