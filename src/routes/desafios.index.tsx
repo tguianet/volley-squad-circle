@@ -198,6 +198,68 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
 
 function DesafiosPage() {
   const [list, setList] = useState<Challenge[]>(() => makeChallenges());
+  const [open, setOpen] = useState(false);
+
+  // Form state
+  const [fType, setFType] = useState<ChallengeType>("dupla");
+  const [fCategory, setFCategory] = useState<"M" | "F" | "X">("M");
+  const [fChallenger, setFChallenger] = useState<string>("");
+  const [fChallenged, setFChallenged] = useState<string>("");
+  const [fArena, setFArena] = useState<string>("Arena Praia Grande");
+  const [fDate, setFDate] = useState<string>("");
+  const [fTime, setFTime] = useState<string>("10:00");
+  const [fStake, setFStake] = useState<number>(50);
+
+  const teamsInCategory = useMemo(() => {
+    const source = fType === "dupla" ? duplas : quartetos;
+    return source.filter(t => t.gender === fCategory);
+  }, [fType, fCategory]);
+
+  const opponentOptions = useMemo(
+    () => teamsInCategory.filter(t => t.id !== fChallenger),
+    [teamsInCategory, fChallenger],
+  );
+
+  const resetForm = () => {
+    setFType("dupla");
+    setFCategory("M");
+    setFChallenger("");
+    setFChallenged("");
+    setFArena("Arena Praia Grande");
+    setFDate("");
+    setFTime("10:00");
+    setFStake(50);
+  };
+
+  const handleCreate = () => {
+    if (!fChallenger || !fChallenged) {
+      toast.error("Selecione as duas equipes.");
+      return;
+    }
+    if (fChallenger === fChallenged) {
+      toast.error("As equipes devem ser diferentes.");
+      return;
+    }
+    if (!fDate) {
+      toast.error("Escolha uma data.");
+      return;
+    }
+    const newChallenge: Challenge = {
+      id: `c${Date.now()}`,
+      type: fType,
+      challengerId: fChallenger,
+      challengedId: fChallenged,
+      arena: fArena,
+      date: new Date(fDate).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }),
+      time: fTime,
+      stake: fStake,
+      status: "pendente",
+    };
+    setList(prev => [newChallenge, ...prev]);
+    toast.success("Desafio criado!");
+    setOpen(false);
+    resetForm();
+  };
 
   const pendentes = useMemo(() => list.filter(c => c.status === "pendente"), [list]);
   const aceitos = useMemo(() => list.filter(c => c.status === "aceito"), [list]);
@@ -210,6 +272,8 @@ function DesafiosPage() {
     toast.success(action === "aceitar" ? "Desafio aceito!" : "Desafio recusado");
   };
 
+  const arenaOptions = ["Arena Praia Grande", "Beach Club Norte", "Costa Verde", "Arena Sul"];
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6">
@@ -220,10 +284,101 @@ function DesafiosPage() {
             </h1>
             <p className="text-sm text-muted-foreground">Apenas Duplas e Quartetos. O Individual é apenas ranking agregado.</p>
           </div>
-          <Button className="gradient-beach text-white shadow-glow shrink-0">
-            <Plus className="size-4" /> Novo desafio
-          </Button>
+          <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gradient-beach text-white shadow-glow shrink-0">
+                <Plus className="size-4" /> Novo desafio
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Novo desafio</DialogTitle>
+                <DialogDescription>Equipes da mesma categoria. Mistas só desafiam Mistas.</DialogDescription>
+              </DialogHeader>
+
+              <div className="grid gap-3 py-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Modalidade</Label>
+                    <Select value={fType} onValueChange={(v) => { setFType(v as ChallengeType); setFChallenger(""); setFChallenged(""); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dupla">Dupla</SelectItem>
+                        <SelectItem value="quarteto">Quarteto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Categoria</Label>
+                    <Select value={fCategory} onValueChange={(v) => { setFCategory(v as "M" | "F" | "X"); setFChallenger(""); setFChallenged(""); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="M">Masculino</SelectItem>
+                        <SelectItem value="F">Feminino</SelectItem>
+                        <SelectItem value="X">Misto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Sua equipe</Label>
+                  <Select value={fChallenger} onValueChange={(v) => { setFChallenger(v); if (v === fChallenged) setFChallenged(""); }}>
+                    <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+                    <SelectContent>
+                      {teamsInCategory.map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Equipe adversária</Label>
+                  <Select value={fChallenged} onValueChange={setFChallenged} disabled={!fChallenger}>
+                    <SelectTrigger><SelectValue placeholder={fChallenger ? "Selecione..." : "Escolha sua equipe primeiro"} /></SelectTrigger>
+                    <SelectContent>
+                      {opponentOptions.map(t => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-xs">Arena</Label>
+                  <Select value={fArena} onValueChange={setFArena}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {arenaOptions.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Data</Label>
+                    <Input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Hora</Label>
+                    <Input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Pts em jogo</Label>
+                    <Input type="number" min={10} max={200} value={fStake} onChange={(e) => setFStake(Number(e.target.value))} />
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                <Button className="gradient-beach text-white" onClick={handleCreate}>Criar desafio</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
+
 
         <div className="grid grid-cols-3 gap-3 my-5">
           <Card className="p-3 text-center">
