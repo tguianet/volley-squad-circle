@@ -96,17 +96,31 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
   const b = getTeam(c.type, c.challengedId);
   if (!a || !b) return null;
 
+  // Trava: desafio só entre equipes da mesma categoria.
+  const teamGender = c.type === "dupla"
+    ? duplas.find(d => d.id === c.challengerId)?.gender
+    : quartetos.find(q => q.id === c.challengerId)?.gender;
+  const oppGender = c.type === "dupla"
+    ? duplas.find(d => d.id === c.challengedId)?.gender
+    : quartetos.find(q => q.id === c.challengedId)?.gender;
+  if (!teamGender || teamGender !== oppGender) return null;
+
+  const catLabel = teamGender === "M" ? "Masculino" : teamGender === "F" ? "Feminino" : "Misto";
+  const typeLabel = c.type === "dupla" ? "Dupla" : "Quarteto";
+
   return (
     <Card className="p-4 shadow-card">
       <div className="flex items-center justify-between mb-3">
         <Badge variant="secondary" className="gap-1">
           <Swords className="size-3" />
-          {c.type === "dupla" ? "Dupla" : "Quarteto"}
+          {typeLabel} • {catLabel}
         </Badge>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <Clock className="size-3" /> {c.date} • {c.time}
         </div>
       </div>
+
+
 
       <div className="flex items-center gap-3">
         <div className="flex-1 text-center">
