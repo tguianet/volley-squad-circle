@@ -252,7 +252,7 @@ function DesafiosPage() {
   const [fArena, setFArena] = useState<string>("Arena Praia Grande");
   const [fDate, setFDate] = useState<string>("");
   const [fTime, setFTime] = useState<string>("10:00");
-  const [fStake, setFStake] = useState<number>(50);
+  // fStake removido — agora calculado automaticamente via `stakes`.
   const [fCourt, setFCourt] = useState<number | null>(null);
 
   const teamsInCategory = useMemo(() => {
