@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TorneiosIndexRouteImport } from './routes/torneios.index'
+import { Route as RegrasIndexRouteImport } from './routes/regras.index'
 import { Route as RankingIndexRouteImport } from './routes/ranking.index'
 import { Route as PerfilIndexRouteImport } from './routes/perfil.index'
 import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
@@ -61,6 +62,11 @@ const IndexRoute = IndexRouteImport.update({
 const TorneiosIndexRoute = TorneiosIndexRouteImport.update({
   id: '/torneios/',
   path: '/torneios/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegrasIndexRoute = RegrasIndexRouteImport.update({
+  id: '/regras/',
+  path: '/regras/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RankingIndexRoute = RankingIndexRouteImport.update({
@@ -176,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
   '/ranking/': typeof RankingIndexRoute
+  '/regras/': typeof RegrasIndexRoute
   '/torneios/': typeof TorneiosIndexRoute
   '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
@@ -200,6 +207,7 @@ export interface FileRoutesByTo {
   '/partidas': typeof PartidasIndexRoute
   '/perfil': typeof PerfilIndexRoute
   '/ranking': typeof RankingIndexRoute
+  '/regras': typeof RegrasIndexRoute
   '/torneios': typeof TorneiosIndexRoute
   '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
   '/admin/banners': typeof AuthenticatedAdminBannersRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
   '/ranking/': typeof RankingIndexRoute
+  '/regras/': typeof RegrasIndexRoute
   '/torneios/': typeof TorneiosIndexRoute
   '/_authenticated/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
   '/_authenticated/admin/banners': typeof AuthenticatedAdminBannersRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/partidas/'
     | '/perfil/'
     | '/ranking/'
+    | '/regras/'
     | '/torneios/'
     | '/admin/auditoria'
     | '/admin/banners'
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/partidas'
     | '/perfil'
     | '/ranking'
+    | '/regras'
     | '/torneios'
     | '/admin/auditoria'
     | '/admin/banners'
@@ -304,6 +315,7 @@ export interface FileRouteTypes {
     | '/partidas/'
     | '/perfil/'
     | '/ranking/'
+    | '/regras/'
     | '/torneios/'
     | '/_authenticated/admin/auditoria'
     | '/_authenticated/admin/banners'
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
   PartidasIndexRoute: typeof PartidasIndexRoute
   PerfilIndexRoute: typeof PerfilIndexRoute
   RankingIndexRoute: typeof RankingIndexRoute
+  RegrasIndexRoute: typeof RegrasIndexRoute
   TorneiosIndexRoute: typeof TorneiosIndexRoute
 }
 
@@ -375,6 +388,13 @@ declare module '@tanstack/react-router' {
       path: '/torneios'
       fullPath: '/torneios/'
       preLoaderRoute: typeof TorneiosIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/regras/': {
+      id: '/regras/'
+      path: '/regras'
+      fullPath: '/regras/'
+      preLoaderRoute: typeof RegrasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ranking/': {
@@ -560,8 +580,19 @@ const rootRouteChildren: RootRouteChildren = {
   PartidasIndexRoute: PartidasIndexRoute,
   PerfilIndexRoute: PerfilIndexRoute,
   RankingIndexRoute: RankingIndexRoute,
+  RegrasIndexRoute: RegrasIndexRoute,
   TorneiosIndexRoute: TorneiosIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
