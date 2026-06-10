@@ -8,6 +8,7 @@ const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
   { to: "/", label: "Feed", icon: Home },
   { to: "/ranking", label: "Ranking", icon: Medal },
+  { to: "/desafios", label: "Desafios", icon: Swords },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
   { to: "/partidas", label: "Partidas", icon: Calendar },
   { to: "/torneios", label: "Torneios", icon: Trophy },
@@ -84,7 +85,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         {/* Mobile bottom nav */}
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-card/95 backdrop-blur">
-          <div className="grid grid-cols-5">
+          <div className="grid grid-cols-7">
             {navItems.map((it) => {
               const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
               return (
