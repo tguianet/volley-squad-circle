@@ -187,7 +187,10 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
         <div className="flex flex-col items-center px-2">
           <div className="font-display text-xs text-muted-foreground">VS</div>
           <div className="mt-1 px-2 py-0.5 rounded-full gradient-beach text-white text-[10px] font-semibold flex items-center gap-1">
-            <Flame className="size-3" /> {c.stake} pts
+            <Flame className="size-3" /> +{c.stake} pts
+          </div>
+          <div className="mt-1 text-[10px] text-destructive font-semibold flex items-center gap-1">
+            <ArrowDown className="size-3" /> -{Math.ceil((c.stake - 20) / 2) - 5 < 0 ? 0 : Math.ceil((c.stake - 20) / 2) - 5} pts
           </div>
         </div>
 
