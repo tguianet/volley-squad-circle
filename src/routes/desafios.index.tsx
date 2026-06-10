@@ -157,6 +157,8 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
   const catLabel = teamGender === "M" ? "Masculino" : teamGender === "F" ? "Feminino" : "Misto";
   const typeLabel = c.type === "dupla" ? "Dupla" : "Quarteto";
 
+  const lossPts = Math.max(0, Math.ceil((c.stake - 20) / 2) - 5);
+
   return (
     <Card className="p-4 shadow-card">
       <div className="flex items-center justify-between mb-3">
@@ -190,7 +192,7 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
             <Flame className="size-3" /> +{c.stake} pts
           </div>
           <div className="mt-1 text-[10px] text-destructive font-semibold flex items-center gap-1">
-            <ArrowDown className="size-3" /> -{Math.ceil((c.stake - 20) / 2) - 5 < 0 ? 0 : Math.ceil((c.stake - 20) / 2) - 5} pts
+            <ArrowDown className="size-3" /> -{lossPts} pts
           </div>
         </div>
 
