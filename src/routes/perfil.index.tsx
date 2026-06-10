@@ -130,6 +130,43 @@ function ProfilePage() {
           </Card>
         )}
 
+        {/* Galeria de fotos */}
+        <Card className="p-5 shadow-card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg">Galeria</h2>
+            <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary cursor-pointer hover:opacity-80">
+              <ImagePlus className="size-4"/> Adicionar fotos
+              <input type="file" accept="image/*" multiple className="hidden" onChange={onUpload}/>
+            </label>
+          </div>
+          {photos.length === 0 ? (
+            <label className="flex flex-col items-center justify-center gap-2 py-10 rounded-lg border-2 border-dashed border-border text-muted-foreground text-sm cursor-pointer hover:bg-secondary/40 transition">
+              <ImagePlus className="size-8 opacity-60"/>
+              Clique para adicionar suas fotos
+              <input type="file" accept="image/*" multiple className="hidden" onChange={onUpload}/>
+            </label>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {photos.map((src, i) => (
+                <div key={i} className="relative group aspect-square overflow-hidden rounded-lg bg-secondary">
+                  <button type="button" onClick={() => setViewer(src)} className="block w-full h-full">
+                    <img src={src} alt={`Foto ${i + 1}`} className="w-full h-full object-cover transition group-hover:scale-105"/>
+                  </button>
+                  <button type="button" onClick={() => removePhoto(i)} aria-label="Remover foto" className="absolute top-1 right-1 size-6 rounded-full bg-background/80 backdrop-blur opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-destructive hover:text-destructive-foreground">
+                    <X className="size-3.5"/>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Dialog open={!!viewer} onOpenChange={(o) => !o && setViewer(null)}>
+          <DialogContent className="max-w-3xl p-2">
+            {viewer && <img src={viewer} alt="Foto" className="w-full h-auto rounded"/>}
+          </DialogContent>
+        </Dialog>
+
         {/* Histórico */}
         <Card className="p-5 shadow-card">
           <div className="flex items-center justify-between mb-3">
