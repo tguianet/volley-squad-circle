@@ -38,7 +38,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <div>
             <div className="font-display text-xl leading-none">PlayBeach</div>
-            <div className="text-xs text-muted-foreground tracking-widest">ARENA</div>
+            <div className="text-xs text-muted-foreground tracking-widest">RANKING</div>
           </div>
         </Link>
         <nav className="flex flex-col gap-1">
