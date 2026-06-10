@@ -246,6 +246,41 @@ export type Database = {
           },
         ]
       }
+      gallery_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          photo_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          photo_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          photo_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_comments_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "gallery_photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gallery_likes: {
         Row: {
           created_at: string
