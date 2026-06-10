@@ -418,7 +418,7 @@ function DesafiosPage() {
 
                 <div>
                   <Label className="text-xs">Arena</Label>
-                  <Select value={fArena} onValueChange={setFArena}>
+                  <Select value={fArena} onValueChange={(v) => { setFArena(v); setFCourt(null); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {arenaOptions.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
