@@ -433,7 +433,32 @@ function DesafiosPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Data</Label>
-                    <Input type="date" value={fDate} onChange={(e) => { setFDate(e.target.value); setFCourt(null); }} />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn("w-full justify-start text-left font-normal text-xs", !fDate && "text-muted-foreground")}
+                        >
+                          <CalendarIcon className="size-3 mr-2" />
+                          {fDate ? format(new Date(fDate + "T00:00:00"), "dd/MM/yyyy") : <span>Domingo...</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={fDate ? new Date(fDate + "T00:00:00") : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setFDate(format(date, "yyyy-MM-dd"));
+                              setFCourt(null);
+                            }
+                          }}
+                          disabled={(date) => date.getDay() !== 0}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div>
                     <Label className="text-xs">Hora</Label>
