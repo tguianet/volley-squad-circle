@@ -390,7 +390,7 @@ function DesafiosPage() {
                 <DialogDescription>Equipes da mesma categoria. Mistas só desafiam Mistas.</DialogDescription>
               </DialogHeader>
 
-              <div className="grid gap-3 py-2">
+              <div className="grid gap-3 py-2 overflow-y-auto max-h-[60vh] pr-1">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Modalidade</Label>
