@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      arenas: {
+        Row: {
+          address: string | null
+          city: string | null
+          cover_url: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          rating: number | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          rating?: number | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          rating?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       audit_log: {
         Row: {
           action: string
@@ -115,6 +151,145 @@ export type Database = {
           variant?: string
         }
         Relationships: []
+      }
+      challenges: {
+        Row: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          created_at: string
+          created_by: string
+          id: string
+          loser_team_id: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        Insert: {
+          arena_id?: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          loser_team_id?: string | null
+          reschedule_reason?: string | null
+          responded_at?: string | null
+          scheduled_date: string
+          scheduled_time: string
+          status?: Database["public"]["Enums"]["challenge_status"]
+          updated_at?: string
+          winner_team_id?: string | null
+        }
+        Update: {
+          arena_id?: string | null
+          challenged_team_id?: string
+          challenger_team_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          loser_team_id?: string | null
+          reschedule_reason?: string | null
+          responded_at?: string | null
+          scheduled_date?: string
+          scheduled_time?: string
+          status?: Database["public"]["Enums"]["challenge_status"]
+          updated_at?: string
+          winner_team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenges_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_challenged_team_id_fkey"
+            columns: ["challenged_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_challenger_team_id_fkey"
+            columns: ["challenger_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_loser_team_id_fkey"
+            columns: ["loser_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_winner_team_id_fkey"
+            columns: ["winner_team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monthly_penalties: {
+        Row: {
+          challenge_id: string | null
+          created_at: string
+          id: string
+          month: string
+          points: number
+          reason: Database["public"]["Enums"]["penalty_reason"]
+          team_id: string
+        }
+        Insert: {
+          challenge_id?: string | null
+          created_at?: string
+          id?: string
+          month: string
+          points: number
+          reason: Database["public"]["Enums"]["penalty_reason"]
+          team_id: string
+        }
+        Update: {
+          challenge_id?: string | null
+          created_at?: string
+          id?: string
+          month?: string
+          points?: number
+          reason?: Database["public"]["Enums"]["penalty_reason"]
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_penalties_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_penalties_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -236,6 +411,159 @@ export type Database = {
         }
         Relationships: []
       }
+      team_members: {
+        Row: {
+          joined_at: string
+          profile_id: string
+          team_id: string
+        }
+        Insert: {
+          joined_at?: string
+          profile_id: string
+          team_id: string
+        }
+        Update: {
+          joined_at?: string
+          profile_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_monthly_availability: {
+        Row: {
+          arena_id: string | null
+          created_at: string
+          id: string
+          is_available: boolean
+          month: string
+          sunday_date: string
+          team_id: string
+          time_end: string | null
+          time_start: string | null
+          updated_at: string
+        }
+        Insert: {
+          arena_id?: string | null
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          month: string
+          sunday_date: string
+          team_id: string
+          time_end?: string | null
+          time_start?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arena_id?: string | null
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          month?: string
+          sunday_date?: string
+          team_id?: string
+          time_end?: string | null
+          time_start?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_monthly_availability_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_monthly_availability_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          captain_id: string
+          category: Database["public"]["Enums"]["team_category"]
+          created_at: string
+          current_streak: number
+          gender: Database["public"]["Enums"]["team_gender"]
+          id: string
+          is_active: boolean
+          losses: number
+          name: string
+          points: number
+          preferred_arena_id: string | null
+          rank_position: number | null
+          updated_at: string
+          wins: number
+        }
+        Insert: {
+          captain_id: string
+          category: Database["public"]["Enums"]["team_category"]
+          created_at?: string
+          current_streak?: number
+          gender?: Database["public"]["Enums"]["team_gender"]
+          id?: string
+          is_active?: boolean
+          losses?: number
+          name: string
+          points?: number
+          preferred_arena_id?: string | null
+          rank_position?: number | null
+          updated_at?: string
+          wins?: number
+        }
+        Update: {
+          captain_id?: string
+          category?: Database["public"]["Enums"]["team_category"]
+          created_at?: string
+          current_streak?: number
+          gender?: Database["public"]["Enums"]["team_gender"]
+          id?: string
+          is_active?: boolean
+          losses?: number
+          name?: string
+          points?: number
+          preferred_arena_id?: string | null
+          rank_position?: number | null
+          updated_at?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teams_captain_id_fkey"
+            columns: ["captain_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "teams_preferred_arena_id_fkey"
+            columns: ["preferred_arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -262,6 +590,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_monthly_penalties: { Args: { _month: string }; Returns: number }
+      apply_previous_month_penalties: { Args: never; Returns: number }
+      generate_current_month_availability: { Args: never; Returns: number }
+      generate_month_availability: { Args: { _month: string }; Returns: number }
+      get_sundays_of_month: {
+        Args: { _month: string }
+        Returns: {
+          sunday_date: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -270,9 +608,23 @@ export type Database = {
         Returns: boolean
       }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_team_captain: {
+        Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "player"
+      challenge_status:
+        | "pending"
+        | "scheduled"
+        | "reschedule_requested"
+        | "declined"
+        | "completed"
+        | "wo"
+      penalty_reason: "no_challenge_month" | "declined" | "walkover"
+      team_category: "dupla" | "quarteto"
+      team_gender: "M" | "F" | "X"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -401,6 +753,17 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "player"],
+      challenge_status: [
+        "pending",
+        "scheduled",
+        "reschedule_requested",
+        "declined",
+        "completed",
+        "wo",
+      ],
+      penalty_reason: ["no_challenge_month", "declined", "walkover"],
+      team_category: ["dupla", "quarteto"],
+      team_gender: ["M", "F", "X"],
     },
   },
 } as const

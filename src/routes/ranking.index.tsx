@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { duplas, quartetos, getPlayer, computeIndividualRanking } from "@/lib/mock-data";
 import type { IndividualRankingRow } from "@/lib/mock-data";
-import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus } from "lucide-react";
+import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus, CalendarDays, MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listScheduledChallenges } from "@/lib/ranking.functions";
 
 type GenderFilter = "M" | "F" | "X";
 
@@ -171,7 +174,56 @@ function RankingPage() {
           </TabsContent>
         </Tabs>
 
+        <ScheduledChallenges />
       </div>
     </AppLayout>
+  );
+}
+
+function formatSunday(iso: string): string {
+  const d = new Date(iso + "T12:00:00");
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+}
+
+function ScheduledChallenges() {
+  const fetchScheduled = useServerFn(listScheduledChallenges);
+  const q = useQuery({
+    queryKey: ["scheduled-challenges"],
+    queryFn: () => fetchScheduled(),
+  });
+  const items = q.data ?? [];
+  if (q.isLoading) return null;
+  return (
+    <div className="mt-8">
+      <h2 className="text-xl font-display flex items-center gap-2">
+        <CalendarDays className="size-5"/>Próximos desafios agendados
+      </h2>
+      <p className="text-xs text-muted-foreground mb-3">Sempre aos domingos.</p>
+      {items.length === 0 ? (
+        <Card className="p-6 text-center text-sm text-muted-foreground">
+          Nenhum desafio agendado no momento.
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {items.map((c) => (
+            <Card key={c.id} className="p-4">
+              <div className="font-semibold">
+                Domingo {formatSunday(c.scheduled_date)} — {c.scheduled_time.slice(0, 5)}
+              </div>
+              <div className="text-sm">
+                {c.challenger?.name} {c.challenger?.rank_position ? `(#${c.challenger.rank_position})` : ""}
+                {" "}vs{" "}
+                {c.challenged?.name} {c.challenged?.rank_position ? `(#${c.challenged.rank_position})` : ""}
+              </div>
+              {c.arena && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <MapPin className="size-3"/>{c.arena.name}
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

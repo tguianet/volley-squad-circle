@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminNotificacoesRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminConfiguracoesRouteImport } from './routes/_authenticated/admin/configuracoes'
 import { Route as AuthenticatedAdminBannersRouteImport } from './routes/_authenticated/admin/banners'
 import { Route as AuthenticatedAdminAuditoriaRouteImport } from './routes/_authenticated/admin/auditoria'
+import { Route as ApiPublicHooksMonthlyRolloverRouteImport } from './routes/api/public/hooks/monthly-rollover'
 
 const NotificacoesRoute = NotificacoesRouteImport.update({
   id: '/notificacoes',
@@ -166,6 +167,12 @@ const AuthenticatedAdminAuditoriaRoute =
     path: '/auditoria',
     getParentRoute: () => AuthenticatedAdminRouteRoute,
   } as any)
+const ApiPublicHooksMonthlyRolloverRoute =
+  ApiPublicHooksMonthlyRolloverRouteImport.update({
+    id: '/api/public/hooks/monthly-rollover',
+    path: '/api/public/hooks/monthly-rollover',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -217,6 +225,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -245,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/usuarios'
     | '/admin/'
+    | '/api/public/hooks/monthly-rollover'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/usuarios'
     | '/admin'
+    | '/api/public/hooks/monthly-rollover'
   id:
     | '__root__'
     | '/'
@@ -325,6 +337,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/admin/'
+    | '/api/public/hooks/monthly-rollover'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -344,6 +357,7 @@ export interface RootRouteChildren {
   RankingIndexRoute: typeof RankingIndexRoute
   RegrasIndexRoute: typeof RegrasIndexRoute
   TorneiosIndexRoute: typeof TorneiosIndexRoute
+  ApiPublicHooksMonthlyRolloverRoute: typeof ApiPublicHooksMonthlyRolloverRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -523,6 +537,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditoriaRouteImport
       parentRoute: typeof AuthenticatedAdminRouteRoute
     }
+    '/api/public/hooks/monthly-rollover': {
+      id: '/api/public/hooks/monthly-rollover'
+      path: '/api/public/hooks/monthly-rollover'
+      fullPath: '/api/public/hooks/monthly-rollover'
+      preLoaderRoute: typeof ApiPublicHooksMonthlyRolloverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -582,17 +603,8 @@ const rootRouteChildren: RootRouteChildren = {
   RankingIndexRoute: RankingIndexRoute,
   RegrasIndexRoute: RegrasIndexRoute,
   TorneiosIndexRoute: TorneiosIndexRoute,
+  ApiPublicHooksMonthlyRolloverRoute: ApiPublicHooksMonthlyRolloverRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
