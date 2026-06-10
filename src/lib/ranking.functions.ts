@@ -383,11 +383,12 @@ export const listMyChallenges = createServerFn({ method: "GET" })
     return { sent, received };
   });
 
+// Public — used in the public /ranking page; no auth required.
 export const listScheduledChallenges = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const today = new Date().toISOString().slice(0, 10);
-    const { data, error } = await context.supabase
+    const { data, error } = await supabaseAdmin
       .from("challenges")
       .select(`
         id, scheduled_date, scheduled_time,
