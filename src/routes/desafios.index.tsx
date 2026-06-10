@@ -36,28 +36,32 @@ type Challenge = {
 };
 
 function makeChallenges(): Challenge[] {
-  const mens = players.filter(p => p.gender === "M").slice(0, 8);
-  const wmns = players.filter(p => p.gender === "F").slice(0, 4);
-  const ds = duplas.slice(0, 6);
+  const mens = players.filter(p => p.gender === "M");
+  const wmns = players.filter(p => p.gender === "F");
+  const ds = duplas;
+  const m = (i: number) => mens[i % mens.length];
+  const w = (i: number) => wmns[i % wmns.length];
+  const d = (i: number) => ds[i % ds.length];
   const arenas = ["Arena Praia Grande", "Beach Club Norte", "Costa Verde", "Arena Sul"];
   const items: Challenge[] = [];
 
   // pendentes
-  items.push({ id: "c1", type: "individual", challengerId: mens[0].id, challengedId: mens[1].id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 50, status: "pendente" });
-  items.push({ id: "c2", type: "individual", challengerId: wmns[0].id, challengedId: wmns[1].id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 40, status: "pendente" });
-  items.push({ id: "c3", type: "dupla", challengerId: ds[0].id, challengedId: ds[1].id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 75, status: "pendente" });
+  items.push({ id: "c1", type: "individual", challengerId: m(0).id, challengedId: m(1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 50, status: "pendente" });
+  items.push({ id: "c2", type: "individual", challengerId: w(0).id, challengedId: w(1).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 40, status: "pendente" });
+  items.push({ id: "c3", type: "dupla", challengerId: d(0).id, challengedId: d(1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 75, status: "pendente" });
 
   // aceitos
-  items.push({ id: "c4", type: "individual", challengerId: mens[2].id, challengedId: mens[3].id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 60, status: "aceito" });
-  items.push({ id: "c5", type: "dupla", challengerId: ds[2].id, challengedId: ds[3].id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 80, status: "aceito" });
+  items.push({ id: "c4", type: "individual", challengerId: m(2).id, challengedId: m(3).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 60, status: "aceito" });
+  items.push({ id: "c5", type: "dupla", challengerId: d(2).id, challengedId: d(3).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 80, status: "aceito" });
 
   // concluídos
-  items.push({ id: "c6", type: "individual", challengerId: mens[4].id, challengedId: mens[5].id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 50, status: "concluido", result: "vitoria", delta: 50 });
-  items.push({ id: "c7", type: "individual", challengerId: mens[6].id, challengedId: mens[7].id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 });
-  items.push({ id: "c8", type: "dupla", challengerId: ds[4].id, challengedId: ds[5].id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 70, status: "concluido", result: "vitoria", delta: 70 });
+  items.push({ id: "c6", type: "individual", challengerId: m(0).id, challengedId: m(2).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 50, status: "concluido", result: "vitoria", delta: 50 });
+  items.push({ id: "c7", type: "individual", challengerId: m(1).id, challengedId: m(3).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 });
+  items.push({ id: "c8", type: "dupla", challengerId: d(4).id, challengedId: d(5).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 70, status: "concluido", result: "vitoria", delta: 70 });
 
   return items;
 }
+
 
 function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, action: "aceitar" | "recusar") => void }) {
   const isDupla = c.type === "dupla";
