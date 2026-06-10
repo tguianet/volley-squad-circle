@@ -7,8 +7,8 @@ import { useIsStaff } from "@/hooks/use-auth";
 const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
   { to: "/", label: "Feed", icon: Home },
-  { to: "/partidas", label: "Partidas", icon: Calendar },
   { to: "/ranking", label: "Ranking", icon: Medal },
+  { to: "/partidas", label: "Partidas", icon: Calendar },
   { to: "/torneios", label: "Torneios", icon: Trophy },
 ];
 
