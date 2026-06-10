@@ -429,17 +429,60 @@ function DesafiosPage() {
                 <div className="grid grid-cols-3 gap-3">
                   <div>
                     <Label className="text-xs">Data</Label>
-                    <Input type="date" value={fDate} onChange={(e) => setFDate(e.target.value)} />
+                    <Input type="date" value={fDate} onChange={(e) => { setFDate(e.target.value); setFCourt(null); }} />
                   </div>
                   <div>
                     <Label className="text-xs">Hora</Label>
-                    <Input type="time" value={fTime} onChange={(e) => setFTime(e.target.value)} />
+                    <Select value={fTime} onValueChange={(v) => { setFTime(v); setFCourt(null); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label className="text-xs">Pts em jogo</Label>
                     <Input type="number" min={10} max={200} value={fStake} onChange={(e) => setFStake(Number(e.target.value))} />
                   </div>
                 </div>
+
+                <div>
+                  <Label className="text-xs">Quadras disponíveis</Label>
+                  {!fDate ? (
+                    <p className="text-[11px] text-muted-foreground mt-1">Escolha data e hora para ver a agenda.</p>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-7 gap-1.5 mt-1">
+                        {COURTS.map(n => {
+                          const busy = occupiedCourts.has(n);
+                          const selected = fCourt === n;
+                          return (
+                            <button
+                              key={n}
+                              type="button"
+                              disabled={busy}
+                              onClick={() => setFCourt(n)}
+                              className={`h-12 rounded-md text-xs font-semibold flex flex-col items-center justify-center transition-all border ${
+                                busy
+                                  ? "bg-destructive/10 text-destructive/60 border-destructive/20 cursor-not-allowed line-through"
+                                  : selected
+                                  ? "gradient-beach text-white border-transparent shadow-glow"
+                                  : "bg-success/10 text-success border-success/30 hover:bg-success/20"
+                              }`}
+                            >
+                              <span>Q{n}</span>
+                              <span className="text-[9px] font-normal opacity-80">{busy ? "ocupada" : "livre"}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {fArena} • {formattedDate} • {fTime}
+                      </p>
+                    </>
+                  )}
+                </div>
+
               </div>
 
               <DialogFooter>
