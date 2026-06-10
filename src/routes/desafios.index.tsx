@@ -62,28 +62,34 @@ function getTeam(type: ChallengeType, id: string): TeamInfo | null {
 }
 
 function makeChallenges(): Challenge[] {
-  const ds = duplas;
-  const qs = quartetos;
-  const d = (i: number) => ds[i % ds.length];
-  const q = (i: number) => qs[i % qs.length];
+  // Desafios só podem acontecer entre equipes da MESMA categoria
+  // (Masculina x Masculina, Feminina x Feminina, Mista x Mista).
+  const dM = duplas.filter(d => d.gender === "M");
+  const dF = duplas.filter(d => d.gender === "F");
+  const dX = duplas.filter(d => d.gender === "X");
+  const qM = quartetos.filter(q => q.gender === "M");
+  const qF = quartetos.filter(q => q.gender === "F");
+  const qX = quartetos.filter(q => q.gender === "X");
+  const pick = <T extends { id: string }>(arr: T[], i: number) => arr[i % arr.length];
   const arenas = ["Arena Praia Grande", "Beach Club Norte", "Costa Verde", "Arena Sul"];
 
   return [
     // pendentes
-    { id: "c1", type: "dupla", challengerId: d(0).id, challengedId: d(1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
-    { id: "c2", type: "dupla", challengerId: d(2).id, challengedId: d(3).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 50, status: "pendente" },
-    { id: "c3", type: "quarteto", challengerId: q(0).id, challengedId: q(1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
+    { id: "c1", type: "dupla", challengerId: pick(dM, 0).id, challengedId: pick(dM, 1).id, arena: arenas[0], date: "Dom, 14/06", time: "10:00", stake: 60, status: "pendente" },
+    { id: "c2", type: "dupla", challengerId: pick(dF, 0).id, challengedId: pick(dF, 1).id, arena: arenas[1], date: "Dom, 14/06", time: "11:30", stake: 50, status: "pendente" },
+    { id: "c3", type: "quarteto", challengerId: pick(qX, 0).id, challengedId: pick(qX, 1).id, arena: arenas[2], date: "Dom, 14/06", time: "14:00", stake: 90, status: "pendente" },
 
     // aceitos
-    { id: "c4", type: "dupla", challengerId: d(4).id, challengedId: d(5).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
-    { id: "c5", type: "quarteto", challengerId: q(2).id, challengedId: q(3).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 100, status: "aceito" },
+    { id: "c4", type: "dupla", challengerId: pick(dX, 0).id, challengedId: pick(dX, 1).id, arena: arenas[3], date: "Dom, 14/06", time: "09:00", stake: 70, status: "aceito" },
+    { id: "c5", type: "quarteto", challengerId: pick(qM, 0).id, challengedId: pick(qM, 1).id, arena: arenas[0], date: "Dom, 14/06", time: "15:30", stake: 100, status: "aceito" },
 
     // concluídos
-    { id: "c6", type: "dupla", challengerId: d(6).id, challengedId: d(7).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
-    { id: "c7", type: "dupla", challengerId: d(8).id, challengedId: d(9).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
-    { id: "c8", type: "quarteto", challengerId: q(4).id, challengedId: q(5).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
+    { id: "c6", type: "dupla", challengerId: pick(dM, 2).id, challengedId: pick(dM, 3).id, arena: arenas[1], date: "Dom, 07/06", time: "10:00", stake: 55, status: "concluido", result: "vitoria", delta: 55 },
+    { id: "c7", type: "dupla", challengerId: pick(dF, 2).id, challengedId: pick(dF, 3).id, arena: arenas[2], date: "Dom, 07/06", time: "11:00", stake: 45, status: "concluido", result: "derrota", delta: -45 },
+    { id: "c8", type: "quarteto", challengerId: pick(qF, 0).id, challengedId: pick(qF, 1).id, arena: arenas[3], date: "Dom, 07/06", time: "16:00", stake: 85, status: "concluido", result: "vitoria", delta: 85 },
   ];
 }
+
 
 function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, action: "aceitar" | "recusar") => void }) {
   const a = getTeam(c.type, c.challengerId);
