@@ -23,6 +23,23 @@ function ProfilePage() {
   const [p, setP] = useState(currentUser);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio, city: p.city, height: p.height });
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [viewer, setViewer] = useState<string | null>(null);
+  const onUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    Promise.all(files.map(f => new Promise<string>((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result as string);
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    }))).then(urls => {
+      setPhotos(prev => [...urls, ...prev]);
+      toast.success(`${urls.length} foto(s) adicionada(s)`);
+    });
+    e.target.value = "";
+  };
+  const removePhoto = (i: number) => setPhotos(prev => prev.filter((_, idx) => idx !== i));
   const dupla = duplas.find(d => d.player1Id === p.id || d.player2Id === p.id);
   const partner = dupla ? getPlayer(dupla.player1Id === p.id ? dupla.player2Id : dupla.player1Id) : null;
   const winRate = ((p.wins / p.matches) * 100).toFixed(0);
