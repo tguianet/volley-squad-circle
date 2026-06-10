@@ -66,6 +66,9 @@ function Feed() {
           </div>
         </Card>
 
+        <GalleryFeed />
+
+
         {posts.map((p) => {
           const a = authorInfo(p);
           if (!a) return null;
