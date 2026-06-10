@@ -460,9 +460,34 @@ function DesafiosPage() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-xs">Data</Label>
+                    <Label className="text-xs">Hora</Label>
+                    <Select value={fTime} onValueChange={(v) => { setFTime(v); setFCourt(null); }}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TIME_SLOTS.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Pontos em jogo</Label>
+                    <div className="h-10 px-3 rounded-md border bg-muted/30 flex items-center justify-between text-xs">
+                      {fChallenger && fChallenged ? (
+                        <>
+                          <span className="flex items-center gap-1 text-success font-semibold">
+                            <ArrowUp className="size-3" /> +{stakes.win}
+                          </span>
+                          <span className="flex items-center gap-1 text-destructive font-semibold">
+                            <ArrowDown className="size-3" /> {stakes.loss}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">Selecione equipes</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
