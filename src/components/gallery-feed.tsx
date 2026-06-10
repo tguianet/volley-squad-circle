@@ -30,21 +30,21 @@ type CommentRow = {
 async function fetchFeed(): Promise<PhotoRow[]> {
   const { data, error } = await supabase
     .from("gallery_photos")
-    .select("id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id), profiles:profiles!gallery_photos_user_id_fkey(display_name, username, avatar_url)")
+    .select("id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id)")
     .order("created_at", { ascending: false })
     .limit(50);
-  if (error) {
-    // fallback: in case the FK alias is not recognized, refetch without profile join
-    const { data: data2, error: err2 } = await supabase
-      .from("gallery_photos")
-      .select("id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id)")
-      .order("created_at", { ascending: false })
-      .limit(50);
-    if (err2) throw err2;
-    return (data2 ?? []).map((p) => ({ ...p, profiles: null })) as PhotoRow[];
-  }
-  return (data as unknown as PhotoRow[]) ?? [];
+  if (error) throw error;
+  const photos = (data ?? []) as Omit<PhotoRow, "profiles">[];
+  const ids = Array.from(new Set(photos.map((p) => p.user_id)));
+  if (ids.length === 0) return [];
+  const { data: profs } = await supabase
+    .from("profiles")
+    .select("id, display_name, username, avatar_url")
+    .in("id", ids);
+  const map = new Map((profs ?? []).map((p) => [p.id, p]));
+  return photos.map((p) => ({ ...p, profiles: map.get(p.user_id) ?? null })) as PhotoRow[];
 }
+
 
 export function GalleryFeed() {
   const qc = useQueryClient();
