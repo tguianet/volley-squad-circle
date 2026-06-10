@@ -72,8 +72,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Mobile topbar */}
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b bg-card/80 backdrop-blur">
           <Link to="/" className="flex items-center gap-2">
-            <div className="size-8 rounded-lg gradient-beach flex items-center justify-center">
-              <Waves className="size-4 text-white" />
+            <div className="size-8 rounded-lg overflow-hidden flex items-center justify-center bg-card">
+              <img src={logoAsset.url} alt="BeachPlay Arena" className="size-full object-contain" />
             </div>
             <span className="font-display text-lg">BeachPlay</span>
           </Link>
