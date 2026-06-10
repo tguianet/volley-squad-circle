@@ -42,7 +42,25 @@ function ProfilePage() {
                 <AvatarFallback>{p.name[0]}</AvatarFallback>
               </Avatar>
             </div>
-            <Button size="sm" variant="secondary" className="absolute top-3 right-3"><Settings className="size-4 mr-1"/>Editar</Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="secondary" className="absolute top-3 right-3"><Settings className="size-4 mr-1"/>Editar</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Editar perfil</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1.5"><Label htmlFor="ed-name">Nome</Label><Input id="ed-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-height">Altura (cm)</Label><Input id="ed-height" type="number" value={form.height} onChange={e => setForm({ ...form, height: Number(e.target.value) })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-bio">Bio</Label><Textarea id="ed-bio" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })}/></div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button onClick={onSave}>Salvar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="pt-16 px-6 pb-6">
             <div className="flex flex-wrap items-end gap-3">
