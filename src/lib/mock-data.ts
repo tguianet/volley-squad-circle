@@ -28,6 +28,7 @@ export type Dupla = {
   losses: number;
   rankingPoints: number;
   formedAt: string;
+  gender: "M" | "F";
 };
 
 export type Quarteto = {
@@ -38,6 +39,7 @@ export type Quarteto = {
   losses: number;
   rankingPoints: number;
   formedAt: string;
+  gender: "M" | "F";
 };
 
 
@@ -97,28 +99,28 @@ const avatar = (seed: number) =>
   `https://i.pravatar.cc/200?img=${seed}`;
 
 export const players: Player[] = [
-  { id: "p1", name: "Bruno Schmidt", username: "@brunoschmidt", avatar: avatar(12), city: "Vitória, ES", level: "Profissional", height: 198, dominantHand: "Destra", preferredSide: "Direito", wins: 142, losses: 38, matches: 180, rankingPoints: 2840, mvps: 21, bio: "Bicampeão mundial. Vibra na areia." },
-  { id: "p2", name: "Alison Cerutti", username: "@alisonceru", avatar: avatar(33), city: "Vila Velha, ES", level: "Profissional", height: 203, dominantHand: "Destra", preferredSide: "Esquerdo", wins: 130, losses: 42, matches: 172, rankingPoints: 2710, mvps: 18, bio: "Mamute da areia 🦣" },
-  { id: "p3", name: "Carolina Solberg", username: "@carolsolberg", avatar: avatar(45), city: "Rio de Janeiro, RJ", level: "Profissional", height: 184, dominantHand: "Destra", preferredSide: "Direito", wins: 118, losses: 35, matches: 153, rankingPoints: 2590, mvps: 14, bio: "Praia, sol e bola." },
-  { id: "p4", name: "Maria Antonelli", username: "@mariaanto", avatar: avatar(47), city: "Saquarema, RJ", level: "Avançado", height: 180, dominantHand: "Canhota", preferredSide: "Esquerdo", wins: 95, losses: 40, matches: 135, rankingPoints: 2180, mvps: 9, bio: "Defensora implacável." },
-  { id: "p5", name: "Pedro Solberg", username: "@pedrosolberg", avatar: avatar(13), city: "Rio de Janeiro, RJ", level: "Avançado", height: 192, dominantHand: "Destra", preferredSide: "Direito", wins: 88, losses: 36, matches: 124, rankingPoints: 2090, mvps: 7, bio: "Bloqueio sólido." },
-  { id: "p6", name: "Ágatha Bednarczuk", username: "@agathabed", avatar: avatar(48), city: "Curitiba, PR", level: "Profissional", height: 187, dominantHand: "Destra", preferredSide: "Direito", wins: 110, losses: 40, matches: 150, rankingPoints: 2450, mvps: 12, bio: "Ataque potente." },
-  { id: "p7", name: "Evandro Gonçalves", username: "@evandrog", avatar: avatar(15), city: "Niterói, RJ", level: "Avançado", height: 195, dominantHand: "Destra", preferredSide: "Esquerdo", wins: 82, losses: 38, matches: 120, rankingPoints: 1970, mvps: 6, bio: "Saque viagem." },
-  { id: "p8", name: "Duda Lisboa", username: "@dudalisboa", avatar: avatar(49), city: "Salvador, BA", level: "Profissional", height: 178, dominantHand: "Destra", preferredSide: "Direito", wins: 102, losses: 28, matches: 130, rankingPoints: 2520, mvps: 15, bio: "Energia pura na areia." },
+  { id: "p1", name: "Bruno Schmidt", username: "@brunoschmidt", avatar: avatar(12), city: "Vitória, ES", level: "Profissional", height: 198, dominantHand: "Destra", preferredSide: "Direito", wins: 142, losses: 38, matches: 180, rankingPoints: 2840, mvps: 21, bio: "Bicampeão mundial. Vibra na areia.", gender: "M" },
+  { id: "p2", name: "Alison Cerutti", username: "@alisonceru", avatar: avatar(33), city: "Vila Velha, ES", level: "Profissional", height: 203, dominantHand: "Destra", preferredSide: "Esquerdo", wins: 130, losses: 42, matches: 172, rankingPoints: 2710, mvps: 18, bio: "Mamute da areia 🦣", gender: "M" },
+  { id: "p3", name: "Carolina Solberg", username: "@carolsolberg", avatar: avatar(45), city: "Rio de Janeiro, RJ", level: "Profissional", height: 184, dominantHand: "Destra", preferredSide: "Direito", wins: 118, losses: 35, matches: 153, rankingPoints: 2590, mvps: 14, bio: "Praia, sol e bola.", gender: "F" },
+  { id: "p4", name: "Maria Antonelli", username: "@mariaanto", avatar: avatar(47), city: "Saquarema, RJ", level: "Avançado", height: 180, dominantHand: "Canhota", preferredSide: "Esquerdo", wins: 95, losses: 40, matches: 135, rankingPoints: 2180, mvps: 9, bio: "Defensora implacável.", gender: "F" },
+  { id: "p5", name: "Pedro Solberg", username: "@pedrosolberg", avatar: avatar(13), city: "Rio de Janeiro, RJ", level: "Avançado", height: 192, dominantHand: "Destra", preferredSide: "Direito", wins: 88, losses: 36, matches: 124, rankingPoints: 2090, mvps: 7, bio: "Bloqueio sólido.", gender: "M" },
+  { id: "p6", name: "Ágatha Bednarczuk", username: "@agathabed", avatar: avatar(48), city: "Curitiba, PR", level: "Profissional", height: 187, dominantHand: "Destra", preferredSide: "Direito", wins: 110, losses: 40, matches: 150, rankingPoints: 2450, mvps: 12, bio: "Ataque potente.", gender: "F" },
+  { id: "p7", name: "Evandro Gonçalves", username: "@evandrog", avatar: avatar(15), city: "Niterói, RJ", level: "Avançado", height: 195, dominantHand: "Destra", preferredSide: "Esquerdo", wins: 82, losses: 38, matches: 120, rankingPoints: 1970, mvps: 6, bio: "Saque viagem.", gender: "M" },
+  { id: "p8", name: "Duda Lisboa", username: "@dudalisboa", avatar: avatar(49), city: "Salvador, BA", level: "Profissional", height: 178, dominantHand: "Destra", preferredSide: "Direito", wins: 102, losses: 28, matches: 130, rankingPoints: 2520, mvps: 15, bio: "Energia pura na areia.", gender: "F" },
 ];
 
 export const duplas: Dupla[] = [
-  { id: "d1", player1Id: "p1", player2Id: "p2", name: "Bruno & Alison", wins: 64, losses: 12, rankingPoints: 3200, formedAt: "2024-02-10" },
-  { id: "d2", player1Id: "p3", player2Id: "p6", name: "Carol & Ágatha", wins: 58, losses: 14, rankingPoints: 3050, formedAt: "2024-01-05" },
-  { id: "d3", player1Id: "p5", player2Id: "p7", name: "Pedro & Evandro", wins: 41, losses: 20, rankingPoints: 2480, formedAt: "2024-03-12" },
-  { id: "d4", player1Id: "p4", player2Id: "p8", name: "Maria & Duda", wins: 47, losses: 18, rankingPoints: 2710, formedAt: "2024-02-25" },
+  { id: "d1", player1Id: "p1", player2Id: "p2", name: "Bruno & Alison", wins: 64, losses: 12, rankingPoints: 3200, formedAt: "2024-02-10", gender: "M" },
+  { id: "d2", player1Id: "p3", player2Id: "p6", name: "Carol & Ágatha", wins: 58, losses: 14, rankingPoints: 3050, formedAt: "2024-01-05", gender: "F" },
+  { id: "d3", player1Id: "p5", player2Id: "p7", name: "Pedro & Evandro", wins: 41, losses: 20, rankingPoints: 2480, formedAt: "2024-03-12", gender: "M" },
+  { id: "d4", player1Id: "p4", player2Id: "p8", name: "Maria & Duda", wins: 47, losses: 18, rankingPoints: 2710, formedAt: "2024-02-25", gender: "F" },
 ];
 
 export const quartetos: Quarteto[] = [
-  { id: "q1", playerIds: ["p1","p2","p3","p6"], name: "Titãs da Areia", wins: 38, losses: 6, rankingPoints: 4120, formedAt: "2024-04-02" },
-  { id: "q2", playerIds: ["p4","p8","p5","p7"], name: "Fênix Costeira", wins: 31, losses: 11, rankingPoints: 3680, formedAt: "2024-03-18" },
-  { id: "q3", playerIds: ["p1","p3","p5","p8"], name: "Brisa Atlântica", wins: 27, losses: 13, rankingPoints: 3410, formedAt: "2024-05-09" },
-  { id: "q4", playerIds: ["p2","p4","p6","p7"], name: "Ondas do Sul", wins: 22, losses: 17, rankingPoints: 2980, formedAt: "2024-05-22" },
+  { id: "q1", playerIds: ["p1","p2","p5","p7"], name: "Titãs da Areia", wins: 38, losses: 6, rankingPoints: 4120, formedAt: "2024-04-02", gender: "M" },
+  { id: "q2", playerIds: ["p3","p4","p6","p8"], name: "Fênix Costeira", wins: 31, losses: 11, rankingPoints: 3680, formedAt: "2024-03-18", gender: "F" },
+  { id: "q3", playerIds: ["p1","p3","p5","p8"], name: "Brisa Atlântica", wins: 27, losses: 13, rankingPoints: 3410, formedAt: "2024-05-09", gender: "M" },
+  { id: "q4", playerIds: ["p2","p4","p6","p7"], name: "Ondas do Sul", wins: 22, losses: 17, rankingPoints: 2980, formedAt: "2024-05-22", gender: "F" },
 ];
 
 
@@ -213,6 +215,6 @@ export const recentMatches = [
 export function getPlayer(id: string) { return players.find(p => p.id === id); }
 export function getDupla(id: string) { return duplas.find(d => d.id === id); }
 export function getArena(id: string) { return arenas.find(a => a.id === id); }
-export function getTournament(id: string) { return tournaments.find(t => t.id === id); }
+export function getTournament(id: string) { return tournaments.find(t => t.id === t); }
 
 export const currentUser = players[0];
