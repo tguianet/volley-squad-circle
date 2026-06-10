@@ -10,7 +10,7 @@ const navItems = [
   { to: "/ranking", label: "Ranking", icon: Medal },
   { to: "/desafios", label: "Desafios", icon: Swords },
   { to: "/agenda", label: "Agenda", icon: CalendarDays },
-  { to: "/partidas", label: "Partidas", icon: Calendar },
+  { to: "/partidas", label: "Partidas amistosas", icon: Calendar },
   { to: "/torneios", label: "Torneios", icon: Trophy },
 ];
 
