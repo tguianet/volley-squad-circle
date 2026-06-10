@@ -1,9 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import { currentUser, duplas, getPlayer, recentMatches } from "@/lib/mock-data";
 import { formatDateBR } from "@/lib/date-format";
 import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
@@ -14,10 +20,17 @@ export const Route = createFileRoute("/perfil/")({
 });
 
 function ProfilePage() {
-  const p = currentUser;
+  const [p, setP] = useState(currentUser);
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio, city: p.city, height: p.height });
   const dupla = duplas.find(d => d.player1Id === p.id || d.player2Id === p.id);
   const partner = dupla ? getPlayer(dupla.player1Id === p.id ? dupla.player2Id : dupla.player1Id) : null;
   const winRate = ((p.wins / p.matches) * 100).toFixed(0);
+  const onSave = () => {
+    setP({ ...p, ...form, height: Number(form.height) });
+    setOpen(false);
+    toast.success("Perfil atualizado");
+  };
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
@@ -29,7 +42,25 @@ function ProfilePage() {
                 <AvatarFallback>{p.name[0]}</AvatarFallback>
               </Avatar>
             </div>
-            <Button size="sm" variant="secondary" className="absolute top-3 right-3"><Settings className="size-4 mr-1"/>Editar</Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="secondary" className="absolute top-3 right-3"><Settings className="size-4 mr-1"/>Editar</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader><DialogTitle>Editar perfil</DialogTitle></DialogHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1.5"><Label htmlFor="ed-name">Nome</Label><Input id="ed-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-height">Altura (cm)</Label><Input id="ed-height" type="number" value={form.height} onChange={e => setForm({ ...form, height: Number(e.target.value) })}/></div>
+                  <div className="space-y-1.5"><Label htmlFor="ed-bio">Bio</Label><Textarea id="ed-bio" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })}/></div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+                  <Button onClick={onSave}>Salvar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="pt-16 px-6 pb-6">
             <div className="flex flex-wrap items-end gap-3">
