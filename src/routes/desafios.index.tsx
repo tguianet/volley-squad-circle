@@ -227,6 +227,7 @@ function DesafiosPage() {
   const [fDate, setFDate] = useState<string>("");
   const [fTime, setFTime] = useState<string>("10:00");
   const [fStake, setFStake] = useState<number>(50);
+  const [fCourt, setFCourt] = useState<number | null>(null);
 
   const teamsInCategory = useMemo(() => {
     const source = fType === "dupla" ? duplas : quartetos;
@@ -248,6 +249,20 @@ function DesafiosPage() {
       .filter(t => t.id !== fChallenger);
   }, [teamsInCategory, fChallenger]);
 
+  // Disponibilidade de quadras na agenda para o slot escolhido.
+  const formattedDate = useMemo(
+    () => fDate ? new Date(fDate).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }) : "",
+    [fDate],
+  );
+
+  const occupiedCourts = useMemo(() => {
+    if (!fDate || !fTime) return new Set<number>();
+    const pre = preBookedCourts(fArena, formattedDate, fTime);
+    const fromList = list
+      .filter(c => c.arena === fArena && c.date === formattedDate && c.time === fTime && c.status !== "recusado")
+      .map(c => c.court);
+    return new Set<number>([...pre, ...fromList]);
+  }, [fArena, formattedDate, fTime, fDate, list]);
 
   const resetForm = () => {
     setFType("dupla");
@@ -258,6 +273,7 @@ function DesafiosPage() {
     setFDate("");
     setFTime("10:00");
     setFStake(50);
+    setFCourt(null);
   };
 
   const handleCreate = () => {
@@ -273,22 +289,32 @@ function DesafiosPage() {
       toast.error("Escolha uma data.");
       return;
     }
+    if (fCourt === null) {
+      toast.error("Selecione uma quadra disponível.");
+      return;
+    }
+    if (occupiedCourts.has(fCourt)) {
+      toast.error("Esta quadra já está ocupada neste horário.");
+      return;
+    }
     const newChallenge: Challenge = {
       id: `c${Date.now()}`,
       type: fType,
       challengerId: fChallenger,
       challengedId: fChallenged,
       arena: fArena,
-      date: new Date(fDate).toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "2-digit" }),
+      court: fCourt,
+      date: formattedDate,
       time: fTime,
       stake: fStake,
       status: "pendente",
     };
     setList(prev => [newChallenge, ...prev]);
-    toast.success("Desafio criado!");
+    toast.success(`Desafio criado na Quadra ${fCourt}!`);
     setOpen(false);
     resetForm();
   };
+
 
   const pendentes = useMemo(() => list.filter(c => c.status === "pendente"), [list]);
   const aceitos = useMemo(() => list.filter(c => c.status === "aceito"), [list]);
