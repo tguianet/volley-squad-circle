@@ -1,8 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Waves, Shield, CalendarDays } from "lucide-react";
+import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Shield, CalendarDays } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useIsStaff } from "@/hooks/use-auth";
+import logoAsset from "@/assets/logo.png.asset.json";
 
 const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
@@ -32,8 +33,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-64 border-r bg-card/60 backdrop-blur sticky top-0 h-screen p-6 gap-2">
         <Link to="/" className="flex items-center gap-2 mb-8">
-          <div className="size-10 rounded-xl gradient-beach flex items-center justify-center shadow-glow">
-            <Waves className="size-5 text-white" />
+          <div className="size-10 rounded-xl overflow-hidden flex items-center justify-center shadow-glow bg-card">
+            <img src={logoAsset.url} alt="BeachPlay Arena" className="size-full object-contain" />
           </div>
           <div>
             <div className="font-display text-xl leading-none">BeachPlay</div>
@@ -71,8 +72,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
         {/* Mobile topbar */}
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b bg-card/80 backdrop-blur">
           <Link to="/" className="flex items-center gap-2">
-            <div className="size-8 rounded-lg gradient-beach flex items-center justify-center">
-              <Waves className="size-4 text-white" />
+            <div className="size-8 rounded-lg overflow-hidden flex items-center justify-center bg-card">
+              <img src={logoAsset.url} alt="BeachPlay Arena" className="size-full object-contain" />
             </div>
             <span className="font-display text-lg">BeachPlay</span>
           </Link>
