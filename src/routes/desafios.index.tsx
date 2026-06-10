@@ -337,8 +337,10 @@ function DesafiosPage() {
                   <Select value={fChallenger} onValueChange={(v) => { setFChallenger(v); if (v === fChallenged) setFChallenged(""); }}>
                     <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                     <SelectContent>
-                      {teamsInCategory.map(t => (
-                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      {teamsInCategory.map((t, i) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          #{i + 1} — {t.name} ({t.rankingPoints} pts)
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -349,12 +351,26 @@ function DesafiosPage() {
                   <Select value={fChallenged} onValueChange={setFChallenged} disabled={!fChallenger}>
                     <SelectTrigger><SelectValue placeholder={fChallenger ? "Selecione..." : "Escolha sua equipe primeiro"} /></SelectTrigger>
                     <SelectContent>
-                      {opponentOptions.map(t => (
-                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                      ))}
+                      {opponentOptions.length === 0 && fChallenger && (
+                        <div className="px-2 py-1.5 text-xs text-muted-foreground">Nenhuma equipe no intervalo permitido.</div>
+                      )}
+                      {opponentOptions.map(t => {
+                        const rank = teamsInCategory.findIndex(x => x.id === t.id) + 1;
+                        return (
+                          <SelectItem key={t.id} value={t.id}>
+                            #{rank} — {t.name} ({t.rankingPoints} pts)
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
+                  {fChallenger && (
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      Pode desafiar até 4 posições acima e 2 abaixo da sua no ranking.
+                    </p>
+                  )}
                 </div>
+
 
                 <div>
                   <Label className="text-xs">Arena</Label>
