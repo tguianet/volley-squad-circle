@@ -308,7 +308,6 @@ function DesafiosPage() {
     setFDate("");
     setFTime("10:00");
     setFCourt(null);
-    setFCourt(null);
   };
 
   const handleCreate = () => {
