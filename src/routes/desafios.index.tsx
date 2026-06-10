@@ -63,6 +63,28 @@ function preBookedCourts(arena: string, date: string, time: string): number[] {
   return Array.from(new Set([a, b, c]));
 }
 
+// Regras de pontuação do ranking:
+// - Vitória contra equipe ACIMA: 1 pos=+20, 2=+30, 3=+40, 4+=+50
+// - Vitória contra equipe ABAIXO: 1 pos=+10, 2+ pos=+5
+// - Derrota: perde metade do que o vencedor ganharia (arredondado p/ cima)
+// - Bônus de atividade já incluso: +5 partida registrada + +15 vitória
+function computeStakes(challengerIdx: number, challengedIdx: number): { win: number; loss: number } {
+  if (challengerIdx < 0 || challengedIdx < 0) return { win: 0, loss: 0 };
+  const diff = challengerIdx - challengedIdx; // >0 = adversário está acima
+  let base: number;
+  if (diff > 0) {
+    base = diff === 1 ? 20 : diff === 2 ? 30 : diff === 3 ? 40 : 50;
+  } else {
+    const d = Math.abs(diff);
+    base = d === 1 ? 10 : 5;
+  }
+  const win = base + 15 + 5; // base + vitória + partida registrada
+  const loss = -(Math.ceil(base / 2) - 5); // perde metade do base, mas ainda ganha +5 por registrar
+  return { win, loss };
+}
+
+
+
 
 interface TeamInfo {
   id: string;
@@ -165,7 +187,10 @@ function ChallengeCard({ c, onAction }: { c: Challenge; onAction: (id: string, a
         <div className="flex flex-col items-center px-2">
           <div className="font-display text-xs text-muted-foreground">VS</div>
           <div className="mt-1 px-2 py-0.5 rounded-full gradient-beach text-white text-[10px] font-semibold flex items-center gap-1">
-            <Flame className="size-3" /> {c.stake} pts
+            <Flame className="size-3" /> +{c.stake} pts
+          </div>
+          <div className="mt-1 text-[10px] text-destructive font-semibold flex items-center gap-1">
+            <ArrowDown className="size-3" /> -{Math.ceil((c.stake - 20) / 2) - 5 < 0 ? 0 : Math.ceil((c.stake - 20) / 2) - 5} pts
           </div>
         </div>
 
@@ -230,7 +255,7 @@ function DesafiosPage() {
   const [fArena, setFArena] = useState<string>("Arena Praia Grande");
   const [fDate, setFDate] = useState<string>("");
   const [fTime, setFTime] = useState<string>("10:00");
-  const [fStake, setFStake] = useState<number>(50);
+  // fStake removido — agora calculado automaticamente via `stakes`.
   const [fCourt, setFCourt] = useState<number | null>(null);
 
   const teamsInCategory = useMemo(() => {
@@ -252,6 +277,15 @@ function DesafiosPage() {
       .slice(min, max + 1)
       .filter(t => t.id !== fChallenger);
   }, [teamsInCategory, fChallenger]);
+
+  // Pontos em jogo calculados a partir das posições no ranking.
+  const stakes = useMemo(() => {
+    if (!fChallenger || !fChallenged) return { win: 0, loss: 0 };
+    const ci = teamsInCategory.findIndex(t => t.id === fChallenger);
+    const oi = teamsInCategory.findIndex(t => t.id === fChallenged);
+    return computeStakes(ci, oi);
+  }, [teamsInCategory, fChallenger, fChallenged]);
+
 
   // Disponibilidade de quadras na agenda para o slot escolhido.
   const formattedDate = useMemo(
@@ -276,7 +310,6 @@ function DesafiosPage() {
     setFArena("Arena Praia Grande");
     setFDate("");
     setFTime("10:00");
-    setFStake(50);
     setFCourt(null);
   };
 
@@ -310,7 +343,7 @@ function DesafiosPage() {
       court: fCourt,
       date: formattedDate,
       time: fTime,
-      stake: fStake,
+      stake: stakes.win,
       status: "pendente",
     };
     setList(prev => [newChallenge, ...prev]);
@@ -430,36 +463,37 @@ function DesafiosPage() {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs">Data</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn("w-full justify-start text-left font-normal text-xs", !fDate && "text-muted-foreground")}
-                        >
-                          <CalendarIcon className="size-3 mr-2" />
-                          {fDate ? format(new Date(fDate + "T00:00:00"), "dd/MM/yyyy") : <span>Domingo...</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={fDate ? new Date(fDate + "T00:00:00") : undefined}
-                          onSelect={(date) => {
-                            if (date) {
-                              setFDate(format(date, "yyyy-MM-dd"));
-                              setFCourt(null);
-                            }
-                          }}
-                          disabled={(date) => date.getDay() !== 0}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                <div>
+                  <Label className="text-xs">Data</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn("w-full justify-start text-left font-normal text-xs", !fDate && "text-muted-foreground")}
+                      >
+                        <CalendarIcon className="size-3 mr-2" />
+                        {fDate ? format(new Date(fDate + "T00:00:00"), "dd/MM/yyyy") : <span>Domingo...</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={fDate ? new Date(fDate + "T00:00:00") : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setFDate(format(date, "yyyy-MM-dd"));
+                            setFCourt(null);
+                          }
+                        }}
+                        disabled={(date) => date.getDay() !== 0}
+                        initialFocus
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-xs">Hora</Label>
                     <Select value={fTime} onValueChange={(v) => { setFTime(v); setFCourt(null); }}>
@@ -470,10 +504,29 @@ function DesafiosPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">Pts em jogo</Label>
-                    <Input type="number" min={10} max={200} value={fStake} onChange={(e) => setFStake(Number(e.target.value))} />
+                    <Label className="text-xs">Pontos em jogo</Label>
+                    <div className="h-10 px-3 rounded-md border bg-muted/30 flex items-center justify-between text-xs">
+                      {fChallenger && fChallenged ? (
+                        <>
+                          <span className="flex items-center gap-1 text-success font-semibold">
+                            <ArrowUp className="size-3" /> +{stakes.win}
+                          </span>
+                          <span className="flex items-center gap-1 text-destructive font-semibold">
+                            <ArrowDown className="size-3" /> {stakes.loss}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">Selecione equipes</span>
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {fChallenger && fChallenged && (
+                  <p className="text-[10px] text-muted-foreground -mt-1">
+                    Pontuação calculada pela diferença de posição no ranking (inclui bônus de partida +5 e vitória +15).
+                  </p>
+                )}
 
                 <div>
                   <Label className="text-xs">Quadras disponíveis</Label>
