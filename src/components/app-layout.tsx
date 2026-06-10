@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 import { useIsStaff } from "@/hooks/use-auth";
 
 const navItems = [
+  { to: "/perfil", label: "Perfil", icon: User },
   { to: "/", label: "Feed", icon: Home },
   { to: "/partidas", label: "Partidas", icon: Calendar },
   { to: "/ranking", label: "Ranking", icon: Medal },
   { to: "/torneios", label: "Torneios", icon: Trophy },
-  { to: "/perfil", label: "Perfil", icon: User },
 ];
 
 const sideExtra = [
