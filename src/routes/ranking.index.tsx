@@ -9,6 +9,7 @@ import { duplas, quartetos, getPlayer, computeIndividualRanking } from "@/lib/mo
 import type { IndividualRankingRow } from "@/lib/mock-data";
 import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus, CalendarDays, MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PlayerPreview } from "@/components/player-preview";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listScheduledChallenges } from "@/lib/ranking.functions";
