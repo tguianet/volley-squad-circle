@@ -256,6 +256,12 @@ export function ProfileCompletionModal() {
               <Field label="Altura (m)">
                 <Input type="number" step="0.01" min="1" max="2.5" value={form.altura} onChange={(e) => setForm({ ...form, altura: e.target.value })} placeholder="1.80" />
               </Field>
+              <Field label="Instagram">
+                <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} maxLength={40} placeholder="@seuinstagram" />
+              </Field>
+              <Field label="Bio / frase do perfil">
+                <Input value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={120} placeholder="Vamo pra areia!" />
+              </Field>
               <Field label="Observações">
                 <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} maxLength={300} rows={2} />
               </Field>
