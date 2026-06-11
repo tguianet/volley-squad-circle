@@ -21,7 +21,7 @@ async function fetchBanner(userId: string) {
   return (data?.banner_url as string | null) ?? null;
 }
 
-function SignedBanner({ path }: { path: string }) {
+function SignedBanner({ path, preview }: { path: string; preview?: string | null }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
@@ -30,8 +30,9 @@ function SignedBanner({ path }: { path: string }) {
     });
     return () => { alive = false; };
   }, [path]);
-  if (!url) return null;
-  return <img src={url} alt="Capa do perfil" className="absolute inset-0 w-full h-full object-cover" />;
+  const src = url ?? preview ?? null;
+  if (!src) return null;
+  return <img src={src} alt="Capa do perfil" className="absolute inset-0 w-full h-full object-cover" />;
 }
 
 async function cropToBlob(src: string, area: Area): Promise<Blob> {
