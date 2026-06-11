@@ -78,6 +78,16 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
   } as MyProfile;
 }
 
+function normalizeAltura(value: string): number | null {
+  const trimmed = value.trim().replace(",", ".");
+  if (!trimmed) return null;
+  const raw = Number(trimmed);
+  if (!Number.isFinite(raw) || raw <= 0) throw new Error("Informe uma altura válida.");
+  const meters = raw > 10 ? raw / 100 : raw;
+  if (meters < 1 || meters > 2.5) throw new Error("Informe a altura em metros ou centímetros. Ex: 1,67 ou 167.");
+  return Number(meters.toFixed(2));
+}
+
 function ProfilePage() {
   const qc = useQueryClient();
   const { data: profile, isLoading } = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
@@ -130,14 +140,14 @@ function ProfilePage() {
         posicao_principal: form.posicao_principal || null,
         level: form.level || null,
         mao_dominante: form.mao_dominante || null,
-        altura: form.altura ? Number(form.altura) : null,
+        altura: normalizeAltura(form.altura),
       };
       const { data, error } = await supabase
         .from("profiles")
         .update(payload)
         .eq("id", profile.id)
-        .select()
-        .single();
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
       if (!data) throw new Error("Nenhuma linha foi atualizada. Verifique permissões.");
       // Update cache immediately so UI reflects without waiting on refetch
@@ -194,7 +204,7 @@ function ProfilePage() {
                     <div className="space-y-1.5"><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} maxLength={20}/></div>
                     <div className="space-y-1.5"><Label>Cidade</Label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
                     <div className="space-y-1.5"><Label>Estado</Label><Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} maxLength={2} placeholder="SP"/></div>
-                    <div className="space-y-1.5"><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => setForm({ ...form, altura: e.target.value })} placeholder="1.80"/></div>
+                    <div className="space-y-1.5"><Label>Altura</Label><Input type="number" step="0.01" value={form.altura} onChange={e => setForm({ ...form, altura: e.target.value })} placeholder="1.80 ou 180"/></div>
                     <div className="space-y-1.5"><Label>Instagram</Label><Input value={form.instagram} onChange={e => setForm({ ...form, instagram: e.target.value })} placeholder="@seuinsta"/></div>
                     <div className="space-y-1.5">
                       <Label>Posição</Label>

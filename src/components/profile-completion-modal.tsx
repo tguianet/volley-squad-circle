@@ -42,6 +42,16 @@ async function fetchMyProfile(): Promise<ProfileRow | null> {
   return data as ProfileRow | null;
 }
 
+function normalizeAltura(value: string): number | null {
+  const trimmed = value.trim().replace(",", ".");
+  if (!trimmed) return null;
+  const raw = Number(trimmed);
+  if (!Number.isFinite(raw) || raw <= 0) throw new Error("Informe uma altura válida.");
+  const meters = raw > 10 ? raw / 100 : raw;
+  if (meters < 1 || meters > 2.5) throw new Error("Informe a altura em metros ou centímetros. Ex: 1,67 ou 167.");
+  return Number(meters.toFixed(2));
+}
+
 export function ProfileCompletionModal() {
   const qc = useQueryClient();
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
@@ -140,26 +150,31 @@ export function ProfileCompletionModal() {
     if (!requiredOk || !profile) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const payload = {
+        apelido: form.apelido.trim(),
+        city: form.city.trim(),
+        state: form.state.trim(),
+        whatsapp: form.whatsapp.trim(),
+        posicao_principal: form.posicao_principal,
+        level: form.level,
+        mao_dominante: form.mao_dominante,
+        avatar_url: form.avatar_url || null,
+        data_nascimento: form.data_nascimento || null,
+        altura: normalizeAltura(form.altura),
+        observacoes: form.observacoes.trim() || null,
+        bio: form.bio.trim() || null,
+        instagram: form.instagram.trim() || null,
+        status: "completo",
+      };
+      const { data, error } = await supabase
         .from("profiles")
-        .update({
-          apelido: form.apelido.trim(),
-          city: form.city.trim(),
-          state: form.state.trim(),
-          whatsapp: form.whatsapp.trim(),
-          posicao_principal: form.posicao_principal,
-          level: form.level,
-          mao_dominante: form.mao_dominante,
-          avatar_url: form.avatar_url || null,
-          data_nascimento: form.data_nascimento || null,
-          altura: form.altura ? Number(form.altura) : null,
-          observacoes: form.observacoes || null,
-          bio: form.bio || null,
-          instagram: form.instagram || null,
-          status: "completo",
-        })
-        .eq("id", profile.id);
+        .update(payload)
+        .eq("id", profile.id)
+        .select("id")
+        .maybeSingle();
       if (error) throw error;
+      if (!data) throw new Error("Nenhuma linha foi atualizada. Verifique permissões.");
+      qc.setQueryData(["my-profile"], (prev: any) => prev ? { ...prev, ...payload } : prev);
       toast.success("Perfil completo! Bem-vindo à areia.");
       setForceClosed(true);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
@@ -253,8 +268,8 @@ export function ProfileCompletionModal() {
               <Field label="Data de nascimento">
                 <Input type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} />
               </Field>
-              <Field label="Altura (m)">
-                <Input type="number" step="0.01" min="1" max="2.5" value={form.altura} onChange={(e) => setForm({ ...form, altura: e.target.value })} placeholder="1.80" />
+              <Field label="Altura">
+                <Input type="number" step="0.01" min="1" max="250" value={form.altura} onChange={(e) => setForm({ ...form, altura: e.target.value })} placeholder="1.80 ou 180" />
               </Field>
               <Field label="Instagram">
                 <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} maxLength={40} placeholder="@seuinstagram" />
