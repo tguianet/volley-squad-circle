@@ -157,6 +157,7 @@ export function ProfileCompletionModal() {
         .eq("id", profile.id);
       if (error) throw error;
       toast.success("Perfil completo! Bem-vindo à areia.");
+      setForceClosed(true);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao salvar perfil");
