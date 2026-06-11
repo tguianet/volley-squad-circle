@@ -129,8 +129,12 @@ function RankingPage() {
                     i === 0 ? "gradient-beach text-white" : "bg-secondary"
                   }`}>{i === 0 ? <Trophy className="size-5"/> : i+1}</div>
                   <div className="flex -space-x-3">
-                    <Avatar className="size-11 ring-2 ring-background"><AvatarImage src={p1.avatar}/><AvatarFallback>{p1.name[0]}</AvatarFallback></Avatar>
-                    <Avatar className="size-11 ring-2 ring-background"><AvatarImage src={p2.avatar}/><AvatarFallback>{p2.name[0]}</AvatarFallback></Avatar>
+                    <PlayerPreview player={p1}>
+                      <Avatar className="size-11 ring-2 ring-background cursor-pointer"><AvatarImage src={p1.avatar}/><AvatarFallback>{p1.name[0]}</AvatarFallback></Avatar>
+                    </PlayerPreview>
+                    <PlayerPreview player={p2}>
+                      <Avatar className="size-11 ring-2 ring-background cursor-pointer"><AvatarImage src={p2.avatar}/><AvatarFallback>{p2.name[0]}</AvatarFallback></Avatar>
+                    </PlayerPreview>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{d.name}</div>
