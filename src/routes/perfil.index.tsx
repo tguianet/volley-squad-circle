@@ -329,9 +329,10 @@ function TeamBuilder({ currentId }: { currentId: string }) {
             return (
               <div key={t.id} className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="font-display text-base">{t.name}</div>
+                      <Badge variant="outline" className="text-[10px]">{t.format}</Badge>
                       {allIn && <Badge className="gradient-beach text-white border-0 text-[10px]">No ranking</Badge>}
                     </div>
                     <div className="text-[11px] text-muted-foreground">{accepted}/{t.invites.length} confirmados</div>
