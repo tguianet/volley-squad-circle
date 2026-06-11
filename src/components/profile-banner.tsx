@@ -36,7 +36,6 @@ function SignedBanner({ path }: { path: string }) {
 
 async function cropToBlob(src: string, area: Area): Promise<Blob> {
   const img = new Image();
-  img.crossOrigin = "anonymous";
   img.src = src;
   await new Promise<void>((res, rej) => {
     img.onload = () => res();
@@ -47,6 +46,8 @@ async function cropToBlob(src: string, area: Area): Promise<Blob> {
   canvas.height = BANNER_H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas indisponível");
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, BANNER_W, BANNER_H);
   ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, BANNER_W, BANNER_H);
   return await new Promise<Blob>((res, rej) => {
     canvas.toBlob((b) => (b ? res(b) : rej(new Error("Falha ao gerar imagem"))), "image/jpeg", 0.9);
