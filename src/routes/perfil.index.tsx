@@ -99,8 +99,9 @@ function ProfilePage() {
   });
   const [saving, setSaving] = useState(false);
 
+  // Initialize form when the modal opens — avoid overwriting user edits on background refetch
   useEffect(() => {
-    if (!profile) return;
+    if (!open || !profile) return;
     setForm({
       apelido: profile.apelido ?? profile.username ?? "",
       bio: profile.bio ?? "",
@@ -113,13 +114,13 @@ function ProfilePage() {
       mao_dominante: profile.mao_dominante ?? "",
       altura: profile.altura ? String(profile.altura) : "",
     });
-  }, [profile]);
+  }, [open, profile?.id]);
 
   const onSave = async () => {
     if (!profile) return;
     setSaving(true);
     try {
-      const { error } = await supabase.from("profiles").update({
+      const payload = {
         apelido: form.apelido.trim() || null,
         bio: form.bio.trim() || null,
         city: form.city.trim() || null,
@@ -130,8 +131,17 @@ function ProfilePage() {
         level: form.level || null,
         mao_dominante: form.mao_dominante || null,
         altura: form.altura ? Number(form.altura) : null,
-      }).eq("id", profile.id);
+      };
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(payload)
+        .eq("id", profile.id)
+        .select()
+        .single();
       if (error) throw error;
+      if (!data) throw new Error("Nenhuma linha foi atualizada. Verifique permissões.");
+      // Update cache immediately so UI reflects without waiting on refetch
+      qc.setQueryData(["my-profile"], (prev: any) => prev ? { ...prev, ...payload } : prev);
       toast.success("Perfil atualizado");
       setOpen(false);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
