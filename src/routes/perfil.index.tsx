@@ -199,10 +199,18 @@ function TeamBuilder({ currentId }: { currentId: string }) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [format, setFormat] = useState<TeamFormat>("Dupla");
   const [selected, setSelected] = useState<string[]>([]);
   const [captainId, setCaptainId] = useState<string>(currentId);
 
-  const reset = () => { setName(""); setSelected([]); setCaptainId(currentId); };
+  const formatInvitesCount: Record<TeamFormat, number> = {
+    Dupla: 1,
+    "Dupla mista": 1,
+    Quarteto: 3,
+    "Quarteto misto": 3,
+  };
+
+  const reset = () => { setName(""); setFormat("Dupla"); setSelected([]); setCaptainId(currentId); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
