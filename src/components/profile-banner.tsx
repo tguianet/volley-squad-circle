@@ -21,7 +21,7 @@ async function fetchBanner(userId: string) {
   return (data?.banner_url as string | null) ?? null;
 }
 
-function SignedBanner({ path }: { path: string }) {
+function SignedBanner({ path, preview }: { path: string; preview?: string | null }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
@@ -30,8 +30,9 @@ function SignedBanner({ path }: { path: string }) {
     });
     return () => { alive = false; };
   }, [path]);
-  if (!url) return null;
-  return <img src={url} alt="Capa do perfil" className="absolute inset-0 w-full h-full object-cover" />;
+  const src = url ?? preview ?? null;
+  if (!src) return null;
+  return <img src={src} alt="Capa do perfil" className="absolute inset-0 w-full h-full object-cover" />;
 }
 
 async function cropToBlob(src: string, area: Area): Promise<Blob> {
@@ -65,6 +66,7 @@ export function ProfileBanner() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [areaPx, setAreaPx] = useState<Area | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -89,14 +91,23 @@ export function ProfileBanner() {
       if (!srcUrl) throw new Error("Selecione uma imagem");
       if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
       const blob = await cropToBlob(srcUrl, areaPx);
+      const localPreview = URL.createObjectURL(blob);
       const path = `${userId}/banner-${Date.now()}.jpg`;
+
+      // Optimistic preview — show cropped image instantly
+      const old = bannerQ.data;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(localPreview);
+      qc.setQueryData(["profile_banner", userId], path);
+      closeCropper();
+      toast.success("Capa atualizada");
+
       const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
         upsert: true,
         contentType: "image/jpeg",
       });
       if (upErr) throw upErr;
 
-      const old = bannerQ.data;
       const { error: dbErr } = await supabase
         .from("profiles")
         .update({ banner_url: path })
@@ -113,10 +124,11 @@ export function ProfileBanner() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
-      toast.success("Capa atualizada");
-      closeCropper();
     },
     onError: (e: any) => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
       toast.error(e?.message ?? "Falha ao enviar");
     },
   });
@@ -162,7 +174,7 @@ export function ProfileBanner() {
 
   return (
     <div className="h-32 gradient-ocean relative overflow-hidden">
-      {bannerQ.data && <SignedBanner path={bannerQ.data} />}
+      {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
       <div className="absolute top-3 left-3 flex gap-2 z-10">
         <input
           ref={fileRef}
