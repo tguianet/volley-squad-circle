@@ -187,8 +187,8 @@ export function ProfileCompletionModal() {
 
         <div className="grid gap-4 py-2">
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label="Nome no ranking *">
-              <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} maxLength={60} />
+            <Field label="Apelido / @username *">
+              <Input value={form.apelido} onChange={(e) => setForm({ ...form, apelido: e.target.value })} maxLength={30} placeholder="@seuapelido" />
             </Field>
             <Field label="Apelido *">
               <Input value={form.apelido} onChange={(e) => setForm({ ...form, apelido: e.target.value })} maxLength={30} />
