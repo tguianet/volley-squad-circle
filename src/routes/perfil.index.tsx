@@ -271,6 +271,15 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                 <Label htmlFor="team-name">Nome do time</Label>
                 <Input id="team-name" placeholder="Ex: Tubarões da Areia" value={name} onChange={e => setName(e.target.value)} />
               </div>
+              <div className="space-y-1.5">
+                <Label>Formato</Label>
+                <Select value={format} onValueChange={(v) => setFormat(v as TeamFormat)}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>
+                    {TEAM_FORMATS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-2">
                 <Label>Participantes</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
