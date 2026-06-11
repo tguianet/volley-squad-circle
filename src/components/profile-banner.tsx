@@ -213,7 +213,7 @@ export function ProfileBanner() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeCropper} disabled={uploadMut.isPending}>Cancelar</Button>
-            <Button onClick={() => uploadMut.mutate()} disabled={!areaPx || uploadMut.isPending}>
+            <Button onClick={() => uploadMut.mutate()} disabled={uploadMut.isPending}>
               {uploadMut.isPending ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
               Salvar capa
             </Button>
