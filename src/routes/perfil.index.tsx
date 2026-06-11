@@ -136,6 +136,9 @@ function ProfilePage() {
           </Card>
         )}
 
+        {/* Montar time */}
+        <TeamBuilder currentId={p.id} />
+
         {/* Galeria de fotos */}
         <ProfileGallery />
 
