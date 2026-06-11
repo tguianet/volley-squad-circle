@@ -190,3 +190,168 @@ function Stat({ label, value, sub, accent }: { label: string; value: number | st
     </Card>
   );
 }
+
+function TeamBuilder({ currentId }: { currentId: string }) {
+  const others = players.filter(pl => pl.id !== currentId);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [selected, setSelected] = useState<string[]>([]);
+  const [captainId, setCaptainId] = useState<string>(currentId);
+
+  const reset = () => { setName(""); setSelected([]); setCaptainId(currentId); };
+
+  const toggle = (id: string) => {
+    setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  };
+
+  const create = () => {
+    if (!name.trim()) return toast.error("Dê um nome ao time");
+    if (selected.length === 0) return toast.error("Selecione ao menos um participante");
+    const eligible = [currentId, ...selected];
+    if (!eligible.includes(captainId)) return toast.error("Escolha um capitão dentre os membros");
+    const team: Team = {
+      id: `t${Date.now()}`,
+      name: name.trim(),
+      captainId,
+      invites: selected.map(pid => ({ playerId: pid, status: "pending" })),
+      createdAt: new Date().toISOString(),
+    };
+    setTeams(t => [team, ...t]);
+    setOpen(false);
+    reset();
+    toast.success(`Convites enviados para ${selected.length} jogador(es)`);
+  };
+
+  const respond = (teamId: string, playerId: string, status: "accepted" | "declined") => {
+    setTeams(ts => ts.map(t => {
+      if (t.id !== teamId) return t;
+      const next = { ...t, invites: t.invites.map(i => i.playerId === playerId ? { ...i, status } : i) };
+      const allAccepted = next.invites.every(i => i.status === "accepted");
+      if (status === "accepted" && allAccepted) {
+        toast.success(`${next.name} entrou no ranking! 🏆`);
+      }
+      return next;
+    }));
+  };
+
+  const remove = (teamId: string) => {
+    setTeams(ts => ts.filter(t => t.id !== teamId));
+    toast.success("Time removido");
+  };
+
+  return (
+    <Card className="p-5 shadow-card">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Users className="size-5 text-primary" />
+          <h2 className="text-lg">Meus times</h2>
+        </div>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gradient-beach text-white border-0"><Plus className="size-4 mr-1"/>Montar time</Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[85vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Montar novo time</DialogTitle></DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="team-name">Nome do time</Label>
+                <Input id="team-name" placeholder="Ex: Tubarões da Areia" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Participantes</Label>
+                <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
+                  {others.map(pl => (
+                    <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
+                      <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
+                      <Avatar className="size-8"><AvatarImage src={pl.avatar}/><AvatarFallback>{pl.name[0]}</AvatarFallback></Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{pl.name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{pl.username}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Capitão</Label>
+                <Select value={captainId} onValueChange={setCaptainId}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={currentId}>Eu (capitão)</SelectItem>
+                    {selected.map(id => {
+                      const pl = getPlayer(id);
+                      return pl ? <SelectItem key={id} value={id}>{pl.name}</SelectItem> : null;
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+              <Button onClick={create}><Send className="size-4 mr-1"/>Enviar convites</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {teams.length === 0 ? (
+        <div className="text-center py-8 text-sm text-muted-foreground">
+          Você ainda não montou nenhum time. Clique em <strong>Montar time</strong> para começar.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {teams.map(t => {
+            const accepted = t.invites.filter(i => i.status === "accepted").length;
+            const allIn = t.invites.length > 0 && accepted === t.invites.length;
+            return (
+              <div key={t.id} className="rounded-lg border p-3 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="font-display text-base">{t.name}</div>
+                      {allIn && <Badge className="gradient-beach text-white border-0 text-[10px]">No ranking</Badge>}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">{accepted}/{t.invites.length} confirmados</div>
+                  </div>
+                  <Button size="icon" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="size-4"/></Button>
+                </div>
+                <div className="space-y-1.5">
+                  {t.invites.map(inv => {
+                    const pl = getPlayer(inv.playerId);
+                    if (!pl) return null;
+                    const isCaptain = t.captainId === pl.id;
+                    return (
+                      <div key={inv.playerId} className="flex items-center gap-2 p-2 rounded-md bg-secondary/40">
+                        <Avatar className="size-7"><AvatarImage src={pl.avatar}/><AvatarFallback>{pl.name[0]}</AvatarFallback></Avatar>
+                        <div className="flex-1 text-sm flex items-center gap-1.5">
+                          {pl.name}
+                          {isCaptain && <Crown className="size-3.5 text-primary" />}
+                        </div>
+                        {inv.status === "pending" && (
+                          <div className="flex items-center gap-1">
+                            <Badge variant="secondary" className="text-[10px]">Pendente</Badge>
+                            <Button size="icon" variant="ghost" className="size-7" onClick={() => respond(t.id, inv.playerId, "accepted")}><Check className="size-3.5 text-success"/></Button>
+                            <Button size="icon" variant="ghost" className="size-7" onClick={() => respond(t.id, inv.playerId, "declined")}><X className="size-3.5 text-destructive"/></Button>
+                          </div>
+                        )}
+                        {inv.status === "accepted" && <Badge className="bg-success/20 text-success border-0 text-[10px]">Aceitou</Badge>}
+                        {inv.status === "declined" && <Badge variant="destructive" className="text-[10px]">Recusou</Badge>}
+                      </div>
+                    );
+                  })}
+                  {t.captainId === currentId && (
+                    <div className="flex items-center gap-2 p-2 rounded-md bg-primary/10">
+                      <Crown className="size-4 text-primary" />
+                      <div className="flex-1 text-sm">Você é o capitão</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+  );
+}
