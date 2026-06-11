@@ -120,7 +120,7 @@ export function ProfileCompletionModal() {
 
   const avatarSrc = previewBlob ?? signedPreview ?? (form.avatar_url?.startsWith("http") ? form.avatar_url : null);
 
-  const open = !!profile && profile.status !== "completo";
+  const open = !!profile && profile.status !== "completo" && !forceClosed;
 
   const requiredOk =
     form.display_name.trim() &&
