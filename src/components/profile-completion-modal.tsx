@@ -59,6 +59,7 @@ export function ProfileCompletionModal() {
     observacoes: "",
   });
   const [saving, setSaving] = useState(false);
+  const [forceClosed, setForceClosed] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -76,6 +77,7 @@ export function ProfileCompletionModal() {
         altura: profile.altura ? String(profile.altura) : "",
         observacoes: profile.observacoes ?? "",
       });
+      if (profile.status !== "completo") setForceClosed(false);
     }
   }, [profile]);
 
@@ -119,7 +121,7 @@ export function ProfileCompletionModal() {
 
   const avatarSrc = previewBlob ?? signedPreview ?? (form.avatar_url?.startsWith("http") ? form.avatar_url : null);
 
-  const open = !!profile && profile.status !== "completo";
+  const open = !!profile && profile.status !== "completo" && !forceClosed;
 
   const requiredOk =
     form.display_name.trim() &&
@@ -155,6 +157,7 @@ export function ProfileCompletionModal() {
         .eq("id", profile.id);
       if (error) throw error;
       toast.success("Perfil completo! Bem-vindo à areia.");
+      setForceClosed(true);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
     } catch (e: any) {
       toast.error(e.message ?? "Erro ao salvar perfil");
