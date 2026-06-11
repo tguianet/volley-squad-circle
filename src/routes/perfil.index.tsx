@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -10,14 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { currentUser, duplas, getPlayer, players, recentMatches } from "@/lib/mock-data";
+import { duplas, getPlayer, players, recentMatches } from "@/lib/mock-data";
 import { formatDateBR } from "@/lib/date-format";
-import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2 } from "lucide-react";
+import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-
-const POSITIONS = ["Entrada de rede", "Saída de rede", "Defesa", "Rede"] as const;
-type Position = typeof POSITIONS[number];
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -29,22 +28,133 @@ type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
 type Team = { id: string; name: string; format: TeamFormat; captainId: string; invites: Invite[]; createdAt: string };
 
 export const Route = createFileRoute("/perfil/")({
-  head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
+  head: () => ({ meta: [{ title: "Perfil — PlayBeach" }] }),
   component: ProfilePage,
 });
 
+type MyProfile = {
+  id: string;
+  email: string | null;
+  google_name: string | null;
+  google_picture: string | null;
+  display_name: string | null;
+  username: string | null;
+  apelido: string | null;
+  bio: string | null;
+  city: string | null;
+  state: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+  posicao_principal: string | null;
+  level: string | null;
+  mao_dominante: string | null;
+  altura: number | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  pontos: number | null;
+  vitorias: number | null;
+  derrotas: number | null;
+};
+
+async function fetchMyProfile(): Promise<MyProfile | null> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return null;
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, pontos, vitorias, derrotas")
+    .eq("id", u.user.id)
+    .maybeSingle();
+  if (error) throw error;
+  const meta = (u.user.user_metadata ?? {}) as Record<string, any>;
+  return {
+    id: u.user.id,
+    email: u.user.email ?? null,
+    google_name: meta.full_name ?? meta.name ?? null,
+    google_picture: meta.avatar_url ?? meta.picture ?? null,
+    ...(data ?? {
+      display_name: null, username: null, apelido: null, bio: null, city: null, state: null,
+      whatsapp: null, instagram: null, posicao_principal: null, level: null, mao_dominante: null,
+      altura: null, avatar_url: null, banner_url: null, pontos: 0, vitorias: 0, derrotas: 0,
+    }),
+  } as MyProfile;
+}
+
 function ProfilePage() {
-  const [p, setP] = useState(currentUser);
+  const qc = useQueryClient();
+  const { data: profile, isLoading } = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
+
+  const emailHandle = profile?.email?.split("@")[0] ?? "";
+  const displayName = profile?.display_name || profile?.google_name || emailHandle || "Jogador";
+  const username = profile?.apelido || profile?.username || emailHandle || "jogador";
+  const city = profile?.city || "Não informado";
+  const state = profile?.state || "";
+  const cityState = state ? `${city}, ${state}` : city;
+  const bio = profile?.bio || "";
+  const matches = (profile?.vitorias ?? 0) + (profile?.derrotas ?? 0);
+  const winRate = matches > 0 ? ((profile?.vitorias ?? 0) / matches * 100).toFixed(0) : "0";
+
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio, city: p.city, height: p.height, position: "Entrada de rede" as Position });
-  const dupla = duplas.find(d => d.player1Id === p.id || d.player2Id === p.id);
-  const partner = dupla ? getPlayer(dupla.player1Id === p.id ? dupla.player2Id : dupla.player1Id) : null;
-  const winRate = ((p.wins / p.matches) * 100).toFixed(0);
-  const onSave = () => {
-    setP({ ...p, ...form, height: Number(form.height) });
-    setOpen(false);
-    toast.success("Perfil atualizado");
+  const [form, setForm] = useState({
+    apelido: "", bio: "", city: "", state: "", whatsapp: "", instagram: "",
+    posicao_principal: "", level: "", mao_dominante: "", altura: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!profile) return;
+    setForm({
+      apelido: profile.apelido ?? profile.username ?? "",
+      bio: profile.bio ?? "",
+      city: profile.city ?? "",
+      state: profile.state ?? "",
+      whatsapp: profile.whatsapp ?? "",
+      instagram: profile.instagram ?? "",
+      posicao_principal: profile.posicao_principal ?? "",
+      level: profile.level ?? "",
+      mao_dominante: profile.mao_dominante ?? "",
+      altura: profile.altura ? String(profile.altura) : "",
+    });
+  }, [profile]);
+
+  const onSave = async () => {
+    if (!profile) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("profiles").update({
+        apelido: form.apelido.trim() || null,
+        bio: form.bio.trim() || null,
+        city: form.city.trim() || null,
+        state: form.state.trim() || null,
+        whatsapp: form.whatsapp.trim() || null,
+        instagram: form.instagram.trim() || null,
+        posicao_principal: form.posicao_principal || null,
+        level: form.level || null,
+        mao_dominante: form.mao_dominante || null,
+        altura: form.altura ? Number(form.altura) : null,
+      }).eq("id", profile.id);
+      if (error) throw error;
+      toast.success("Perfil atualizado");
+      setOpen(false);
+      await qc.invalidateQueries({ queryKey: ["my-profile"] });
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao salvar");
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (isLoading || !profile) {
+    return (
+      <AppLayout>
+        <div className="max-w-3xl mx-auto px-4 py-12 flex justify-center">
+          <Loader2 className="size-6 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const fallbackInitial = (displayName[0] ?? "?").toUpperCase();
+
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
@@ -52,37 +162,70 @@ function ProfilePage() {
           <div className="relative">
             <ProfileBanner />
             <div className="absolute -bottom-12 left-6 z-10">
-              <ProfileAvatar fallback={p.name[0]} className="size-24 ring-4 ring-background shadow-glow" />
+              <ProfileAvatar fallback={fallbackInitial} className="size-24 ring-4 ring-background shadow-glow" />
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="secondary" className="absolute top-3 right-3 z-10"><Settings className="size-4 mr-1"/>Editar</Button>
               </DialogTrigger>
-              <DialogContent>
-                <DialogHeader><DialogTitle>Editar perfil</DialogTitle></DialogHeader>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader><DialogTitle>Editar perfil <span className="text-primary">PlayBeach</span></DialogTitle></DialogHeader>
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <Label>Foto do perfil</Label>
-                    <ProfileAvatar fallback={p.name[0]} className="size-20" editable />
+                    <ProfileAvatar fallback={fallbackInitial} className="size-20" editable />
                   </div>
-                  <div className="space-y-1.5"><Label htmlFor="ed-name">Nome</Label><Input id="ed-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
-                  <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
-                  <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
-                  <div className="space-y-1.5"><Label htmlFor="ed-height">Altura (cm)</Label><Input id="ed-height" type="number" value={form.height} onChange={e => setForm({ ...form, height: Number(e.target.value) })}/></div>
                   <div className="space-y-1.5">
-                    <Label>Posição que joga</Label>
-                    <Select value={form.position} onValueChange={(v) => setForm({ ...form, position: v as Position })}>
-                      <SelectTrigger><SelectValue placeholder="Selecione a posição" /></SelectTrigger>
-                      <SelectContent>
-                        {POSITIONS.map((pos) => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <Label>Nome</Label>
+                    <Input value={displayName} disabled readOnly />
+                    <p className="text-[11px] text-muted-foreground">Nome vindo da sua conta Google.</p>
                   </div>
-                  <div className="space-y-1.5"><Label htmlFor="ed-bio">Bio</Label><Textarea id="ed-bio" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })}/></div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5"><Label>Apelido / @username</Label><Input value={form.apelido} onChange={e => setForm({ ...form, apelido: e.target.value })} maxLength={30}/></div>
+                    <div className="space-y-1.5"><Label>WhatsApp</Label><Input value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} maxLength={20}/></div>
+                    <div className="space-y-1.5"><Label>Cidade</Label><Input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
+                    <div className="space-y-1.5"><Label>Estado</Label><Input value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} maxLength={2} placeholder="SP"/></div>
+                    <div className="space-y-1.5"><Label>Altura (m)</Label><Input type="number" step="0.01" value={form.altura} onChange={e => setForm({ ...form, altura: e.target.value })} placeholder="1.80"/></div>
+                    <div className="space-y-1.5"><Label>Instagram</Label><Input value={form.instagram} onChange={e => setForm({ ...form, instagram: e.target.value })} placeholder="@seuinsta"/></div>
+                    <div className="space-y-1.5">
+                      <Label>Posição</Label>
+                      <Select value={form.posicao_principal} onValueChange={(v) => setForm({ ...form, posicao_principal: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Atacante">Atacante</SelectItem>
+                          <SelectItem value="Defensor">Defensor</SelectItem>
+                          <SelectItem value="Levantador">Levantador</SelectItem>
+                          <SelectItem value="Universal">Universal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Nível</Label>
+                      <Select value={form.level} onValueChange={(v) => setForm({ ...form, level: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Iniciante">Iniciante</SelectItem>
+                          <SelectItem value="Intermediário">Intermediário</SelectItem>
+                          <SelectItem value="Avançado">Avançado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Mão dominante</Label>
+                      <Select value={form.mao_dominante} onValueChange={(v) => setForm({ ...form, mao_dominante: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Direita">Direita</SelectItem>
+                          <SelectItem value="Esquerda">Esquerda</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5"><Label>Bio</Label><Textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} maxLength={200}/></div>
                 </div>
                 <DialogFooter>
                   <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-                  <Button onClick={onSave}>Salvar</Button>
+                  <Button onClick={onSave} disabled={saving}>{saving && <Loader2 className="size-4 mr-2 animate-spin"/>}Salvar</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -90,61 +233,36 @@ function ProfilePage() {
           <div className="pt-16 px-6 pb-6">
             <div className="flex flex-wrap items-end gap-3">
               <div>
-                <h1 className="font-display text-3xl leading-none">{p.name}</h1>
-                <div className="text-sm text-muted-foreground">{p.username}</div>
+                <h1 className="font-display text-3xl leading-none">{displayName}</h1>
+                <div className="text-sm text-muted-foreground">@{username.replace(/^@/, "")}</div>
               </div>
-              <Badge className="gradient-beach text-white border-0 ml-auto">{p.level}</Badge>
+              {profile.level && <Badge className="gradient-beach text-white border-0 ml-auto">{profile.level}</Badge>}
             </div>
-            <p className="text-sm mt-3">{p.bio}</p>
+            {bio && <p className="text-sm mt-3">{bio}</p>}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 text-xs">
-              <Info icon={MapPin} label="Cidade" value={p.city}/>
-              <Info icon={Ruler} label="Altura" value={`${p.height} cm`}/>
-              <Info icon={Hand} label="Mão" value={p.dominantHand}/>
-              <Info icon={ArrowLeftRight} label="Lado" value={p.preferredSide}/>
-              <Info icon={Target} label="Posição" value={(p as any).position ?? form.position}/>
+              <Info icon={MapPin} label="Cidade" value={cityState}/>
+              <Info icon={Ruler} label="Altura" value={profile.altura ? `${profile.altura} m` : "—"}/>
+              <Info icon={Hand} label="Mão" value={profile.mao_dominante || "—"}/>
+              <Info icon={Target} label="Posição" value={profile.posicao_principal || "—"}/>
+              {profile.whatsapp && <Info icon={MessageCircle} label="WhatsApp" value={profile.whatsapp}/>}
+              {profile.instagram && <Info icon={Instagram} label="Instagram" value={profile.instagram}/>}
             </div>
           </div>
         </Card>
 
         {/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <Stat label="Ranking" value={p.rankingPoints} sub={`#${1}`} accent/>
-          <Stat label="Vitórias" value={p.wins} sub={`${winRate}% apr.`}/>
-          <Stat label="Derrotas" value={p.losses}/>
-          <Stat label="MVPs" value={p.mvps} sub={`${p.matches} jogos`}/>
+          <Stat label="Pontos" value={profile.pontos ?? 0} accent/>
+          <Stat label="Vitórias" value={profile.vitorias ?? 0} sub={`${winRate}% apr.`}/>
+          <Stat label="Derrotas" value={profile.derrotas ?? 0}/>
+          <Stat label="Jogos" value={matches}/>
         </div>
 
-        {/* Dupla */}
-        {dupla && partner && (
-          <Card className="p-5 shadow-card">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg">Dupla fixa</h2>
-              <Badge variant="secondary">#{1} ranking</Badge>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-3">
-                <Avatar className="size-12 ring-2 ring-background"><AvatarImage src={p.avatar}/></Avatar>
-                <Avatar className="size-12 ring-2 ring-background"><AvatarImage src={partner.avatar}/></Avatar>
-              </div>
-              <div className="flex-1">
-                <div className="font-display text-xl">{dupla.name}</div>
-                <div className="text-xs text-muted-foreground">Desde {formatDateBR(dupla.formedAt)}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-3 text-center text-xs">
-                <div><div className="font-display text-lg text-success">{dupla.wins}</div><div className="text-muted-foreground">V</div></div>
-                <div><div className="font-display text-lg text-destructive">{dupla.losses}</div><div className="text-muted-foreground">D</div></div>
-                <div><div className="font-display text-lg text-primary">{dupla.rankingPoints}</div><div className="text-muted-foreground">pts</div></div>
-              </div>
-            </div>
-          </Card>
-        )}
-
         {/* Montar time */}
-        <TeamBuilder currentId={p.id} />
+        <TeamBuilder currentId={profile.id} />
 
         {/* Galeria de fotos */}
         <ProfileGallery />
-
 
         {/* Histórico */}
         <Card className="p-5 shadow-card">
@@ -166,7 +284,7 @@ function ProfilePage() {
           </div>
         </Card>
 
-        <Link to="/auth"><Button variant="outline" className="w-full">Sair</Button></Link>
+        <Button variant="outline" className="w-full" onClick={async () => { await supabase.auth.signOut(); window.location.href = "/auth"; }}>Sair</Button>
       </div>
     </AppLayout>
   );
