@@ -70,8 +70,11 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
       if (upErr) throw upErr;
 
       const old = avatarQ.data;
-      const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: path }).eq("id", userId);
+      const { error: dbErr } = await supabase
+        .from("profiles")
+        .upsert({ id: userId, avatar_url: path }, { onConflict: "id" });
       if (dbErr) {
+        console.error("[avatar] db upsert error", dbErr);
         await supabase.storage.from("avatars").remove([path]);
         throw dbErr;
       }
