@@ -25,6 +25,7 @@ const sideExtra = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const isStaff = useIsStaff();
   const extra = isStaff
     ? [...sideExtra, { to: "/admin", label: "Admin", icon: Shield }]
