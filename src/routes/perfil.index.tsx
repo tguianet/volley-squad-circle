@@ -210,7 +210,32 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     "Quarteto misto": 3,
   };
 
-  const reset = () => { setName(""); setFormat("Dupla"); setSelected([]); setCaptainId(currentId); };
+  // Formatos em que já estou no ranking (não posso abrir outro time no mesmo formato)
+  const myRankedFormats = new Set<TeamFormat>(
+    teams
+      .filter(t => t.invites.length > 0 && t.invites.every(i => i.status === "accepted"))
+      .map(t => t.format)
+  );
+
+  // Jogadores que já estão num time meu (no ranking) do formato selecionado — não aparecem
+  const playersInRankedFormat = new Set<string>(
+    teams
+      .filter(t => t.format === format && t.invites.length > 0 && t.invites.every(i => i.status === "accepted"))
+      .flatMap(t => [t.captainId, ...t.invites.map(i => i.playerId)])
+  );
+
+  const availableFormats = TEAM_FORMATS.filter(f => !myRankedFormats.has(f));
+  const visibleOthers = others.filter(pl => !playersInRankedFormat.has(pl.id));
+
+  // Se o formato atual ficou bloqueado, troca para o primeiro disponível
+  useEffect(() => {
+    if (myRankedFormats.has(format) && availableFormats.length > 0) {
+      setFormat(availableFormats[0]);
+      setSelected([]);
+    }
+  }, [teams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); setCaptainId(currentId); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
@@ -218,8 +243,10 @@ function TeamBuilder({ currentId }: { currentId: string }) {
 
   const create = () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
+    if (myRankedFormats.has(format)) return toast.error(`Você já participa de um time no formato ${format}`);
     const required = formatInvitesCount[format];
     if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
+
     const eligible = [currentId, ...selected];
     if (!eligible.includes(captainId)) return toast.error("Escolha um capitão dentre os membros");
     const team: Team = {
