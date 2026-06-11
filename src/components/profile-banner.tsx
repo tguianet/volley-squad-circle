@@ -36,7 +36,6 @@ function SignedBanner({ path }: { path: string }) {
 
 async function cropToBlob(src: string, area: Area): Promise<Blob> {
   const img = new Image();
-  img.crossOrigin = "anonymous";
   img.src = src;
   await new Promise<void>((res, rej) => {
     img.onload = () => res();
@@ -47,6 +46,8 @@ async function cropToBlob(src: string, area: Area): Promise<Blob> {
   canvas.height = BANNER_H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas indisponível");
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, BANNER_W, BANNER_H);
   ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, BANNER_W, BANNER_H);
   return await new Promise<Blob>((res, rej) => {
     canvas.toBlob((b) => (b ? res(b) : rej(new Error("Falha ao gerar imagem"))), "image/jpeg", 0.9);
@@ -85,21 +86,23 @@ export function ProfileBanner() {
   const uploadMut = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Faça login para alterar a capa");
-      if (!srcUrl || !areaPx) throw new Error("Selecione uma área");
+      if (!srcUrl) throw new Error("Selecione uma imagem");
+      if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
+      console.log("[banner] uploading crop", areaPx);
       const blob = await cropToBlob(srcUrl, areaPx);
-      if (blob.size > 8 * 1024 * 1024) throw new Error("Imagem deve ter até 8 MB");
+      console.log("[banner] blob size", blob.size);
       const path = `${userId}/banner-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
         upsert: true,
         contentType: "image/jpeg",
       });
-      if (upErr) throw upErr;
+      if (upErr) { console.error("[banner] upload error", upErr); throw upErr; }
       const old = bannerQ.data;
       if (old && old !== path) {
         await supabase.storage.from("banners").remove([old]).catch(() => {});
       }
       const { error: dbErr } = await supabase.from("profiles").update({ banner_url: path }).eq("id", userId);
-      if (dbErr) throw dbErr;
+      if (dbErr) { console.error("[banner] db error", dbErr); throw dbErr; }
       return path;
     },
     onSuccess: () => {
@@ -107,7 +110,10 @@ export function ProfileBanner() {
       toast.success("Capa atualizada");
       closeCropper();
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao enviar"),
+    onError: (e: any) => {
+      console.error("[banner] save failed", e);
+      toast.error(e?.message ?? "Falha ao enviar");
+    },
   });
 
   const removeMut = useMutation({
@@ -207,7 +213,7 @@ export function ProfileBanner() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={closeCropper} disabled={uploadMut.isPending}>Cancelar</Button>
-            <Button onClick={() => uploadMut.mutate()} disabled={!areaPx || uploadMut.isPending}>
+            <Button onClick={() => uploadMut.mutate()} disabled={uploadMut.isPending}>
               {uploadMut.isPending ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
               Salvar capa
             </Button>
