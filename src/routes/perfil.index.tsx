@@ -94,6 +94,7 @@ function ProfilePage() {
               <Info icon={Ruler} label="Altura" value={`${p.height} cm`}/>
               <Info icon={Hand} label="Mão" value={p.dominantHand}/>
               <Info icon={ArrowLeftRight} label="Lado" value={p.preferredSide}/>
+              <Info icon={Target} label="Posição" value={(p as any).position ?? form.position}/>
             </div>
           </div>
         </Card>
