@@ -289,7 +289,9 @@ function TeamBuilder({ currentId }: { currentId: string }) {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gradient-beach text-white border-0"><Plus className="size-4 mr-1"/>Montar time</Button>
+            <Button size="sm" className="gradient-beach text-white border-0" disabled={availableFormats.length === 0}>
+              <Plus className="size-4 mr-1"/>Montar time
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Montar novo time</DialogTitle></DialogHeader>
@@ -300,17 +302,26 @@ function TeamBuilder({ currentId }: { currentId: string }) {
               </div>
               <div className="space-y-1.5">
                 <Label>Formato</Label>
-                <Select value={format} onValueChange={(v) => setFormat(v as TeamFormat)}>
+                <Select value={format} onValueChange={(v) => { setFormat(v as TeamFormat); setSelected([]); }}>
                   <SelectTrigger><SelectValue/></SelectTrigger>
                   <SelectContent>
-                    {TEAM_FORMATS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    {availableFormats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {myRankedFormats.size > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Você já está no ranking em: {[...myRankedFormats].join(", ")}.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Participantes</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {others.map(pl => (
+                  {visibleOthers.length === 0 ? (
+                    <div className="text-xs text-muted-foreground p-2 text-center">
+                      Nenhum jogador disponível para este formato.
+                    </div>
+                  ) : visibleOthers.map(pl => (
                     <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
                       <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
                       <Avatar className="size-8"><AvatarImage src={pl.avatar}/><AvatarFallback>{pl.name[0]}</AvatarFallback></Avatar>
@@ -322,6 +333,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                   ))}
                 </div>
               </div>
+
               <div className="space-y-1.5">
                 <Label>Capitão</Label>
                 <Select value={captainId} onValueChange={setCaptainId}>
