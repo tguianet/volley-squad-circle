@@ -15,6 +15,7 @@ import { formatDateBR } from "@/lib/date-format";
 import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
+import { ProfileAvatar } from "@/components/profile-avatar";
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
