@@ -86,21 +86,23 @@ export function ProfileBanner() {
   const uploadMut = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Faça login para alterar a capa");
-      if (!srcUrl || !areaPx) throw new Error("Selecione uma área");
+      if (!srcUrl) throw new Error("Selecione uma imagem");
+      if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
+      console.log("[banner] uploading crop", areaPx);
       const blob = await cropToBlob(srcUrl, areaPx);
-      if (blob.size > 8 * 1024 * 1024) throw new Error("Imagem deve ter até 8 MB");
+      console.log("[banner] blob size", blob.size);
       const path = `${userId}/banner-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
         upsert: true,
         contentType: "image/jpeg",
       });
-      if (upErr) throw upErr;
+      if (upErr) { console.error("[banner] upload error", upErr); throw upErr; }
       const old = bannerQ.data;
       if (old && old !== path) {
         await supabase.storage.from("banners").remove([old]).catch(() => {});
       }
       const { error: dbErr } = await supabase.from("profiles").update({ banner_url: path }).eq("id", userId);
-      if (dbErr) throw dbErr;
+      if (dbErr) { console.error("[banner] db error", dbErr); throw dbErr; }
       return path;
     },
     onSuccess: () => {
@@ -108,7 +110,10 @@ export function ProfileBanner() {
       toast.success("Capa atualizada");
       closeCropper();
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao enviar"),
+    onError: (e: any) => {
+      console.error("[banner] save failed", e);
+      toast.error(e?.message ?? "Falha ao enviar");
+    },
   });
 
   const removeMut = useMutation({
