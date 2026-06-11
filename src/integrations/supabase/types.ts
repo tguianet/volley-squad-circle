@@ -431,6 +431,7 @@ export type Database = {
           derrotas: number
           display_name: string
           id: string
+          instagram: string | null
           is_suspended: boolean
           is_verified: boolean
           level: string | null
@@ -459,6 +460,7 @@ export type Database = {
           derrotas?: number
           display_name?: string
           id: string
+          instagram?: string | null
           is_suspended?: boolean
           is_verified?: boolean
           level?: string | null
@@ -487,6 +489,7 @@ export type Database = {
           derrotas?: number
           display_name?: string
           id?: string
+          instagram?: string | null
           is_suspended?: boolean
           is_verified?: boolean
           level?: string | null

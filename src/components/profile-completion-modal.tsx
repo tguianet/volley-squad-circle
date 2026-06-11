@@ -25,6 +25,8 @@ type ProfileRow = {
   data_nascimento: string | null;
   altura: number | null;
   observacoes: string | null;
+  bio: string | null;
+  instagram: string | null;
   status: string;
 };
 
@@ -33,7 +35,7 @@ async function fetchMyProfile(): Promise<ProfileRow | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, avatar_url, data_nascimento, altura, observacoes, status")
+    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, avatar_url, data_nascimento, altura, observacoes, bio, instagram, status")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -45,7 +47,6 @@ export function ProfileCompletionModal() {
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
 
   const [form, setForm] = useState({
-    display_name: "",
     apelido: "",
     city: "",
     state: "",
@@ -57,6 +58,8 @@ export function ProfileCompletionModal() {
     data_nascimento: "",
     altura: "",
     observacoes: "",
+    bio: "",
+    instagram: "",
   });
   const [saving, setSaving] = useState(false);
   const [forceClosed, setForceClosed] = useState(false);
@@ -64,7 +67,6 @@ export function ProfileCompletionModal() {
   useEffect(() => {
     if (profile) {
       setForm({
-        display_name: profile.display_name ?? "",
         apelido: profile.apelido ?? "",
         city: profile.city ?? "",
         state: profile.state ?? "",
@@ -76,6 +78,8 @@ export function ProfileCompletionModal() {
         data_nascimento: profile.data_nascimento ?? "",
         altura: profile.altura ? String(profile.altura) : "",
         observacoes: profile.observacoes ?? "",
+        bio: profile.bio ?? "",
+        instagram: profile.instagram ?? "",
       });
       if (profile.status !== "completo") setForceClosed(false);
     }
@@ -124,7 +128,6 @@ export function ProfileCompletionModal() {
   const open = !!profile && profile.status !== "completo" && !forceClosed;
 
   const requiredOk =
-    form.display_name.trim() &&
     form.apelido.trim() &&
     form.city.trim() &&
     form.state.trim() &&
@@ -140,7 +143,6 @@ export function ProfileCompletionModal() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          display_name: form.display_name.trim(),
           apelido: form.apelido.trim(),
           city: form.city.trim(),
           state: form.state.trim(),
@@ -152,6 +154,8 @@ export function ProfileCompletionModal() {
           data_nascimento: form.data_nascimento || null,
           altura: form.altura ? Number(form.altura) : null,
           observacoes: form.observacoes || null,
+          bio: form.bio || null,
+          instagram: form.instagram || null,
           status: "completo",
         })
         .eq("id", profile.id);
@@ -175,19 +179,17 @@ export function ProfileCompletionModal() {
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Complete seu perfil</DialogTitle>
+          <DialogTitle>Complete seu perfil <span className="text-primary">PlayBeach</span></DialogTitle>
           <DialogDescription>
-            Para entrar no ranking e desafiar outros jogadores, preencha as informações abaixo.
+            Para entrar no ranking PlayBeach e desafiar outros jogadores, preencha as informações abaixo.
+            {profile?.display_name && <span className="block mt-1 text-xs">Olá, <b>{profile.display_name}</b> — seu nome do Google será usado no ranking.</span>}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2">
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label="Nome no ranking *">
-              <Input value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} maxLength={60} />
-            </Field>
-            <Field label="Apelido *">
-              <Input value={form.apelido} onChange={(e) => setForm({ ...form, apelido: e.target.value })} maxLength={30} />
+            <Field label="Apelido / @username *">
+              <Input value={form.apelido} onChange={(e) => setForm({ ...form, apelido: e.target.value })} maxLength={30} placeholder="@seuapelido" />
             </Field>
             <Field label="Cidade *">
               <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={60} />
@@ -237,7 +239,7 @@ export function ProfileCompletionModal() {
               <div className="flex items-center gap-3">
                 <Avatar className="size-16">
                   {avatarSrc ? <AvatarImage src={avatarSrc} /> : null}
-                  <AvatarFallback>{(form.apelido || form.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{(form.apelido || profile?.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
                 <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
@@ -253,6 +255,12 @@ export function ProfileCompletionModal() {
               </Field>
               <Field label="Altura (m)">
                 <Input type="number" step="0.01" min="1" max="2.5" value={form.altura} onChange={(e) => setForm({ ...form, altura: e.target.value })} placeholder="1.80" />
+              </Field>
+              <Field label="Instagram">
+                <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} maxLength={40} placeholder="@seuinstagram" />
+              </Field>
+              <Field label="Bio / frase do perfil">
+                <Input value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} maxLength={120} placeholder="Vamo pra areia!" />
               </Field>
               <Field label="Observações">
                 <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} maxLength={300} rows={2} />
