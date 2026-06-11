@@ -173,7 +173,7 @@ export function ProfileBanner() {
   const isLoading = uploadMut.isPending || removeMut.isPending;
 
   return (
-    <div className="h-32 gradient-ocean relative overflow-hidden">
+    <div className="h-64 md:h-72 gradient-ocean relative overflow-hidden">
       {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
       <div className="absolute top-3 left-3 flex gap-2 z-10">
         <input
