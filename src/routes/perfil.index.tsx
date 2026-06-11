@@ -62,6 +62,15 @@ function ProfilePage() {
                   <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-height">Altura (cm)</Label><Input id="ed-height" type="number" value={form.height} onChange={e => setForm({ ...form, height: Number(e.target.value) })}/></div>
+                  <div className="space-y-1.5">
+                    <Label>Posição que joga</Label>
+                    <Select value={form.position} onValueChange={(v) => setForm({ ...form, position: v as Position })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a posição" /></SelectTrigger>
+                      <SelectContent>
+                        {POSITIONS.map((pos) => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-1.5"><Label htmlFor="ed-bio">Bio</Label><Textarea id="ed-bio" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })}/></div>
                 </div>
                 <DialogFooter>
