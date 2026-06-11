@@ -227,12 +227,24 @@ export function ProfileCompletionModal() {
             </Field>
           </div>
 
-          <div className="border-t pt-3">
-            <p className="text-xs text-muted-foreground mb-2">Opcionais</p>
+          <div className="border-t pt-3 space-y-3">
+            <p className="text-xs text-muted-foreground">Opcionais</p>
+
+            <Field label="Foto de perfil">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-16">
+                  {avatarSrc ? <AvatarImage src={avatarSrc} /> : null}
+                  <AvatarFallback>{(form.apelido || form.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                  {uploading ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Upload className="size-4 mr-2" />}
+                  {uploading ? "Enviando..." : "Enviar foto"}
+                </Button>
+              </div>
+            </Field>
+
             <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Foto (URL)">
-                <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://..." />
-              </Field>
               <Field label="Data de nascimento">
                 <Input type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} />
               </Field>
