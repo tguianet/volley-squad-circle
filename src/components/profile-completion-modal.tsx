@@ -238,7 +238,7 @@ export function ProfileCompletionModal() {
               <div className="flex items-center gap-3">
                 <Avatar className="size-16">
                   {avatarSrc ? <AvatarImage src={avatarSrc} /> : null}
-                  <AvatarFallback>{(form.apelido || form.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback>{(form.apelido || profile?.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
                 <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
