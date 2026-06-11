@@ -278,56 +278,72 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>
-                {category === "dupla" ? "Parceiro(a)" : "Jogadores"}{" "}
-                <span className="text-xs text-muted-foreground">
-                  ({selectedMembers.length}/{required})
-                </span>
-              </Label>
-            </div>
-            <Input
-              placeholder="Buscar por nome ou usuário…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <div className="max-h-64 overflow-y-auto rounded-md border p-1">
-              {profilesQ.isLoading ? (
-                <p className="text-xs text-muted-foreground p-2">Carregando jogadores…</p>
-              ) : filtered.length === 0 ? (
-                <p className="text-xs text-muted-foreground p-2 text-center">
-                  Nenhum jogador encontrado.
-                </p>
-              ) : (
-                filtered.map((p) => {
-                  const checked = selectedMembers.includes(p.id);
+            <Label>
+              {category === "dupla" ? "Parceiro(a)" : "Jogadores"}{" "}
+              <span className="text-xs text-muted-foreground">
+                ({selectedMembers.length}/{required})
+              </span>
+            </Label>
+
+            <Select
+              value=""
+              onValueChange={(v) => { if (v) toggleMember(v); }}
+              disabled={profilesQ.isLoading || selectedMembers.length >= required}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={
+                    profilesQ.isLoading
+                      ? "Carregando perfis…"
+                      : selectedMembers.length >= required
+                        ? `Limite atingido (${required})`
+                        : "Selecione um perfil existente"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {others
+                  .filter((p) => !selectedMembers.includes(p.id))
+                  .map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.display_name ?? "Sem nome"}
+                      {p.username ? ` (@${p.username})` : ""}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+
+            {selectedMembers.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {selectedMembers.map((id) => {
+                  const p = others.find((x) => x.id === id);
+                  if (!p) return null;
                   return (
-                    <label
-                      key={p.id}
-                      className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer"
+                    <Badge
+                      key={id}
+                      variant="secondary"
+                      className="flex items-center gap-2 pl-1 pr-2 py-1"
                     >
-                      <Checkbox checked={checked} onCheckedChange={() => toggleMember(p.id)} />
-                      <Avatar className="size-8">
+                      <Avatar className="size-5">
                         <AvatarImage src={p.avatar_url ?? undefined}/>
-                        <AvatarFallback>
+                        <AvatarFallback className="text-[10px]">
                           {(p.display_name ?? "?").slice(0, 1).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">
-                          {p.display_name ?? "Sem nome"}
-                        </div>
-                        {p.username && (
-                          <div className="text-[11px] text-muted-foreground truncate">
-                            @{p.username}
-                          </div>
-                        )}
-                      </div>
-                    </label>
+                      <span className="text-xs">{p.display_name ?? "Sem nome"}</span>
+                      <button
+                        type="button"
+                        onClick={() => toggleMember(id)}
+                        className="ml-1 rounded hover:bg-background/40"
+                        aria-label="Remover"
+                      >
+                        <X className="size-3"/>
+                      </button>
+                    </Badge>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         </div>
         <DialogFooter>
