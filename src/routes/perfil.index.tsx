@@ -37,8 +37,9 @@ function ProfilePage() {
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
         <Card className="overflow-hidden shadow-card">
-          <div className="h-32 gradient-ocean relative">
-            <div className="absolute -bottom-12 left-6">
+          <div className="relative">
+            <ProfileBanner />
+            <div className="absolute -bottom-12 left-6 z-10">
               <Avatar className="size-24 ring-4 ring-background shadow-glow">
                 <AvatarImage src={p.avatar}/>
                 <AvatarFallback>{p.name[0]}</AvatarFallback>
@@ -46,7 +47,7 @@ function ProfilePage() {
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" variant="secondary" className="absolute top-3 right-3"><Settings className="size-4 mr-1"/>Editar</Button>
+                <Button size="sm" variant="secondary" className="absolute top-3 right-3 z-10"><Settings className="size-4 mr-1"/>Editar</Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Editar perfil</DialogTitle></DialogHeader>
