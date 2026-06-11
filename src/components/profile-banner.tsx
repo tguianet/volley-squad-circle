@@ -94,35 +94,39 @@ export function ProfileBanner() {
   return (
     <div className="h-32 gradient-ocean relative overflow-hidden">
       {bannerQ.data && <SignedBanner path={bannerQ.data} />}
-      {userId && (
-        <div className="absolute top-3 left-3 flex gap-2 z-10">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) uploadMut.mutate(f);
-              e.target.value = "";
-            }}
-          />
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={() => fileRef.current?.click()}
-            disabled={isLoading}
-          >
-            {isLoading ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ImagePlus className="size-4 mr-1" />}
-            {bannerQ.data ? "Trocar capa" : "Adicionar capa"}
+      <div className="absolute top-3 left-3 flex gap-2 z-10">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) uploadMut.mutate(f);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            if (!userId) {
+              toast.error("Faça login para alterar a capa");
+              return;
+            }
+            fileRef.current?.click();
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ImagePlus className="size-4 mr-1" />}
+          {bannerQ.data ? "Trocar capa" : "Adicionar capa"}
+        </Button>
+        {bannerQ.data && userId && (
+          <Button size="sm" variant="destructive" onClick={() => removeMut.mutate()} disabled={isLoading}>
+            <Trash2 className="size-4" />
           </Button>
-          {bannerQ.data && (
-            <Button size="sm" variant="destructive" onClick={() => removeMut.mutate()} disabled={isLoading}>
-              <Trash2 className="size-4" />
-            </Button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
