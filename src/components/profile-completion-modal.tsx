@@ -25,6 +25,8 @@ type ProfileRow = {
   data_nascimento: string | null;
   altura: number | null;
   observacoes: string | null;
+  bio: string | null;
+  instagram: string | null;
   status: string;
 };
 
@@ -33,7 +35,7 @@ async function fetchMyProfile(): Promise<ProfileRow | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, avatar_url, data_nascimento, altura, observacoes, status")
+    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, avatar_url, data_nascimento, altura, observacoes, bio, instagram, status")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -45,7 +47,6 @@ export function ProfileCompletionModal() {
   const { data: profile } = useQuery({ queryKey: ["my-profile"], queryFn: fetchMyProfile });
 
   const [form, setForm] = useState({
-    display_name: "",
     apelido: "",
     city: "",
     state: "",
@@ -57,6 +58,8 @@ export function ProfileCompletionModal() {
     data_nascimento: "",
     altura: "",
     observacoes: "",
+    bio: "",
+    instagram: "",
   });
   const [saving, setSaving] = useState(false);
   const [forceClosed, setForceClosed] = useState(false);
@@ -64,7 +67,6 @@ export function ProfileCompletionModal() {
   useEffect(() => {
     if (profile) {
       setForm({
-        display_name: profile.display_name ?? "",
         apelido: profile.apelido ?? "",
         city: profile.city ?? "",
         state: profile.state ?? "",
@@ -76,6 +78,8 @@ export function ProfileCompletionModal() {
         data_nascimento: profile.data_nascimento ?? "",
         altura: profile.altura ? String(profile.altura) : "",
         observacoes: profile.observacoes ?? "",
+        bio: profile.bio ?? "",
+        instagram: profile.instagram ?? "",
       });
       if (profile.status !== "completo") setForceClosed(false);
     }
