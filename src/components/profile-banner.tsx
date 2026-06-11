@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const BANNER_W = 1600;
-const BANNER_H = 400; // 4:1 aspect to match the h-32 header
+const BANNER_H = 600; // ~8:3 aspect to match the taller header
 
 async function fetchBanner(userId: string) {
   const { data, error } = await supabase
