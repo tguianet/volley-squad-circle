@@ -288,16 +288,20 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
             <Select
               value=""
               onValueChange={(v) => { if (v) toggleMember(v); }}
-              disabled={profilesQ.isLoading || selectedMembers.length >= required}
+              disabled={profilesQ.isLoading || others.length === 0 || selectedMembers.length >= required}
             >
               <SelectTrigger>
                 <SelectValue
                   placeholder={
                     profilesQ.isLoading
                       ? "Carregando perfis…"
-                      : selectedMembers.length >= required
-                        ? `Limite atingido (${required})`
-                        : "Selecione um perfil existente"
+                      : profilesQ.error
+                        ? "Erro ao carregar perfis"
+                        : others.length === 0
+                          ? "Nenhum outro jogador cadastrado ainda"
+                          : selectedMembers.length >= required
+                            ? `Limite atingido (${required})`
+                            : "Selecione um perfil existente"
                   }
                 />
               </SelectTrigger>
@@ -312,6 +316,17 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
                   ))}
               </SelectContent>
             </Select>
+
+            {!profilesQ.isLoading && others.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                Ainda não há outros jogadores cadastrados. Convide pessoas para criar conta em <code>/auth</code> e elas aparecerão aqui.
+              </p>
+            )}
+            {profilesQ.error && (
+              <p className="text-[11px] text-destructive">
+                {(profilesQ.error as Error).message}
+              </p>
+            )}
 
             {selectedMembers.length > 0 && (
               <div className="flex flex-wrap gap-2 pt-1">
