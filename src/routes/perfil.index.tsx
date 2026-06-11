@@ -22,8 +22,11 @@ import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
 
+const TEAM_FORMATS = ["Dupla", "Dupla mista", "Quarteto", "Quarteto misto"] as const;
+type TeamFormat = typeof TEAM_FORMATS[number];
+
 type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
-type Team = { id: string; name: string; captainId: string; invites: Invite[]; createdAt: string };
+type Team = { id: string; name: string; format: TeamFormat; captainId: string; invites: Invite[]; createdAt: string };
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
