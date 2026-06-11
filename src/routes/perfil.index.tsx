@@ -41,10 +41,7 @@ function ProfilePage() {
           <div className="relative">
             <ProfileBanner />
             <div className="absolute -bottom-12 left-6 z-10">
-              <Avatar className="size-24 ring-4 ring-background shadow-glow">
-                <AvatarImage src={p.avatar}/>
-                <AvatarFallback>{p.name[0]}</AvatarFallback>
-              </Avatar>
+              <ProfileAvatar fallback={p.name[0]} className="size-24 ring-4 ring-background shadow-glow" />
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
