@@ -322,8 +322,23 @@ function Stat({ label, value, sub, accent }: { label: string; value: number | st
   );
 }
 
+type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null };
+
 function TeamBuilder({ currentId }: { currentId: string }) {
-  const others = players.filter(pl => pl.id !== currentId);
+  const rosterQ = useQuery<RosterPlayer[]>({
+    queryKey: ["roster-players"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, apelido, username, avatar_url")
+        .neq("id", currentId)
+        .order("display_name");
+      if (error) throw error;
+      return (data ?? []) as RosterPlayer[];
+    },
+  });
+  const others: RosterPlayer[] = rosterQ.data ?? [];
+  const getPlayer = (id: string): RosterPlayer | undefined => others.find(p => p.id === id);
   const [teams, setTeams] = useState<Team[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -452,10 +467,10 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                   ) : visibleOthers.map(pl => (
                     <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
                       <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
-                      <Avatar className="size-8"><AvatarImage src={pl.avatar}/><AvatarFallback>{pl.name[0]}</AvatarFallback></Avatar>
+                      <Avatar className="size-8"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{pl.name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">{pl.username}</div>
+                        <div className="text-sm font-medium truncate">{pl.display_name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">@{pl.apelido ?? pl.username ?? ""}</div>
                       </div>
                     </label>
                   ))}
@@ -470,7 +485,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     <SelectItem value={currentId}>Eu (capitão)</SelectItem>
                     {selected.map(id => {
                       const pl = getPlayer(id);
-                      return pl ? <SelectItem key={id} value={id}>{pl.name}</SelectItem> : null;
+                      return pl ? <SelectItem key={id} value={id}>{pl.display_name}</SelectItem> : null;
                     })}
                   </SelectContent>
                 </Select>
@@ -513,9 +528,9 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     const isCaptain = t.captainId === pl.id;
                     return (
                       <div key={inv.playerId} className="flex items-center gap-2 p-2 rounded-md bg-secondary/40">
-                        <Avatar className="size-7"><AvatarImage src={pl.avatar}/><AvatarFallback>{pl.name[0]}</AvatarFallback></Avatar>
+                        <Avatar className="size-7"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
                         <div className="flex-1 text-sm flex items-center gap-1.5">
-                          {pl.name}
+                          {pl.display_name}
                           {isCaptain && <Crown className="size-3.5 text-primary" />}
                         </div>
                         {inv.status === "pending" && (
