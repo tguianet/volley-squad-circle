@@ -14,6 +14,7 @@ import { currentUser, duplas, getPlayer, recentMatches } from "@/lib/mock-data";
 import { formatDateBR } from "@/lib/date-format";
 import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
 import { ProfileGallery } from "@/components/profile-gallery";
+import { ProfileBanner } from "@/components/profile-banner";
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
