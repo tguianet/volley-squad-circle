@@ -420,49 +420,88 @@ export type Database = {
       }
       profiles: {
         Row: {
+          altura: number | null
+          apelido: string | null
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
           city: string | null
           created_at: string
+          data_nascimento: string | null
+          derrotas: number
           display_name: string
           id: string
           is_suspended: boolean
           is_verified: boolean
           level: string | null
+          mao_dominante: string | null
+          observacoes: string | null
+          pontos: number
+          posicao_principal: string | null
+          state: string | null
+          status: string
           suspended_until: string | null
+          ultimo_acesso: string | null
           updated_at: string
           username: string | null
+          vitorias: number
+          whatsapp: string | null
         }
         Insert: {
+          altura?: number | null
+          apelido?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
           city?: string | null
           created_at?: string
+          data_nascimento?: string | null
+          derrotas?: number
           display_name?: string
           id: string
           is_suspended?: boolean
           is_verified?: boolean
           level?: string | null
+          mao_dominante?: string | null
+          observacoes?: string | null
+          pontos?: number
+          posicao_principal?: string | null
+          state?: string | null
+          status?: string
           suspended_until?: string | null
+          ultimo_acesso?: string | null
           updated_at?: string
           username?: string | null
+          vitorias?: number
+          whatsapp?: string | null
         }
         Update: {
+          altura?: number | null
+          apelido?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
           city?: string | null
           created_at?: string
+          data_nascimento?: string | null
+          derrotas?: number
           display_name?: string
           id?: string
           is_suspended?: boolean
           is_verified?: boolean
           level?: string | null
+          mao_dominante?: string | null
+          observacoes?: string | null
+          pontos?: number
+          posicao_principal?: string | null
+          state?: string | null
+          status?: string
           suspended_until?: string | null
+          ultimo_acesso?: string | null
           updated_at?: string
           username?: string | null
+          vitorias?: number
+          whatsapp?: string | null
         }
         Relationships: []
       }
