@@ -22,8 +22,11 @@ import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
 
+const TEAM_FORMATS = ["Dupla", "Dupla mista", "Quarteto", "Quarteto misto"] as const;
+type TeamFormat = typeof TEAM_FORMATS[number];
+
 type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
-type Team = { id: string; name: string; captainId: string; invites: Invite[]; createdAt: string };
+type Team = { id: string; name: string; format: TeamFormat; captainId: string; invites: Invite[]; createdAt: string };
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
@@ -196,10 +199,18 @@ function TeamBuilder({ currentId }: { currentId: string }) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [format, setFormat] = useState<TeamFormat>("Dupla");
   const [selected, setSelected] = useState<string[]>([]);
   const [captainId, setCaptainId] = useState<string>(currentId);
 
-  const reset = () => { setName(""); setSelected([]); setCaptainId(currentId); };
+  const formatInvitesCount: Record<TeamFormat, number> = {
+    Dupla: 1,
+    "Dupla mista": 1,
+    Quarteto: 3,
+    "Quarteto misto": 3,
+  };
+
+  const reset = () => { setName(""); setFormat("Dupla"); setSelected([]); setCaptainId(currentId); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
@@ -207,12 +218,14 @@ function TeamBuilder({ currentId }: { currentId: string }) {
 
   const create = () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
-    if (selected.length === 0) return toast.error("Selecione ao menos um participante");
+    const required = formatInvitesCount[format];
+    if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
     const eligible = [currentId, ...selected];
     if (!eligible.includes(captainId)) return toast.error("Escolha um capitão dentre os membros");
     const team: Team = {
       id: `t${Date.now()}`,
       name: name.trim(),
+      format,
       captainId,
       invites: selected.map(pid => ({ playerId: pid, status: "pending" })),
       createdAt: new Date().toISOString(),
@@ -257,6 +270,15 @@ function TeamBuilder({ currentId }: { currentId: string }) {
               <div className="space-y-1.5">
                 <Label htmlFor="team-name">Nome do time</Label>
                 <Input id="team-name" placeholder="Ex: Tubarões da Areia" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Formato</Label>
+                <Select value={format} onValueChange={(v) => setFormat(v as TeamFormat)}>
+                  <SelectTrigger><SelectValue/></SelectTrigger>
+                  <SelectContent>
+                    {TEAM_FORMATS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Participantes</Label>
@@ -307,9 +329,10 @@ function TeamBuilder({ currentId }: { currentId: string }) {
             return (
               <div key={t.id} className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="font-display text-base">{t.name}</div>
+                      <Badge variant="outline" className="text-[10px]">{t.format}</Badge>
                       {allIn && <Badge className="gradient-beach text-white border-0 text-[10px]">No ranking</Badge>}
                     </div>
                     <div className="text-[11px] text-muted-foreground">{accepted}/{t.invites.length} confirmados</div>
