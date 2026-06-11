@@ -77,6 +77,7 @@ export function ProfileCompletionModal() {
         altura: profile.altura ? String(profile.altura) : "",
         observacoes: profile.observacoes ?? "",
       });
+      if (profile.status !== "completo") setForceClosed(false);
     }
   }, [profile]);
 
