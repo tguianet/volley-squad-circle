@@ -43,6 +43,20 @@ export const createArena = createServerFn({ method: "POST" })
   });
 
 // =====================================================================
+// PROFILES
+// =====================================================================
+export const listProfiles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .select("id, display_name, username, avatar_url")
+      .order("display_name");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+// =====================================================================
 // TEAMS
 // =====================================================================
 export const listTeams = createServerFn({ method: "GET" })
