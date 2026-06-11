@@ -161,10 +161,12 @@ function RankingPage() {
                   }`}>{i === 0 ? <Users className="size-5"/> : i+1}</div>
                   <div className="flex -space-x-3">
                     {ps.map(p => (
-                      <Avatar key={p.id} className="size-10 ring-2 ring-background">
-                        <AvatarImage src={p.avatar}/>
-                        <AvatarFallback>{p.name[0]}</AvatarFallback>
-                      </Avatar>
+                      <PlayerPreview key={p.id} player={p}>
+                        <Avatar className="size-10 ring-2 ring-background cursor-pointer">
+                          <AvatarImage src={p.avatar}/>
+                          <AvatarFallback>{p.name[0]}</AvatarFallback>
+                        </Avatar>
+                      </PlayerPreview>
                     ))}
                   </div>
                   <div className="flex-1 min-w-0">
