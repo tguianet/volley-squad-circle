@@ -9,6 +9,7 @@ import { duplas, quartetos, getPlayer, computeIndividualRanking } from "@/lib/mo
 import type { IndividualRankingRow } from "@/lib/mock-data";
 import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus, CalendarDays, MapPin } from "lucide-react";
 import { useMemo, useState } from "react";
+import { PlayerPreview } from "@/components/player-preview";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listScheduledChallenges } from "@/lib/ranking.functions";
@@ -94,7 +95,9 @@ function RankingPage() {
                   }`}>
                     {i === 0 ? <Crown className="size-5"/> : i+1}
                   </div>
-                  <Avatar className="size-12 ring-2 ring-primary/30"><AvatarImage src={p.avatar}/><AvatarFallback>{p.name[0]}</AvatarFallback></Avatar>
+                  <PlayerPreview player={p}>
+                    <Avatar className="size-12 ring-2 ring-primary/30 cursor-pointer"><AvatarImage src={p.avatar}/><AvatarFallback>{p.name[0]}</AvatarFallback></Avatar>
+                  </PlayerPreview>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{p.name}</div>
                     <div className="text-xs text-muted-foreground truncate">
@@ -126,8 +129,12 @@ function RankingPage() {
                     i === 0 ? "gradient-beach text-white" : "bg-secondary"
                   }`}>{i === 0 ? <Trophy className="size-5"/> : i+1}</div>
                   <div className="flex -space-x-3">
-                    <Avatar className="size-11 ring-2 ring-background"><AvatarImage src={p1.avatar}/><AvatarFallback>{p1.name[0]}</AvatarFallback></Avatar>
-                    <Avatar className="size-11 ring-2 ring-background"><AvatarImage src={p2.avatar}/><AvatarFallback>{p2.name[0]}</AvatarFallback></Avatar>
+                    <PlayerPreview player={p1}>
+                      <Avatar className="size-11 ring-2 ring-background cursor-pointer"><AvatarImage src={p1.avatar}/><AvatarFallback>{p1.name[0]}</AvatarFallback></Avatar>
+                    </PlayerPreview>
+                    <PlayerPreview player={p2}>
+                      <Avatar className="size-11 ring-2 ring-background cursor-pointer"><AvatarImage src={p2.avatar}/><AvatarFallback>{p2.name[0]}</AvatarFallback></Avatar>
+                    </PlayerPreview>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{d.name}</div>
@@ -154,10 +161,12 @@ function RankingPage() {
                   }`}>{i === 0 ? <Users className="size-5"/> : i+1}</div>
                   <div className="flex -space-x-3">
                     {ps.map(p => (
-                      <Avatar key={p.id} className="size-10 ring-2 ring-background">
-                        <AvatarImage src={p.avatar}/>
-                        <AvatarFallback>{p.name[0]}</AvatarFallback>
-                      </Avatar>
+                      <PlayerPreview key={p.id} player={p}>
+                        <Avatar className="size-10 ring-2 ring-background cursor-pointer">
+                          <AvatarImage src={p.avatar}/>
+                          <AvatarFallback>{p.name[0]}</AvatarFallback>
+                        </Avatar>
+                      </PlayerPreview>
                     ))}
                   </div>
                   <div className="flex-1 min-w-0">
