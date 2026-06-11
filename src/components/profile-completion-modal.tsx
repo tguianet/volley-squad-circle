@@ -190,9 +190,6 @@ export function ProfileCompletionModal() {
             <Field label="Apelido / @username *">
               <Input value={form.apelido} onChange={(e) => setForm({ ...form, apelido: e.target.value })} maxLength={30} placeholder="@seuapelido" />
             </Field>
-            <Field label="Apelido *">
-              <Input value={form.apelido} onChange={(e) => setForm({ ...form, apelido: e.target.value })} maxLength={30} />
-            </Field>
             <Field label="Cidade *">
               <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} maxLength={60} />
             </Field>
