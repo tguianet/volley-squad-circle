@@ -179,9 +179,10 @@ export function ProfileCompletionModal() {
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle>Complete seu perfil</DialogTitle>
+          <DialogTitle>Complete seu perfil <span className="text-primary">PlayBeach</span></DialogTitle>
           <DialogDescription>
-            Para entrar no ranking e desafiar outros jogadores, preencha as informações abaixo.
+            Para entrar no ranking PlayBeach e desafiar outros jogadores, preencha as informações abaixo.
+            {profile?.display_name && <span className="block mt-1 text-xs">Olá, <b>{profile.display_name}</b> — seu nome do Google será usado no ranking.</span>}
           </DialogDescription>
         </DialogHeader>
 
