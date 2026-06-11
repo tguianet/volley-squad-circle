@@ -1,7 +1,9 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Shield, CalendarDays } from "lucide-react";
+import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Shield, CalendarDays, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 import { useIsStaff } from "@/hooks/use-auth";
 import logoAsset from "@/assets/logo.png.asset.json";
 
@@ -23,6 +25,7 @@ const sideExtra = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
   const isStaff = useIsStaff();
   const extra = isStaff
     ? [...sideExtra, { to: "/admin", label: "Admin", icon: Shield }]
@@ -59,6 +62,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
+        <div className="px-3">
+          <button
+            onClick={async () => {
+              await supabase.auth.signOut();
+              navigate({ to: "/auth" });
+            }}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium w-full text-foreground/70 hover:bg-destructive/10 hover:text-destructive transition-colors"
+          >
+            <LogOut className="size-4" />
+            Sair
+          </button>
+        </div>
         <div className="mt-auto p-4 rounded-2xl gradient-sand text-sm">
           <div className="font-display text-lg leading-none">Pronto pra jogar?</div>
           <p className="text-xs text-muted-foreground mt-1">Crie ou entre numa partida aberta agora.</p>
