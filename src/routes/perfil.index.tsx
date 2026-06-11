@@ -49,7 +49,11 @@ function ProfilePage() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Editar perfil</DialogTitle></DialogHeader>
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Foto do perfil</Label>
+                    <ProfileAvatar fallback={p.name[0]} className="size-20" editable />
+                  </div>
                   <div className="space-y-1.5"><Label htmlFor="ed-name">Nome</Label><Input id="ed-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
