@@ -95,7 +95,9 @@ function RankingPage() {
                   }`}>
                     {i === 0 ? <Crown className="size-5"/> : i+1}
                   </div>
-                  <Avatar className="size-12 ring-2 ring-primary/30"><AvatarImage src={p.avatar}/><AvatarFallback>{p.name[0]}</AvatarFallback></Avatar>
+                  <PlayerPreview player={p}>
+                    <Avatar className="size-12 ring-2 ring-primary/30 cursor-pointer"><AvatarImage src={p.avatar}/><AvatarFallback>{p.name[0]}</AvatarFallback></Avatar>
+                  </PlayerPreview>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{p.name}</div>
                     <div className="text-xs text-muted-foreground truncate">
