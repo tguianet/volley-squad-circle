@@ -21,7 +21,7 @@ export function PlayerPreview({ player, children }: { player: Player; children: 
     <HoverCard openDelay={200} closeDelay={100}>
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
       <HoverCardContent side="top" align="center" className="w-72 p-0 overflow-hidden">
-        <div className="relative h-20 bg-gradient-to-r from-primary/20 to-primary-glow/20">
+        <div className="relative h-20 bg-gradient-to-r from-primary/20 to-accent/20">
           <div className="absolute -bottom-6 left-4">
             <Avatar className="size-12 ring-4 ring-popover shadow-md">
               <AvatarImage src={player.avatar} />
