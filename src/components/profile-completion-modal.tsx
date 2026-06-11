@@ -128,7 +128,6 @@ export function ProfileCompletionModal() {
   const open = !!profile && profile.status !== "completo" && !forceClosed;
 
   const requiredOk =
-    form.display_name.trim() &&
     form.apelido.trim() &&
     form.city.trim() &&
     form.state.trim() &&
@@ -144,7 +143,6 @@ export function ProfileCompletionModal() {
       const { error } = await supabase
         .from("profiles")
         .update({
-          display_name: form.display_name.trim(),
           apelido: form.apelido.trim(),
           city: form.city.trim(),
           state: form.state.trim(),
@@ -156,6 +154,8 @@ export function ProfileCompletionModal() {
           data_nascimento: form.data_nascimento || null,
           altura: form.altura ? Number(form.altura) : null,
           observacoes: form.observacoes || null,
+          bio: form.bio || null,
+          instagram: form.instagram || null,
           status: "completo",
         })
         .eq("id", profile.id);
