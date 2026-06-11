@@ -10,16 +10,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { currentUser, duplas, getPlayer, recentMatches } from "@/lib/mock-data";
+import { currentUser, duplas, getPlayer, players, recentMatches } from "@/lib/mock-data";
 import { formatDateBR } from "@/lib/date-format";
-import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings, Target } from "lucide-react";
+import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const POSITIONS = ["Entrada de rede", "Saída de rede", "Defesa", "Rede"] as const;
 type Position = typeof POSITIONS[number];
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
+
+type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
+type Team = { id: string; name: string; captainId: string; invites: Invite[]; createdAt: string };
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
