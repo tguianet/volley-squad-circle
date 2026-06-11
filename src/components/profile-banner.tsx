@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -88,21 +88,27 @@ export function ProfileBanner() {
       if (!userId) throw new Error("Faça login para alterar a capa");
       if (!srcUrl) throw new Error("Selecione uma imagem");
       if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
-      console.log("[banner] uploading crop", areaPx);
       const blob = await cropToBlob(srcUrl, areaPx);
-      console.log("[banner] blob size", blob.size);
       const path = `${userId}/banner-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
         upsert: true,
         contentType: "image/jpeg",
       });
-      if (upErr) { console.error("[banner] upload error", upErr); throw upErr; }
+      if (upErr) throw upErr;
+
       const old = bannerQ.data;
-      if (old && old !== path) {
-        await supabase.storage.from("banners").remove([old]).catch(() => {});
+      const { error: dbErr } = await supabase
+        .from("profiles")
+        .update({ banner_url: path })
+        .eq("id", userId)
+        .select("banner_url")
+        .single();
+      if (dbErr) {
+        await supabase.storage.from("banners").remove([path]).catch(() => {});
+        throw dbErr;
       }
-      const { error: dbErr } = await supabase.from("profiles").update({ banner_url: path }).eq("id", userId);
-      if (dbErr) { console.error("[banner] db error", dbErr); throw dbErr; }
+
+      if (old && old !== path) await supabase.storage.from("banners").remove([old]).catch(() => {});
       return path;
     },
     onSuccess: () => {
@@ -111,7 +117,6 @@ export function ProfileBanner() {
       closeCropper();
     },
     onError: (e: any) => {
-      console.error("[banner] save failed", e);
       toast.error(e?.message ?? "Falha ao enviar");
     },
   });
@@ -145,6 +150,10 @@ export function ProfileBanner() {
       toast.error("Selecione uma imagem");
       return;
     }
+    if (srcUrl) URL.revokeObjectURL(srcUrl);
+    setAreaPx(null);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
     setSrcUrl(URL.createObjectURL(f));
     setCropOpen(true);
   };
@@ -192,6 +201,7 @@ export function ProfileBanner() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Ajustar capa</DialogTitle>
+            <DialogDescription>Reposicione a imagem para encaixar no banner.</DialogDescription>
           </DialogHeader>
           <div className="relative w-full bg-muted rounded-md overflow-hidden" style={{ height: 320 }}>
             {srcUrl && (
