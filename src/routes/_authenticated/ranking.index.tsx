@@ -3,40 +3,73 @@ import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { duplas, quartetos, getPlayer, computeIndividualRanking } from "@/lib/mock-data";
-import type { IndividualRankingRow } from "@/lib/mock-data";
-import { Crown, Trophy, Medal, TrendingUp, Users, Mars, Venus, CalendarDays, MapPin } from "lucide-react";
-import { useMemo, useState } from "react";
-import { PlayerPreview } from "@/components/player-preview";
+import { Crown, Medal, Mars, Venus, Users, CalendarDays, MapPin } from "lucide-react";
+import { useState } from "react";
+import { PlayerPreview, type PreviewProfile } from "@/components/player-preview";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listScheduledChallenges } from "@/lib/ranking.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 type GenderFilter = "M" | "F" | "X";
 
 export const Route = createFileRoute("/_authenticated/ranking/")({
-  head: () => ({ meta: [{ title: "Ranking — BeachPlay Arena" }] }),
+  head: () => ({ meta: [{ title: "Ranking — PlayBeach" }] }),
   component: RankingPage,
 });
+
+type RankRow = {
+  id: string;
+  display_name: string;
+  apelido: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  city: string | null;
+  state: string | null;
+  level: string | null;
+  altura: number | null;
+  mao_dominante: string | null;
+  posicao_principal: string | null;
+  pontos: number;
+  vitorias: number;
+  derrotas: number;
+};
+
+async function fetchRanking(): Promise<RankRow[]> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, apelido, username, avatar_url, city, state, level, altura, mao_dominante, posicao_principal, pontos, vitorias, derrotas")
+    .order("pontos", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data ?? []) as RankRow[];
+}
+
+function toPreview(p: RankRow): PreviewProfile {
+  return {
+    id: p.id,
+    name: p.display_name,
+    username: p.apelido ?? p.username,
+    avatar: p.avatar_url,
+    city: [p.city, p.state].filter(Boolean).join(", ") || null,
+    level: p.level,
+    height: p.altura != null ? Number(p.altura) : null,
+    dominantHand: p.mao_dominante,
+    position: p.posicao_principal,
+    wins: p.vitorias,
+    losses: p.derrotas,
+    rankingPoints: p.pontos,
+  };
+}
 
 function RankingPage() {
   const [tab, setTab] = useState<"ind" | "dupla" | "quarteto">("ind");
   const [gender, setGender] = useState<GenderFilter>("M");
-
-  // No tab Individual, Misto não é permitido — força para Masculino.
   const effectiveGender: GenderFilter = tab === "ind" && gender === "X" ? "M" : gender;
 
-  const filteredDuplas = duplas.filter(d => d.gender === effectiveGender);
-  const filteredQuartetos = quartetos.filter(q => q.gender === effectiveGender);
-
-  const rankedIndividuals: IndividualRankingRow[] = useMemo(
-    () => computeIndividualRanking(effectiveGender === "X" ? "M" : effectiveGender),
-    [effectiveGender],
-  );
-  const rankedDuplas = [...filteredDuplas].sort((a,b) => b.rankingPoints - a.rankingPoints);
-  const rankedQuartetos = [...filteredQuartetos].sort((a,b) => b.rankingPoints - a.rankingPoints);
+  const q = useQuery({ queryKey: ["ranking-players"], queryFn: fetchRanking });
+  const players = q.data ?? [];
 
   return (
     <AppLayout>
@@ -50,18 +83,15 @@ function RankingPage() {
           onValueChange={(v) => { if (v === "M" || v === "F" || v === "X") setGender(v); }}
           className="mb-4 justify-start"
         >
-          <ToggleGroupItem value="M" aria-label="Masculino" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <Mars className="size-4" />
-            Masculino
+          <ToggleGroupItem value="M" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <Mars className="size-4" /> Masculino
           </ToggleGroupItem>
-          <ToggleGroupItem value="F" aria-label="Feminino" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-            <Venus className="size-4" />
-            Feminino
+          <ToggleGroupItem value="F" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+            <Venus className="size-4" /> Feminino
           </ToggleGroupItem>
           {tab !== "ind" && (
-            <ToggleGroupItem value="X" aria-label="Misto" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
-              <Users className="size-4" />
-              Misto
+            <ToggleGroupItem value="X" className="gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">
+              <Users className="size-4" /> Misto
             </ToggleGroupItem>
           )}
         </ToggleGroup>
@@ -73,19 +103,17 @@ function RankingPage() {
             <TabsTrigger value="quarteto">Quartetos</TabsTrigger>
           </TabsList>
 
-
-
-
           <TabsContent value="ind" className="mt-4 space-y-3">
-            <p className="text-xs text-muted-foreground px-1">
-              Pontos agregados das modalidades coletivas (Duplas e Quartetos). Não há partidas individuais.
-            </p>
-            {rankedIndividuals.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum jogador nesta categoria ainda.</p>
+            {q.isLoading && <p className="text-sm text-muted-foreground text-center py-8">Carregando…</p>}
+            {!q.isLoading && players.length === 0 && (
+              <Card className="p-6 text-center text-sm text-muted-foreground">
+                Ainda não há jogadores cadastrados no ranking.
+              </Card>
             )}
-            {rankedIndividuals.map((row, i) => {
-              const p = row.player;
-              const winRate = (row.winRate * 100).toFixed(0);
+            {players.map((p, i) => {
+              const preview = toPreview(p);
+              const total = p.vitorias + p.derrotas;
+              const winRate = total ? ((p.vitorias / total) * 100).toFixed(0) : "0";
               return (
                 <Card key={p.id} className="p-4 flex items-center gap-4 shadow-card hover:shadow-glow transition-shadow">
                   <div className={`size-10 rounded-full flex items-center justify-center font-display text-lg shrink-0 ${
@@ -95,91 +123,42 @@ function RankingPage() {
                   }`}>
                     {i === 0 ? <Crown className="size-5"/> : i+1}
                   </div>
-                  <PlayerPreview player={p}>
-                    <Avatar className="size-12 ring-2 ring-primary/30 cursor-pointer"><AvatarImage src={p.avatar}/><AvatarFallback>{p.name[0]}</AvatarFallback></Avatar>
+                  <PlayerPreview player={preview}>
+                    <Avatar className="size-12 ring-2 ring-primary/30 cursor-pointer">
+                      <AvatarImage src={p.avatar_url ?? undefined}/>
+                      <AvatarFallback>{p.display_name[0]}</AvatarFallback>
+                    </Avatar>
                   </PlayerPreview>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{p.name}</div>
+                    <div className="font-semibold truncate">{p.display_name}</div>
                     <div className="text-xs text-muted-foreground truncate">
-                      {row.modalities.length > 0 ? row.modalities.join(" • ") : "Sem modalidades"}
+                      {preview.city ?? "—"}{p.level ? ` • ${p.level}` : ""}
                     </div>
                   </div>
                   <div className="hidden sm:grid grid-cols-3 gap-3 text-center text-xs">
-                    <div><div className="font-display text-base text-success">{row.wins}</div><div className="text-muted-foreground">V</div></div>
-                    <div><div className="font-display text-base text-destructive">{row.losses}</div><div className="text-muted-foreground">D</div></div>
+                    <div><div className="font-display text-base text-success">{p.vitorias}</div><div className="text-muted-foreground">V</div></div>
+                    <div><div className="font-display text-base text-destructive">{p.derrotas}</div><div className="text-muted-foreground">D</div></div>
                     <div><div className="font-display text-base text-primary">{winRate}%</div><div className="text-muted-foreground">Apr.</div></div>
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-display text-2xl text-gradient">{row.points}</div>
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><Medal className="size-3"/>pts agregados</div>
+                    <div className="font-display text-2xl text-gradient">{p.pontos}</div>
+                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><Medal className="size-3"/>pts</div>
                   </div>
                 </Card>
               );
             })}
           </TabsContent>
 
-
-          <TabsContent value="dupla" className="mt-4 space-y-3">
-            {rankedDuplas.map((d, i) => {
-              const p1 = getPlayer(d.player1Id)!;
-              const p2 = getPlayer(d.player2Id)!;
-              return (
-                <Card key={d.id} className="p-4 flex items-center gap-4 shadow-card">
-                  <div className={`size-10 rounded-full flex items-center justify-center font-display text-lg shrink-0 ${
-                    i === 0 ? "gradient-beach text-white" : "bg-secondary"
-                  }`}>{i === 0 ? <Trophy className="size-5"/> : i+1}</div>
-                  <div className="flex -space-x-3">
-                    <PlayerPreview player={p1}>
-                      <Avatar className="size-11 ring-2 ring-background cursor-pointer"><AvatarImage src={p1.avatar}/><AvatarFallback>{p1.name[0]}</AvatarFallback></Avatar>
-                    </PlayerPreview>
-                    <PlayerPreview player={p2}>
-                      <Avatar className="size-11 ring-2 ring-background cursor-pointer"><AvatarImage src={p2.avatar}/><AvatarFallback>{p2.name[0]}</AvatarFallback></Avatar>
-                    </PlayerPreview>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{d.name}</div>
-                    <Badge variant="secondary" className="text-[10px] mt-0.5">{d.wins}V — {d.losses}D</Badge>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-display text-2xl text-gradient">{d.rankingPoints}</div>
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><TrendingUp className="size-3"/>pts</div>
-                  </div>
-                </Card>
-              );
-            })}
+          <TabsContent value="dupla" className="mt-4">
+            <Card className="p-6 text-center text-sm text-muted-foreground">
+              Ranking de duplas {effectiveGender === "F" ? "femininas" : effectiveGender === "X" ? "mistas" : "masculinas"} em breve.
+            </Card>
           </TabsContent>
 
-          <TabsContent value="quarteto" className="mt-4 space-y-3">
-            {rankedQuartetos.map((q, i) => {
-              const ps = q.playerIds.map(id => getPlayer(id)!).filter(Boolean);
-              const total = q.wins + q.losses;
-              const winRate = total ? ((q.wins / total) * 100).toFixed(0) : "0";
-              return (
-                <Card key={q.id} className="p-4 flex items-center gap-4 shadow-card">
-                  <div className={`size-10 rounded-full flex items-center justify-center font-display text-lg shrink-0 ${
-                    i === 0 ? "gradient-beach text-white shadow-glow" : "bg-secondary"
-                  }`}>{i === 0 ? <Users className="size-5"/> : i+1}</div>
-                  <div className="flex -space-x-3">
-                    {ps.map(p => (
-                      <PlayerPreview key={p.id} player={p}>
-                        <Avatar className="size-10 ring-2 ring-background cursor-pointer">
-                          <AvatarImage src={p.avatar}/>
-                          <AvatarFallback>{p.name[0]}</AvatarFallback>
-                        </Avatar>
-                      </PlayerPreview>
-                    ))}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate">{q.name}</div>
-                    <Badge variant="secondary" className="text-[10px] mt-0.5">{q.wins}V — {q.losses}D • {winRate}%</Badge>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-display text-2xl text-gradient">{q.rankingPoints}</div>
-                    <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><TrendingUp className="size-3"/>pts</div>
-                  </div>
-                </Card>
-              );
-            })}
+          <TabsContent value="quarteto" className="mt-4">
+            <Card className="p-6 text-center text-sm text-muted-foreground">
+              Ranking de quartetos em breve.
+            </Card>
           </TabsContent>
         </Tabs>
 
