@@ -79,6 +79,46 @@ export function ProfileCompletionModal() {
     }
   }, [profile]);
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewBlob, setPreviewBlob] = useState<string | null>(null);
+  const [signedPreview, setSignedPreview] = useState<string | null>(null);
+
+  // Generate signed URL for storage paths (not full http URLs)
+  useEffect(() => {
+    const v = form.avatar_url;
+    if (!v || v.startsWith("http") || v.startsWith("blob:")) { setSignedPreview(null); return; }
+    let alive = true;
+    supabase.storage.from("avatars").createSignedUrl(v, 3600).then(({ data }) => {
+      if (alive) setSignedPreview(data?.signedUrl ?? null);
+    });
+    return () => { alive = false; };
+  }, [form.avatar_url]);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !profile) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB."); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${profile.id}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      setPreviewBlob(URL.createObjectURL(file));
+      setForm((f) => ({ ...f, avatar_url: path }));
+      toast.success("Foto enviada!");
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao enviar foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const avatarSrc = previewBlob ?? signedPreview ?? (form.avatar_url?.startsWith("http") ? form.avatar_url : null);
+
   const open = !!profile && profile.status !== "completo";
 
   const requiredOk =
