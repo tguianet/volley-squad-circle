@@ -12,7 +12,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { currentUser, duplas, getPlayer, recentMatches } from "@/lib/mock-data";
 import { formatDateBR } from "@/lib/date-format";
-import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
+import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings, Target } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const POSITIONS = ["Entrada de rede", "Saída de rede", "Defesa", "Rede"] as const;
+type Position = typeof POSITIONS[number];
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -25,7 +29,7 @@ export const Route = createFileRoute("/perfil/")({
 function ProfilePage() {
   const [p, setP] = useState(currentUser);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio, city: p.city, height: p.height });
+  const [form, setForm] = useState({ name: p.name, username: p.username, bio: p.bio, city: p.city, height: p.height, position: "Entrada de rede" as Position });
   const dupla = duplas.find(d => d.player1Id === p.id || d.player2Id === p.id);
   const partner = dupla ? getPlayer(dupla.player1Id === p.id ? dupla.player2Id : dupla.player1Id) : null;
   const winRate = ((p.wins / p.matches) * 100).toFixed(0);
@@ -58,6 +62,15 @@ function ProfilePage() {
                   <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-height">Altura (cm)</Label><Input id="ed-height" type="number" value={form.height} onChange={e => setForm({ ...form, height: Number(e.target.value) })}/></div>
+                  <div className="space-y-1.5">
+                    <Label>Posição que joga</Label>
+                    <Select value={form.position} onValueChange={(v) => setForm({ ...form, position: v as Position })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione a posição" /></SelectTrigger>
+                      <SelectContent>
+                        {POSITIONS.map((pos) => <SelectItem key={pos} value={pos}>{pos}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-1.5"><Label htmlFor="ed-bio">Bio</Label><Textarea id="ed-bio" value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })}/></div>
                 </div>
                 <DialogFooter>
@@ -81,6 +94,7 @@ function ProfilePage() {
               <Info icon={Ruler} label="Altura" value={`${p.height} cm`}/>
               <Info icon={Hand} label="Mão" value={p.dominantHand}/>
               <Info icon={ArrowLeftRight} label="Lado" value={p.preferredSide}/>
+              <Info icon={Target} label="Posição" value={(p as any).position ?? form.position}/>
             </div>
           </div>
         </Card>
