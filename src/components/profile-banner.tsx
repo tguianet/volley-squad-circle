@@ -91,14 +91,23 @@ export function ProfileBanner() {
       if (!srcUrl) throw new Error("Selecione uma imagem");
       if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
       const blob = await cropToBlob(srcUrl, areaPx);
+      const localPreview = URL.createObjectURL(blob);
       const path = `${userId}/banner-${Date.now()}.jpg`;
+
+      // Optimistic preview — show cropped image instantly
+      const old = bannerQ.data;
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(localPreview);
+      qc.setQueryData(["profile_banner", userId], path);
+      closeCropper();
+      toast.success("Capa atualizada");
+
       const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
         upsert: true,
         contentType: "image/jpeg",
       });
       if (upErr) throw upErr;
 
-      const old = bannerQ.data;
       const { error: dbErr } = await supabase
         .from("profiles")
         .update({ banner_url: path })
@@ -115,10 +124,11 @@ export function ProfileBanner() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
-      toast.success("Capa atualizada");
-      closeCropper();
     },
     onError: (e: any) => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(null);
+      qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
       toast.error(e?.message ?? "Falha ao enviar");
     },
   });
