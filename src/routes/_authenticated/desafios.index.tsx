@@ -17,8 +17,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  listArenas, listTeams, getMyTeams, createTeam,
+  listArenas, listTeams, getMyTeams, createTeam, listProfiles,
   getTeamAvailability, upsertSundayAvailability,
   findCommonSundays, createChallenge, respondToChallenge, listMyChallenges,
 } from "@/lib/ranking.functions";
