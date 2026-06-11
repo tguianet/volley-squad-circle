@@ -15,6 +15,7 @@ import { formatDateBR } from "@/lib/date-format";
 import { MapPin, Ruler, Hand, ArrowLeftRight, Trophy, Settings } from "lucide-react";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
+import { ProfileAvatar } from "@/components/profile-avatar";
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — BeachPlay Arena" }] }),
@@ -40,10 +41,7 @@ function ProfilePage() {
           <div className="relative">
             <ProfileBanner />
             <div className="absolute -bottom-12 left-6 z-10">
-              <Avatar className="size-24 ring-4 ring-background shadow-glow">
-                <AvatarImage src={p.avatar}/>
-                <AvatarFallback>{p.name[0]}</AvatarFallback>
-              </Avatar>
+              <ProfileAvatar fallback={p.name[0]} className="size-24 ring-4 ring-background shadow-glow" />
             </div>
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
@@ -51,7 +49,11 @@ function ProfilePage() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Editar perfil</DialogTitle></DialogHeader>
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label>Foto do perfil</Label>
+                    <ProfileAvatar fallback={p.name[0]} className="size-20" editable />
+                  </div>
                   <div className="space-y-1.5"><Label htmlFor="ed-name">Nome</Label><Input id="ed-name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-user">Usuário</Label><Input id="ed-user" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })}/></div>
                   <div className="space-y-1.5"><Label htmlFor="ed-city">Cidade</Label><Input id="ed-city" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })}/></div>
