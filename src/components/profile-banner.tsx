@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const BANNER_W = 1600;
-const BANNER_H = 400; // 4:1 aspect to match the h-32 header
+const BANNER_H = 600; // ~8:3 aspect to match the taller header
 
 async function fetchBanner(userId: string) {
   const { data, error } = await supabase
@@ -173,7 +173,7 @@ export function ProfileBanner() {
   const isLoading = uploadMut.isPending || removeMut.isPending;
 
   return (
-    <div className="h-32 gradient-ocean relative overflow-hidden">
+    <div className="h-64 md:h-72 gradient-ocean relative overflow-hidden">
       {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
       <div className="absolute top-3 left-3 flex gap-2 z-10">
         <input
