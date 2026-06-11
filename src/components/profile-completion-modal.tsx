@@ -59,6 +59,7 @@ export function ProfileCompletionModal() {
     observacoes: "",
   });
   const [saving, setSaving] = useState(false);
+  const [forceClosed, setForceClosed] = useState(false);
 
   useEffect(() => {
     if (profile) {
