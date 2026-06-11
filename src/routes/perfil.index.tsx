@@ -218,12 +218,14 @@ function TeamBuilder({ currentId }: { currentId: string }) {
 
   const create = () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
-    if (selected.length === 0) return toast.error("Selecione ao menos um participante");
+    const required = formatInvitesCount[format];
+    if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
     const eligible = [currentId, ...selected];
     if (!eligible.includes(captainId)) return toast.error("Escolha um capitão dentre os membros");
     const team: Team = {
       id: `t${Date.now()}`,
       name: name.trim(),
+      format,
       captainId,
       invites: selected.map(pid => ({ playerId: pid, status: "pending" })),
       createdAt: new Date().toISOString(),
