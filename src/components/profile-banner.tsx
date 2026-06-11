@@ -174,7 +174,7 @@ export function ProfileBanner() {
 
   return (
     <div className="h-32 gradient-ocean relative overflow-hidden">
-      {bannerQ.data && <SignedBanner path={bannerQ.data} />}
+      {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
       <div className="absolute top-3 left-3 flex gap-2 z-10">
         <input
           ref={fileRef}
