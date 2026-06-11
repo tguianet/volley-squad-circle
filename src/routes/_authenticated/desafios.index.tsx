@@ -17,8 +17,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  listArenas, listTeams, getMyTeams, createTeam,
+  listArenas, listTeams, getMyTeams, createTeam, listProfiles,
   getTeamAvailability, upsertSundayAvailability,
   findCommonSundays, createChallenge, respondToChallenge, listMyChallenges,
 } from "@/lib/ranking.functions";
@@ -169,8 +171,45 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
   const [category, setCategory] = useState<"dupla" | "quarteto">("dupla");
   const [gender, setGender] = useState<"M" | "F" | "X">("M");
   const [arenaId, setArenaId] = useState<string>("");
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
   const qc = useQueryClient();
   const createFn = useServerFn(createTeam);
+  const fetchProfiles = useServerFn(listProfiles);
+
+  const [myId, setMyId] = useState<string | null>(null);
+  useMemo(() => {
+    supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
+  }, []);
+
+  const profilesQ = useQuery({
+    queryKey: ["profiles-all"],
+    queryFn: () => fetchProfiles(),
+    enabled: open,
+  });
+
+  const required = category === "dupla" ? 1 : 3;
+  const others = (profilesQ.data ?? []).filter((p) => p.id !== myId);
+  const filtered = others.filter((p) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      (p.display_name ?? "").toLowerCase().includes(q) ||
+      (p.username ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  const toggleMember = (id: string) => {
+    setSelectedMembers((s) => {
+      if (s.includes(id)) return s.filter((x) => x !== id);
+      if (s.length >= required) {
+        toast.error(`Selecione no máximo ${required} jogador(es) para ${category}`);
+        return s;
+      }
+      return [...s, id];
+    });
+  };
+
   const m = useMutation({
     mutationFn: createFn,
     onSuccess: () => {
@@ -179,16 +218,24 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
       qc.invalidateQueries({ queryKey: ["teams"] });
       setOpen(false);
       setName("");
+      setSelectedMembers([]);
+      setSearch("");
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // reset selection when category changes (different required count)
+  const onCategoryChange = (v: "dupla" | "quarteto") => {
+    setCategory(v);
+    setSelectedMembers([]);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm"><Plus className="size-4 mr-1"/>Nova equipe</Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Criar equipe (você será o capitão)</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
@@ -198,7 +245,7 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label>Categoria</Label>
-              <Select value={category} onValueChange={(v) => setCategory(v as "dupla" | "quarteto")}>
+              <Select value={category} onValueChange={(v) => onCategoryChange(v as "dupla" | "quarteto")}>
                 <SelectTrigger><SelectValue/></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="dupla">Dupla</SelectItem>
@@ -229,10 +276,63 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>
+                {category === "dupla" ? "Parceiro(a)" : "Jogadores"}{" "}
+                <span className="text-xs text-muted-foreground">
+                  ({selectedMembers.length}/{required})
+                </span>
+              </Label>
+            </div>
+            <Input
+              placeholder="Buscar por nome ou usuário…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className="max-h-64 overflow-y-auto rounded-md border p-1">
+              {profilesQ.isLoading ? (
+                <p className="text-xs text-muted-foreground p-2">Carregando jogadores…</p>
+              ) : filtered.length === 0 ? (
+                <p className="text-xs text-muted-foreground p-2 text-center">
+                  Nenhum jogador encontrado.
+                </p>
+              ) : (
+                filtered.map((p) => {
+                  const checked = selectedMembers.includes(p.id);
+                  return (
+                    <label
+                      key={p.id}
+                      className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer"
+                    >
+                      <Checkbox checked={checked} onCheckedChange={() => toggleMember(p.id)} />
+                      <Avatar className="size-8">
+                        <AvatarImage src={p.avatar_url ?? undefined}/>
+                        <AvatarFallback>
+                          {(p.display_name ?? "?").slice(0, 1).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">
+                          {p.display_name ?? "Sem nome"}
+                        </div>
+                        {p.username && (
+                          <div className="text-[11px] text-muted-foreground truncate">
+                            @{p.username}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
         <DialogFooter>
           <Button
-            disabled={!name || m.isPending}
+            disabled={!name || selectedMembers.length !== required || m.isPending}
             onClick={() =>
               m.mutate({
                 data: {
@@ -240,7 +340,7 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
                   category,
                   gender,
                   preferred_arena_id: arenaId || null,
-                  member_profile_ids: [],
+                  member_profile_ids: selectedMembers,
                 },
               })
             }
