@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -210,7 +210,32 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     "Quarteto misto": 3,
   };
 
-  const reset = () => { setName(""); setFormat("Dupla"); setSelected([]); setCaptainId(currentId); };
+  // Formatos em que já estou no ranking (não posso abrir outro time no mesmo formato)
+  const myRankedFormats = new Set<TeamFormat>(
+    teams
+      .filter(t => t.invites.length > 0 && t.invites.every(i => i.status === "accepted"))
+      .map(t => t.format)
+  );
+
+  // Jogadores que já estão num time meu (no ranking) do formato selecionado — não aparecem
+  const playersInRankedFormat = new Set<string>(
+    teams
+      .filter(t => t.format === format && t.invites.length > 0 && t.invites.every(i => i.status === "accepted"))
+      .flatMap(t => [t.captainId, ...t.invites.map(i => i.playerId)])
+  );
+
+  const availableFormats = TEAM_FORMATS.filter(f => !myRankedFormats.has(f));
+  const visibleOthers = others.filter(pl => !playersInRankedFormat.has(pl.id));
+
+  // Se o formato atual ficou bloqueado, troca para o primeiro disponível
+  useEffect(() => {
+    if (myRankedFormats.has(format) && availableFormats.length > 0) {
+      setFormat(availableFormats[0]);
+      setSelected([]);
+    }
+  }, [teams]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); setCaptainId(currentId); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
@@ -218,8 +243,10 @@ function TeamBuilder({ currentId }: { currentId: string }) {
 
   const create = () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
+    if (myRankedFormats.has(format)) return toast.error(`Você já participa de um time no formato ${format}`);
     const required = formatInvitesCount[format];
     if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
+
     const eligible = [currentId, ...selected];
     if (!eligible.includes(captainId)) return toast.error("Escolha um capitão dentre os membros");
     const team: Team = {
@@ -262,7 +289,9 @@ function TeamBuilder({ currentId }: { currentId: string }) {
         </div>
         <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gradient-beach text-white border-0"><Plus className="size-4 mr-1"/>Montar time</Button>
+            <Button size="sm" className="gradient-beach text-white border-0" disabled={availableFormats.length === 0}>
+              <Plus className="size-4 mr-1"/>Montar time
+            </Button>
           </DialogTrigger>
           <DialogContent className="max-h-[85vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Montar novo time</DialogTitle></DialogHeader>
@@ -273,17 +302,26 @@ function TeamBuilder({ currentId }: { currentId: string }) {
               </div>
               <div className="space-y-1.5">
                 <Label>Formato</Label>
-                <Select value={format} onValueChange={(v) => setFormat(v as TeamFormat)}>
+                <Select value={format} onValueChange={(v) => { setFormat(v as TeamFormat); setSelected([]); }}>
                   <SelectTrigger><SelectValue/></SelectTrigger>
                   <SelectContent>
-                    {TEAM_FORMATS.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                    {availableFormats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {myRankedFormats.size > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Você já está no ranking em: {[...myRankedFormats].join(", ")}.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Participantes</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {others.map(pl => (
+                  {visibleOthers.length === 0 ? (
+                    <div className="text-xs text-muted-foreground p-2 text-center">
+                      Nenhum jogador disponível para este formato.
+                    </div>
+                  ) : visibleOthers.map(pl => (
                     <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
                       <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
                       <Avatar className="size-8"><AvatarImage src={pl.avatar}/><AvatarFallback>{pl.name[0]}</AvatarFallback></Avatar>
@@ -295,6 +333,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                   ))}
                 </div>
               </div>
+
               <div className="space-y-1.5">
                 <Label>Capitão</Label>
                 <Select value={captainId} onValueChange={setCaptainId}>
