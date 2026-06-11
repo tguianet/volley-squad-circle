@@ -2,6 +2,8 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Shield, CalendarDays, LogOut } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "@tanstack/react-router";
 import { useIsStaff } from "@/hooks/use-auth";
 import logoAsset from "@/assets/logo.png.asset.json";
 
