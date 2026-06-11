@@ -1,14 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 
 type ProfileRow = {
   id: string;
@@ -77,6 +78,46 @@ export function ProfileCompletionModal() {
       });
     }
   }, [profile]);
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewBlob, setPreviewBlob] = useState<string | null>(null);
+  const [signedPreview, setSignedPreview] = useState<string | null>(null);
+
+  // Generate signed URL for storage paths (not full http URLs)
+  useEffect(() => {
+    const v = form.avatar_url;
+    if (!v || v.startsWith("http") || v.startsWith("blob:")) { setSignedPreview(null); return; }
+    let alive = true;
+    supabase.storage.from("avatars").createSignedUrl(v, 3600).then(({ data }) => {
+      if (alive) setSignedPreview(data?.signedUrl ?? null);
+    });
+    return () => { alive = false; };
+  }, [form.avatar_url]);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !profile) return;
+    if (!file.type.startsWith("image/")) { toast.error("Selecione uma imagem."); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem deve ter no máximo 5MB."); return; }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const path = `${profile.id}/avatar-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
+      if (error) throw error;
+      setPreviewBlob(URL.createObjectURL(file));
+      setForm((f) => ({ ...f, avatar_url: path }));
+      toast.success("Foto enviada!");
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao enviar foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const avatarSrc = previewBlob ?? signedPreview ?? (form.avatar_url?.startsWith("http") ? form.avatar_url : null);
 
   const open = !!profile && profile.status !== "completo";
 
@@ -186,12 +227,24 @@ export function ProfileCompletionModal() {
             </Field>
           </div>
 
-          <div className="border-t pt-3">
-            <p className="text-xs text-muted-foreground mb-2">Opcionais</p>
+          <div className="border-t pt-3 space-y-3">
+            <p className="text-xs text-muted-foreground">Opcionais</p>
+
+            <Field label="Foto de perfil">
+              <div className="flex items-center gap-3">
+                <Avatar className="size-16">
+                  {avatarSrc ? <AvatarImage src={avatarSrc} /> : null}
+                  <AvatarFallback>{(form.apelido || form.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+                <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                  {uploading ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Upload className="size-4 mr-2" />}
+                  {uploading ? "Enviando..." : "Enviar foto"}
+                </Button>
+              </div>
+            </Field>
+
             <div className="grid sm:grid-cols-2 gap-3">
-              <Field label="Foto (URL)">
-                <Input value={form.avatar_url} onChange={(e) => setForm({ ...form, avatar_url: e.target.value })} placeholder="https://..." />
-              </Field>
               <Field label="Data de nascimento">
                 <Input type="date" value={form.data_nascimento} onChange={(e) => setForm({ ...form, data_nascimento: e.target.value })} />
               </Field>
