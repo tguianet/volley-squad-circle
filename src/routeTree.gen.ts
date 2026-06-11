@@ -16,7 +16,6 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TorneiosIndexRouteImport } from './routes/torneios.index'
 import { Route as RegrasIndexRouteImport } from './routes/regras.index'
-import { Route as RankingIndexRouteImport } from './routes/ranking.index'
 import { Route as PerfilIndexRouteImport } from './routes/perfil.index'
 import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
 import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
@@ -25,6 +24,7 @@ import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
+import { Route as AuthenticatedRankingIndexRouteImport } from './routes/_authenticated/ranking.index'
 import { Route as AuthenticatedDesafiosIndexRouteImport } from './routes/_authenticated/desafios.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin/index'
 import { Route as AuthenticatedAdminUsuariosRouteImport } from './routes/_authenticated/admin/usuarios'
@@ -70,11 +70,6 @@ const RegrasIndexRoute = RegrasIndexRouteImport.update({
   path: '/regras/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RankingIndexRoute = RankingIndexRouteImport.update({
-  id: '/ranking/',
-  path: '/ranking/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PerfilIndexRoute = PerfilIndexRouteImport.update({
   id: '/perfil/',
   path: '/perfil/',
@@ -115,6 +110,12 @@ const AuthenticatedAdminRouteRoute = AuthenticatedAdminRouteRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRankingIndexRoute =
+  AuthenticatedRankingIndexRouteImport.update({
+    id: '/ranking/',
+    path: '/ranking/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDesafiosIndexRoute =
   AuthenticatedDesafiosIndexRouteImport.update({
     id: '/desafios/',
@@ -188,7 +189,6 @@ export interface FileRoutesByFullPath {
   '/arenas/': typeof ArenasIndexRoute
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
-  '/ranking/': typeof RankingIndexRoute
   '/regras/': typeof RegrasIndexRoute
   '/torneios/': typeof TorneiosIndexRoute
   '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
@@ -200,6 +200,7 @@ export interface FileRoutesByFullPath {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/desafios/': typeof AuthenticatedDesafiosIndexRoute
+  '/ranking/': typeof AuthenticatedRankingIndexRoute
   '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRoutesByTo {
@@ -214,7 +215,6 @@ export interface FileRoutesByTo {
   '/arenas': typeof ArenasIndexRoute
   '/partidas': typeof PartidasIndexRoute
   '/perfil': typeof PerfilIndexRoute
-  '/ranking': typeof RankingIndexRoute
   '/regras': typeof RegrasIndexRoute
   '/torneios': typeof TorneiosIndexRoute
   '/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
@@ -226,6 +226,7 @@ export interface FileRoutesByTo {
   '/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/desafios': typeof AuthenticatedDesafiosIndexRoute
+  '/ranking': typeof AuthenticatedRankingIndexRoute
   '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRoutesById {
@@ -243,7 +244,6 @@ export interface FileRoutesById {
   '/arenas/': typeof ArenasIndexRoute
   '/partidas/': typeof PartidasIndexRoute
   '/perfil/': typeof PerfilIndexRoute
-  '/ranking/': typeof RankingIndexRoute
   '/regras/': typeof RegrasIndexRoute
   '/torneios/': typeof TorneiosIndexRoute
   '/_authenticated/admin/auditoria': typeof AuthenticatedAdminAuditoriaRoute
@@ -255,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/usuarios': typeof AuthenticatedAdminUsuariosRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/desafios/': typeof AuthenticatedDesafiosIndexRoute
+  '/_authenticated/ranking/': typeof AuthenticatedRankingIndexRoute
   '/api/public/hooks/monthly-rollover': typeof ApiPublicHooksMonthlyRolloverRoute
 }
 export interface FileRouteTypes {
@@ -272,7 +273,6 @@ export interface FileRouteTypes {
     | '/arenas/'
     | '/partidas/'
     | '/perfil/'
-    | '/ranking/'
     | '/regras/'
     | '/torneios/'
     | '/admin/auditoria'
@@ -284,6 +284,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/admin/'
     | '/desafios/'
+    | '/ranking/'
     | '/api/public/hooks/monthly-rollover'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -298,7 +299,6 @@ export interface FileRouteTypes {
     | '/arenas'
     | '/partidas'
     | '/perfil'
-    | '/ranking'
     | '/regras'
     | '/torneios'
     | '/admin/auditoria'
@@ -310,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin/usuarios'
     | '/admin'
     | '/desafios'
+    | '/ranking'
     | '/api/public/hooks/monthly-rollover'
   id:
     | '__root__'
@@ -326,7 +327,6 @@ export interface FileRouteTypes {
     | '/arenas/'
     | '/partidas/'
     | '/perfil/'
-    | '/ranking/'
     | '/regras/'
     | '/torneios/'
     | '/_authenticated/admin/auditoria'
@@ -338,6 +338,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/usuarios'
     | '/_authenticated/admin/'
     | '/_authenticated/desafios/'
+    | '/_authenticated/ranking/'
     | '/api/public/hooks/monthly-rollover'
   fileRoutesById: FileRoutesById
 }
@@ -354,7 +355,6 @@ export interface RootRouteChildren {
   ArenasIndexRoute: typeof ArenasIndexRoute
   PartidasIndexRoute: typeof PartidasIndexRoute
   PerfilIndexRoute: typeof PerfilIndexRoute
-  RankingIndexRoute: typeof RankingIndexRoute
   RegrasIndexRoute: typeof RegrasIndexRoute
   TorneiosIndexRoute: typeof TorneiosIndexRoute
   ApiPublicHooksMonthlyRolloverRoute: typeof ApiPublicHooksMonthlyRolloverRoute
@@ -411,13 +411,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RegrasIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ranking/': {
-      id: '/ranking/'
-      path: '/ranking'
-      fullPath: '/ranking/'
-      preLoaderRoute: typeof RankingIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/perfil/': {
       id: '/perfil/'
       path: '/perfil'
@@ -472,6 +465,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ranking/': {
+      id: '/_authenticated/ranking/'
+      path: '/ranking'
+      fullPath: '/ranking/'
+      preLoaderRoute: typeof AuthenticatedRankingIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/desafios/': {
@@ -578,11 +578,13 @@ const AuthenticatedAdminRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRouteRoute: typeof AuthenticatedAdminRouteRouteWithChildren
   AuthenticatedDesafiosIndexRoute: typeof AuthenticatedDesafiosIndexRoute
+  AuthenticatedRankingIndexRoute: typeof AuthenticatedRankingIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRouteRoute: AuthenticatedAdminRouteRouteWithChildren,
   AuthenticatedDesafiosIndexRoute: AuthenticatedDesafiosIndexRoute,
+  AuthenticatedRankingIndexRoute: AuthenticatedRankingIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
@@ -601,7 +603,6 @@ const rootRouteChildren: RootRouteChildren = {
   ArenasIndexRoute: ArenasIndexRoute,
   PartidasIndexRoute: PartidasIndexRoute,
   PerfilIndexRoute: PerfilIndexRoute,
-  RankingIndexRoute: RankingIndexRoute,
   RegrasIndexRoute: RegrasIndexRoute,
   TorneiosIndexRoute: TorneiosIndexRoute,
   ApiPublicHooksMonthlyRolloverRoute: ApiPublicHooksMonthlyRolloverRoute,
@@ -609,3 +610,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

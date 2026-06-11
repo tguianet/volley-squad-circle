@@ -16,7 +16,7 @@ import { listScheduledChallenges } from "@/lib/ranking.functions";
 
 type GenderFilter = "M" | "F" | "X";
 
-export const Route = createFileRoute("/ranking/")({
+export const Route = createFileRoute("/_authenticated/ranking/")({
   head: () => ({ meta: [{ title: "Ranking — BeachPlay Arena" }] }),
   component: RankingPage,
 });
