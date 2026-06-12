@@ -133,6 +133,16 @@ function ProfilePage() {
     if (!profile) return;
     setSaving(true);
     try {
+      const isProfileComplete =
+        form.apelido.trim() &&
+        form.city.trim() &&
+        form.state.trim() &&
+        form.whatsapp.trim() &&
+        form.posicao_principal &&
+        form.level &&
+        form.mao_dominante &&
+        form.genero;
+
       const payload = {
         apelido: form.apelido.trim() || null,
         bio: form.bio.trim() || null,
@@ -145,6 +155,7 @@ function ProfilePage() {
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
         genero: form.genero || null,
+        status: isProfileComplete ? "completo" : (profile.status ?? null),
       };
       const { data, error } = await supabase
         .from("profiles")
