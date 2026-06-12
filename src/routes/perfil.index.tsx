@@ -538,7 +538,6 @@ function TeamBuilder({ currentId, currentGender }: { currentId: string; currentG
   const create = async () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
     if (myExistingFormats.has(format)) return toast.error(`Você já tem um time no formato ${format}`);
-    const required = formatInvitesCount[format];
     if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
 
     setSubmitting(true);
