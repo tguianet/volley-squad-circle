@@ -337,6 +337,100 @@ export type Database = {
         }
         Relationships: []
       }
+      match_players: {
+        Row: {
+          id: string
+          joined_at: string
+          match_id: string
+          player_id: string
+          status: Database["public"]["Enums"]["match_player_status"]
+          team: Database["public"]["Enums"]["match_team"] | null
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          match_id: string
+          player_id: string
+          status?: Database["public"]["Enums"]["match_player_status"]
+          team?: Database["public"]["Enums"]["match_team"] | null
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          match_id?: string
+          player_id?: string
+          status?: Database["public"]["Enums"]["match_player_status"]
+          team?: Database["public"]["Enums"]["match_team"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_players_match_id_fkey"
+            columns: ["match_id"]
+            isOneToOne: false
+            referencedRelation: "matches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          arena_id: string | null
+          created_at: string
+          creator_id: string
+          date: string
+          end_time: string | null
+          id: string
+          match_type: Database["public"]["Enums"]["match_type"]
+          max_players: number
+          modality: Database["public"]["Enums"]["match_modality"]
+          notes: string | null
+          start_time: string
+          status: Database["public"]["Enums"]["match_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          arena_id?: string | null
+          created_at?: string
+          creator_id: string
+          date: string
+          end_time?: string | null
+          id?: string
+          match_type?: Database["public"]["Enums"]["match_type"]
+          max_players?: number
+          modality?: Database["public"]["Enums"]["match_modality"]
+          notes?: string | null
+          start_time: string
+          status?: Database["public"]["Enums"]["match_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          arena_id?: string | null
+          created_at?: string
+          creator_id?: string
+          date?: string
+          end_time?: string | null
+          id?: string
+          match_type?: Database["public"]["Enums"]["match_type"]
+          max_players?: number
+          modality?: Database["public"]["Enums"]["match_modality"]
+          notes?: string | null
+          start_time?: string
+          status?: Database["public"]["Enums"]["match_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_arena_id_fkey"
+            columns: ["arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_penalties: {
         Row: {
           challenge_id: string | null
@@ -758,6 +852,11 @@ export type Database = {
         | "declined"
         | "completed"
         | "wo"
+      match_modality: "beach_volley" | "indoor_volley" | "futevolei"
+      match_player_status: "confirmed" | "waiting" | "cancelled"
+      match_status: "open" | "full" | "finished" | "cancelled"
+      match_team: "A" | "B"
+      match_type: "dupla" | "quarteto" | "sexteto"
       penalty_reason: "no_challenge_month" | "declined" | "walkover"
       team_category: "dupla" | "quarteto"
       team_gender: "M" | "F" | "X"
@@ -897,6 +996,11 @@ export const Constants = {
         "completed",
         "wo",
       ],
+      match_modality: ["beach_volley", "indoor_volley", "futevolei"],
+      match_player_status: ["confirmed", "waiting", "cancelled"],
+      match_status: ["open", "full", "finished", "cancelled"],
+      match_team: ["A", "B"],
+      match_type: ["dupla", "quarteto", "sexteto"],
       penalty_reason: ["no_challenge_month", "declined", "walkover"],
       team_category: ["dupla", "quarteto"],
       team_gender: ["M", "F", "X"],
