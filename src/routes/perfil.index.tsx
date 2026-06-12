@@ -808,7 +808,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                       <div className="flex items-center gap-1.5 flex-wrap pb-1">
                         {roster.map(p => (
                           <div key={p.id} className="flex items-center gap-1.5 pl-0.5 pr-2 py-0.5 rounded-full bg-secondary/60">
-                            <Avatar className="size-6"><AvatarImage src={p.avatar_url ?? undefined}/><AvatarFallback>{p.display_name[0]}</AvatarFallback></Avatar>
+                            <AvatarThumb src={p.avatar_url} name={p.display_name} className="size-6" />
                             <span className="text-xs">{p.apelido ?? p.display_name}</span>
                             {p.id === t.captain_id && <Crown className="size-3 text-primary" />}
                           </div>
