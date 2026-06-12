@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { AvatarThumb } from "@/components/avatar-thumb";
 
 const TEAM_FORMATS = ["Dupla", "Dupla mista", "Quarteto", "Quarteto misto"] as const;
 type TeamFormat = typeof TEAM_FORMATS[number];
