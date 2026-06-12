@@ -681,7 +681,7 @@ function TeamBuilder({ currentId, currentGender }: { currentId: string; currentG
               </div>
               <div className="space-y-1.5">
                 <Label>Formato</Label>
-                <Select value={format} onValueChange={(v) => { setFormat(v as TeamFormat); setSelected([]); }}>
+                <Select value={format} onValueChange={(v) => { setFormat(v); setSelected([]); }}>
                   <SelectTrigger><SelectValue/></SelectTrigger>
                   <SelectContent>
                     {availableFormats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
