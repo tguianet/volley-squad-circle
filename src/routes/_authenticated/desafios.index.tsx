@@ -173,6 +173,163 @@ function EmptyState({ title, hint }: { title: string; hint: string }) {
 }
 
 // =====================================================================
+type TeamLite = {
+  id: string; name: string; category: string; gender?: string;
+  rank_position: number | null; captain_id: string; points?: number;
+};
+
+function pointsDelta(myPos: number | null, targetPos: number | null): number {
+  if (!myPos || !targetPos) return 30;
+  const diff = myPos - targetPos;
+  const d = 30 + diff * 5;
+  return Math.max(10, Math.min(60, d));
+}
+
+function ChallengeRankingButton({
+  captainedTeams,
+  allTeams,
+  onCreated,
+}: {
+  captainedTeams: TeamLite[];
+  allTeams: TeamLite[];
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [teamId, setTeamId] = useState<string>("");
+  const [targetId, setTargetId] = useState<string>("");
+  const createFn = useServerFn(createChallenge);
+
+  const isCaptain = captainedTeams.length > 0;
+  const effectiveTeamId = teamId || captainedTeams[0]?.id || "";
+  const effectiveMyTeam =
+    allTeams.find((t) => t.id === effectiveTeamId) ?? captainedTeams.find((t) => t.id === effectiveTeamId);
+
+  const candidates = useMemo(() => {
+    if (!effectiveMyTeam) return [];
+    const myPos = effectiveMyTeam.rank_position;
+    return allTeams
+      .filter((t) =>
+        t.id !== effectiveMyTeam.id &&
+        t.category === effectiveMyTeam.category &&
+        (effectiveMyTeam.gender ? t.gender === effectiveMyTeam.gender : true) &&
+        t.rank_position != null &&
+        myPos != null &&
+        t.rank_position >= myPos - 3 &&
+        t.rank_position <= myPos + 2,
+      )
+      .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
+  }, [allTeams, effectiveMyTeam]);
+
+  const target = candidates.find((t) => t.id === targetId);
+  const delta = pointsDelta(effectiveMyTeam?.rank_position ?? null, target?.rank_position ?? null);
+
+  const m = useMutation({
+    mutationFn: createFn,
+    onSuccess: () => {
+      toast.success("Desafio enviado. Aguarde a equipe aceitar para agendar.");
+      setOpen(false); setTargetId("");
+      onCreated();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const handleClick = () => {
+    if (!isCaptain) {
+      toast.error("Somente capitães podem enviar desafios.");
+      return;
+    }
+    setOpen(true);
+  };
+
+  return (
+    <>
+      <Button size="sm" onClick={handleClick}>
+        <Swords className="size-4 mr-1"/>Desafiar
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>Novo desafio de ranking</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {captainedTeams.length > 1 && (
+              <div>
+                <Label>Minha equipe</Label>
+                <Select value={effectiveTeamId} onValueChange={(v) => { setTeamId(v); setTargetId(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Selecione sua equipe"/></SelectTrigger>
+                  <SelectContent>
+                    {captainedTeams.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name} ({t.category}{t.gender ? `/${t.gender}` : ""})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {effectiveMyTeam && (
+              <Card className="p-3 bg-secondary/40">
+                <div className="text-xs text-muted-foreground">Minha equipe</div>
+                <div className="font-semibold">{effectiveMyTeam.name}</div>
+                <div className="text-xs">
+                  Categoria: {effectiveMyTeam.category}
+                  {effectiveMyTeam.gender ? ` · ${effectiveMyTeam.gender}` : ""}
+                </div>
+                <div className="text-xs">
+                  Posição atual:{" "}
+                  <strong>{effectiveMyTeam.rank_position ? `${effectiveMyTeam.rank_position}º` : "—"}</strong>
+                  {typeof effectiveMyTeam.points === "number" ? ` · ${effectiveMyTeam.points} pts` : ""}
+                </div>
+              </Card>
+            )}
+
+            <div>
+              <Label>Equipes disponíveis para desafiar</Label>
+              <Select value={targetId} onValueChange={setTargetId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    candidates.length === 0
+                      ? "Nenhuma equipe elegível (até 3 acima / 2 abaixo)"
+                      : "Escolha o adversário"
+                  }/>
+                </SelectTrigger>
+                <SelectContent>
+                  {candidates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.rank_position}º — {t.name}
+                      {typeof t.points === "number" ? ` — ${t.points} pts` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Permitido: até 3 posições acima e até 2 abaixo, mesma categoria/gênero.
+              </p>
+            </div>
+
+            {target && (
+              <Card className="p-3">
+                <div className="text-xs text-muted-foreground">Pontuação estimada</div>
+                <div className="text-sm">Vitória: <strong className="text-primary">+{delta} pontos</strong></div>
+                <div className="text-sm">Derrota: <strong className="text-destructive">-{delta} pontos</strong></div>
+              </Card>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button
+              disabled={!targetId || !effectiveTeamId || m.isPending}
+              onClick={() => m.mutate({ data: { challengerTeamId: effectiveTeamId, challengedTeamId: targetId } })}
+            >
+              <Swords className="size-4 mr-1"/>Enviar desafio
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+// =====================================================================
 function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string }> }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
