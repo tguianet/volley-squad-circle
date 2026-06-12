@@ -9,6 +9,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
+  ssr: false,
+  beforeLoad: async () => {
+    const { redirect } = await import("@tanstack/react-router");
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth" });
+  },
   head: () => ({
     meta: [
       { title: "Feed — PlayBeach" },
