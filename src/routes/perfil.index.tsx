@@ -694,7 +694,7 @@ function TeamBuilder({ currentId, currentGender }: { currentId: string; currentG
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Participantes ({selected.length}/{formatInvitesCount[format]})</Label>
+                <Label>Participantes ({selected.length}/{required})</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
                   {others.length === 0 ? (
                     <div className="text-xs text-muted-foreground p-2 text-center">
