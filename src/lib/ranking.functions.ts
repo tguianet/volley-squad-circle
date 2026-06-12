@@ -418,3 +418,80 @@ export const listScheduledChallenges = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+// =====================================================================
+// COURTS & SCHEDULING
+// =====================================================================
+export const listCourts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("courts")
+      .select("id, number, name, is_active")
+      .eq("is_active", true)
+      .order("number");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const getCourtAvailability = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .rpc("court_availability", { _date: data.date });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const scheduleChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      challengeId: z.string().uuid(),
+      date: z.string(),
+      time: z.string(),
+      courtId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("schedule_challenge", {
+      _challenge_id: data.challengeId,
+      _date: data.date,
+      _time: data.time,
+      _court_id: data.courtId,
+    });
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const reportWalkover = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("challenges")
+      .update({ status: "wo" })
+      .eq("id", data.challengeId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const listSundayAgenda = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("challenges")
+      .select(`
+        id, scheduled_date, scheduled_time, duration_minutes, status,
+        court:courts(id, number, name),
+        challenger:teams!challenges_challenger_team_id_fkey(id, name),
+        challenged:teams!challenges_challenged_team_id_fkey(id, name)
+      `)
+      .eq("scheduled_date", data.date)
+      .eq("status", "scheduled")
+      .order("scheduled_time");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
