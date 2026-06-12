@@ -124,6 +124,7 @@ function ProfilePage() {
       level: profile.level ?? "",
       mao_dominante: profile.mao_dominante ?? "",
       altura: profile.altura ? String(profile.altura) : "",
+      genero: profile.genero ?? "",
     });
   }, [open, profile?.id]);
 
