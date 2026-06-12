@@ -75,7 +75,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
     ...(data ?? {
       display_name: null, username: null, apelido: null, bio: null, city: null, state: null,
       whatsapp: null, instagram: null, posicao_principal: null, level: null, mao_dominante: null,
-      altura: null, avatar_url: null, banner_url: null, genero: null, pontos: 0, vitorias: 0, derrotas: 0,
+      altura: null, avatar_url: null, banner_url: null, genero: null, status: null, pontos: 0, vitorias: 0, derrotas: 0,
     }),
   } as MyProfile;
 }
