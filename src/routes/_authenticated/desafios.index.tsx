@@ -185,6 +185,26 @@ function pointsDelta(myPos: number | null, targetPos: number | null): number {
   return Math.max(10, Math.min(60, d));
 }
 
+type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
+
+const CATEGORY_OPTIONS: Array<{ key: CatKey; label: string; category: "dupla" | "quarteto"; gender?: "X" }> = [
+  { key: "dupla", label: "Dupla", category: "dupla" },
+  { key: "quarteto", label: "Quarteto", category: "quarteto" },
+  { key: "dupla_mista", label: "Dupla Mista", category: "dupla", gender: "X" },
+  { key: "quarteto_misto", label: "Quarteto Misto", category: "quarteto", gender: "X" },
+];
+
+function teamCategoryKey(t: { category: string; gender?: string }): CatKey | null {
+  if (t.category === "dupla") return t.gender === "X" ? "dupla_mista" : "dupla";
+  if (t.category === "quarteto") return t.gender === "X" ? "quarteto_misto" : "quarteto";
+  return null;
+}
+
+function categoryLabel(t: { category: string; gender?: string }): string {
+  const k = teamCategoryKey(t);
+  return CATEGORY_OPTIONS.find((o) => o.key === k)?.label ?? t.category;
+}
+
 function ChallengeRankingButton({
   captainedTeams,
   allTeams,
