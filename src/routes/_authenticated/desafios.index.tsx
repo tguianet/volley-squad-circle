@@ -278,15 +278,30 @@ function ChallengeRankingButton({
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Novo desafio de ranking</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            {captainedTeams.length > 1 && (
+            <div>
+              <Label>Categoria</Label>
+              <Select
+                value={categoryKey}
+                onValueChange={(v) => { setCategoryKey(v as CatKey); setTeamId(""); setTargetId(""); }}
+              >
+                <SelectTrigger><SelectValue placeholder="Todas as categorias"/></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {teamsInCategory.length > 1 && (
               <div>
                 <Label>Minha equipe</Label>
                 <Select value={effectiveTeamId} onValueChange={(v) => { setTeamId(v); setTargetId(""); }}>
                   <SelectTrigger><SelectValue placeholder="Selecione sua equipe"/></SelectTrigger>
                   <SelectContent>
-                    {captainedTeams.map((t) => (
+                    {teamsInCategory.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
-                        {t.name} ({t.category}{t.gender ? `/${t.gender}` : ""})
+                        {t.name} — {categoryLabel(t)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -294,30 +309,35 @@ function ChallengeRankingButton({
               </div>
             )}
 
-            {effectiveMyTeam && (
+            {effectiveMyTeam ? (
               <Card className="p-3 bg-secondary/40">
                 <div className="text-xs text-muted-foreground">Minha equipe</div>
                 <div className="font-semibold">{effectiveMyTeam.name}</div>
-                <div className="text-xs">
-                  Categoria: {effectiveMyTeam.category}
-                  {effectiveMyTeam.gender ? ` · ${effectiveMyTeam.gender}` : ""}
-                </div>
+                <div className="text-xs">Categoria: {categoryLabel(effectiveMyTeam)}</div>
                 <div className="text-xs">
                   Posição atual:{" "}
                   <strong>{effectiveMyTeam.rank_position ? `${effectiveMyTeam.rank_position}º` : "—"}</strong>
                   {typeof effectiveMyTeam.points === "number" ? ` · ${effectiveMyTeam.points} pts` : ""}
                 </div>
               </Card>
+            ) : (
+              categoryKey && (
+                <p className="text-xs text-muted-foreground">
+                  Você não é capitão de nenhuma equipe nesta categoria.
+                </p>
+              )
             )}
 
             <div>
               <Label>Equipes disponíveis para desafiar</Label>
-              <Select value={targetId} onValueChange={setTargetId}>
+              <Select value={targetId} onValueChange={setTargetId} disabled={!effectiveMyTeam}>
                 <SelectTrigger>
                   <SelectValue placeholder={
-                    candidates.length === 0
-                      ? "Nenhuma equipe elegível (até 3 acima / 2 abaixo)"
-                      : "Escolha o adversário"
+                    !effectiveMyTeam
+                      ? "Selecione a categoria primeiro"
+                      : candidates.length === 0
+                        ? "Nenhuma equipe elegível (até 3 acima / 2 abaixo)"
+                        : "Escolha o adversário"
                   }/>
                 </SelectTrigger>
                 <SelectContent>
@@ -330,9 +350,10 @@ function ChallengeRankingButton({
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground mt-1">
-                Permitido: até 3 posições acima e até 2 abaixo, mesma categoria/gênero.
+                Permitido: até 3 posições acima e até 2 abaixo, mesma categoria.
               </p>
             </div>
+
 
             {target && (
               <Card className="p-3">
