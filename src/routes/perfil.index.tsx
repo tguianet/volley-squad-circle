@@ -51,6 +51,7 @@ type MyProfile = {
   avatar_url: string | null;
   banner_url: string | null;
   genero: string | null;
+  status: string | null;
   pontos: number | null;
   vitorias: number | null;
   derrotas: number | null;
