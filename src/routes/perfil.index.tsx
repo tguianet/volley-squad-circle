@@ -155,7 +155,7 @@ function ProfilePage() {
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
         genero: form.genero || null,
-        status: isProfileComplete ? "completo" : (profile.status ?? null),
+        status: isProfileComplete ? "completo" : undefined,
       };
       const { data, error } = await supabase
         .from("profiles")
