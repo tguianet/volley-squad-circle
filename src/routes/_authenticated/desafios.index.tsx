@@ -218,7 +218,30 @@ function ChallengeRankingButton({
   const [categoryKey, setCategoryKey] = useState<CatKey | "">("");
   const [teamId, setTeamId] = useState<string>("");
   const [targetId, setTargetId] = useState<string>("");
+  const [sunday, setSunday] = useState<string>("");
+  const [slot1, setSlot1] = useState<string>("");
+  const [slot2, setSlot2] = useState<string>("");
+  const [slot3, setSlot3] = useState<string>("");
   const createFn = useServerFn(createChallenge);
+
+  const nextSundays = useMemo(() => {
+    const out: string[] = [];
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    const offset = (7 - d.getDay()) % 7 || 7;
+    d.setDate(d.getDate() + offset);
+    for (let i = 0; i < 8; i++) {
+      out.push(d.toISOString().slice(0, 10));
+      d.setDate(d.getDate() + 7);
+    }
+    return out;
+  }, []);
+
+  const timeOptions = useMemo(() => {
+    const out: string[] = [];
+    for (let h = 8; h <= 16; h++) out.push(`${String(h).padStart(2, "0")}:00`);
+    return out;
+  }, []);
 
   const isCaptain = captainedTeams.length > 0;
 
