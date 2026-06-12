@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2 } from "lucide-react";
+import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2, LogOut } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
@@ -568,11 +569,74 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     qc.invalidateQueries({ queryKey: ["my-received-invites"] });
   };
 
-  const removeTeam = async (teamId: string) => {
-    const { error } = await supabase.from("teams").update({ is_active: false }).eq("id", teamId);
-    if (error) return toast.error(error.message);
-    toast.success("Time removido");
+  const refetchTeams = () => {
     qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
+    qc.invalidateQueries({ queryKey: ["my-member-teams"] });
+    qc.invalidateQueries({ queryKey: ["my-teams-members"] });
+    qc.invalidateQueries({ queryKey: ["my-teams-captains"] });
+  };
+
+  const deleteTeam = async (teamId: string, captainId: string) => {
+    if (captainId !== currentId) return toast.error("Apenas o capitão pode deletar o time");
+    const { error: mErr } = await supabase.from("team_members").delete().eq("team_id", teamId);
+    if (mErr) return toast.error(mErr.message);
+    await supabase.from("team_invitations").delete().eq("team_id", teamId);
+    const { error } = await supabase.from("teams").delete().eq("id", teamId);
+    if (error) return toast.error(error.message);
+    toast.success("Time deletado com sucesso");
+    refetchTeams();
+  };
+
+  const leaveTeam = async (teamId: string, captainId: string) => {
+    const isCap = captainId === currentId;
+    if (isCap) {
+      // Buscar outros membros ordenados por joined_at
+      const { data: others, error: oErr } = await supabase
+        .from("team_members")
+        .select("profile_id, joined_at")
+        .eq("team_id", teamId)
+        .neq("profile_id", currentId)
+        .order("joined_at", { ascending: true });
+      if (oErr) return toast.error(oErr.message);
+
+      if (!others || others.length === 0) {
+        // Único membro: deletar time
+        await supabase.from("team_invitations").delete().eq("team_id", teamId);
+        await supabase.from("team_members").delete().eq("team_id", teamId);
+        const { error } = await supabase.from("teams").delete().eq("id", teamId);
+        if (error) return toast.error(error.message);
+        toast.success("Time removido porque não havia outros membros.");
+        refetchTeams();
+        return;
+      }
+
+      // Transferir capitania para o membro mais antigo
+      const newCaptainId = others[0].profile_id;
+      const { error: uErr } = await supabase
+        .from("teams")
+        .update({ captain_id: newCaptainId })
+        .eq("id", teamId);
+      if (uErr) return toast.error(uErr.message);
+
+      const { error: dErr } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("profile_id", currentId);
+      if (dErr) return toast.error(dErr.message);
+
+      toast.success("Você saiu do time. Um novo capitão foi definido.");
+      refetchTeams();
+    } else {
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("profile_id", currentId);
+      if (error) return toast.error(error.message);
+      toast.success("Você saiu do time");
+      refetchTeams();
+    }
   };
 
   const cancelInvite = async (inviteId: string) => {
@@ -690,9 +754,46 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     </div>
                     {isCaptain && <div className="text-[11px] text-muted-foreground">{accepted}/{total} confirmados</div>}
                   </div>
-                  {isCaptain && (
-                    <Button size="icon" variant="ghost" onClick={() => removeTeam(t.id)}><Trash2 className="size-4"/></Button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" title="Sair do time"><LogOut className="size-4"/></Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sair do time</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {isCaptain
+                              ? "Tem certeza que deseja sair deste time? Se houver outros membros, a capitania será transferida ao membro mais antigo. Caso contrário, o time será removido."
+                              : "Tem certeza que deseja sair deste time?"}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => leaveTeam(t.id, t.captain_id)}>Sair</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    {isCaptain && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" title="Deletar time"><Trash2 className="size-4 text-destructive"/></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Deletar time</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja deletar este time? Essa ação removerá todos os membros e não poderá ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteTeam(t.id, t.captain_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Deletar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   {(() => {
