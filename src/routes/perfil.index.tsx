@@ -143,6 +143,7 @@ function ProfilePage() {
         level: form.level || null,
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
+        genero: form.genero || null,
       };
       const { data, error } = await supabase
         .from("profiles")
