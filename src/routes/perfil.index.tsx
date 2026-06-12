@@ -394,7 +394,7 @@ type ReceivedInvite = {
 };
 
 
-function TeamBuilder({ currentId }: { currentId: string }) {
+function TeamBuilder({ currentId, currentGender }: { currentId: string; currentGender?: string | null }) {
   const qc = useQueryClient();
 
   const rosterQ = useQuery<RosterPlayer[]>({
@@ -402,7 +402,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, apelido, username, avatar_url")
+        .select("id, display_name, apelido, username, avatar_url, genero")
         .neq("id", currentId)
         .order("display_name");
       if (error) throw error;
