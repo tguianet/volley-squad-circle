@@ -21,6 +21,7 @@ type ProfileRow = {
   posicao_principal: string | null;
   level: string | null;
   mao_dominante: string | null;
+  genero: string | null;
   avatar_url: string | null;
   data_nascimento: string | null;
   altura: number | null;
