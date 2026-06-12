@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
-import { Bell, Trophy, Users, Heart, Calendar, MessageCircle } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Bell, Trophy, Users, Heart, Calendar, MessageCircle, Check, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações — PlayBeach" }] }),
@@ -19,9 +21,17 @@ type NotifRow = {
   created_at: string;
 };
 
+type PendingInvite = {
+  id: string;
+  team_id: string;
+  created_at: string;
+  team: { name: string } | null;
+  inviter: { display_name: string | null; username: string | null } | null;
+};
+
 const iconMap: Record<string, any> = {
   trophy: Trophy, users: Users, heart: Heart, calendar: Calendar, message: MessageCircle,
-  challenge: Trophy, team: Users, like: Heart, comment: MessageCircle,
+  challenge: Trophy, team: Users, like: Heart, comment: MessageCircle, team_invite: Users,
 };
 
 async function fetchNotifs(): Promise<NotifRow[]> {
@@ -37,6 +47,19 @@ async function fetchNotifs(): Promise<NotifRow[]> {
   return (data ?? []) as NotifRow[];
 }
 
+async function fetchPendingInvites(): Promise<PendingInvite[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data, error } = await supabase
+    .from("team_invitations")
+    .select("id, team_id, created_at, team:teams(name), inviter:profiles!team_invitations_inviter_id_fkey(display_name, username)")
+    .eq("invitee_id", user.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as any;
+}
+
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
@@ -49,8 +72,25 @@ function timeAgo(iso: string) {
 }
 
 function NotifPage() {
+  const qc = useQueryClient();
   const q = useQuery({ queryKey: ["notifications"], queryFn: fetchNotifs });
+  const invitesQ = useQuery({ queryKey: ["pending-invites"], queryFn: fetchPendingInvites });
   const items = q.data ?? [];
+  const invites = invitesQ.data ?? [];
+
+  const respond = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "accepted" | "declined" }) => {
+      const { error } = await supabase.from("team_invitations").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.status === "accepted" ? "Convite aceito!" : "Convite recusado");
+      qc.invalidateQueries({ queryKey: ["pending-invites"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao responder"),
+  });
 
   return (
     <AppLayout>
@@ -61,8 +101,42 @@ function NotifPage() {
         </div>
         <p className="text-sm text-muted-foreground mb-6">Tudo que rolou na sua areia.</p>
 
+        {invites.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {invites.map(inv => {
+              const who = inv.inviter?.display_name ?? inv.inviter?.username ?? "Alguém";
+              const team = inv.team?.name ?? "um time";
+              const loading = respond.isPending;
+              return (
+                <Card key={inv.id} className="p-4 flex items-center gap-3 bg-primary/5">
+                  <div className="size-10 rounded-full gradient-beach text-white flex items-center justify-center shrink-0">
+                    <Users className="size-4"/>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">Convite para time</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {who} convidou você para o time "{team}"
+                    </div>
+                    <div className="text-xs text-muted-foreground">{timeAgo(inv.created_at)}</div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" disabled={loading}
+                      onClick={() => respond.mutate({ id: inv.id, status: "accepted" })}>
+                      <Check className="size-4 mr-1"/> Aceitar
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={loading}
+                      onClick={() => respond.mutate({ id: inv.id, status: "declined" })}>
+                      <X className="size-4 mr-1"/> Recusar
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
         {q.isLoading && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
-        {!q.isLoading && items.length === 0 && (
+        {!q.isLoading && items.length === 0 && invites.length === 0 && (
           <Card className="p-6 text-center text-sm text-muted-foreground">Nenhuma notificação por enquanto.</Card>
         )}
         {items.length > 0 && (
