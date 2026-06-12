@@ -402,13 +402,14 @@ export const listMyChallenges = createServerFn({ method: "GET" })
     const { data: rows, error } = await context.supabase
       .from("challenges")
       .select(`
-        id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason,
+        id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes,
         challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
         challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),
-        arena:arenas(id, name)
+        arena:arenas(id, name),
+        court:courts(id, number, name)
       `)
       .or(`challenger_team_id.in.(${ids.join(",")}),challenged_team_id.in.(${ids.join(",")})`)
-      .order("scheduled_date", { ascending: true });
+      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
     const sent: typeof rows = [];
