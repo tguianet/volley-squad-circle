@@ -106,7 +106,7 @@ function ProfilePage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     apelido: "", bio: "", city: "", state: "", whatsapp: "", instagram: "",
-    posicao_principal: "", level: "", mao_dominante: "", altura: "",
+    posicao_principal: "", level: "", mao_dominante: "", altura: "", genero: "",
   });
   const [saving, setSaving] = useState(false);
 
