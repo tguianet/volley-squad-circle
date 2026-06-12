@@ -284,15 +284,8 @@ function ProfilePage() {
         <ProfileGallery />
 
         {/* Histórico */}
-        <Card className="p-5 shadow-card">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg">Histórico recente</h2>
-            <Link to="/h2h" className="text-xs text-primary font-semibold">Comparar H2H →</Link>
-          </div>
-          <div className="text-center text-sm text-muted-foreground py-6">
-            Nenhuma partida registrada ainda.
-          </div>
-        </Card>
+        <MatchHistory userId={profile.id} />
+
 
         <Button variant="outline" className="w-full" onClick={async () => { await supabase.auth.signOut(); window.location.href = "/auth"; }}>Sair</Button>
       </div>
