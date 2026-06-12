@@ -393,7 +393,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
   const getPlayer = (id: string): RosterPlayer | undefined => others.find(p => p.id === id);
 
   // Times onde eu sou capitão (com convites)
-  const teamsQ = useQuery<DbTeam[]>({
+  const captainQ = useQuery<DbTeam[]>({
     queryKey: ["my-captain-teams", currentId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -406,7 +406,29 @@ function TeamBuilder({ currentId }: { currentId: string }) {
       return (data ?? []) as unknown as DbTeam[];
     },
   });
-  const teams: DbTeam[] = teamsQ.data ?? [];
+
+  // Times onde eu sou membro (aceitei convite)
+  const memberQ = useQuery<DbTeam[]>({
+    queryKey: ["my-member-teams", currentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("team:team_id(id, name, category, gender, captain_id, created_at)")
+        .eq("profile_id", currentId)
+        .eq("team.is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return ((data ?? []).map((r: any) => r.team).filter(Boolean) as DbTeam[]).map(t => ({ ...t, invitations: [] }));
+    },
+  });
+
+  const captainTeams: DbTeam[] = captainQ.data ?? [];
+  const memberTeams: DbTeam[] = memberQ.data ?? [];
+  // Merge and dedupe by id (capitão tem prioridade para dados completos)
+  const teamsMap = new Map<string, DbTeam>();
+  for (const t of memberTeams) teamsMap.set(t.id, t);
+  for (const t of captainTeams) teamsMap.set(t.id, t);
+  const teams = Array.from(teamsMap.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   // Convites recebidos
   const receivedQ = useQuery<ReceivedInvite[]>({
