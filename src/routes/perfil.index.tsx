@@ -50,6 +50,7 @@ type MyProfile = {
   altura: number | null;
   avatar_url: string | null;
   banner_url: string | null;
+  genero: string | null;
   pontos: number | null;
   vitorias: number | null;
   derrotas: number | null;
