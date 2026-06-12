@@ -695,6 +695,26 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                   )}
                 </div>
                 <div className="space-y-1.5">
+                  {(() => {
+                    const cap = captainsById[t.captain_id];
+                    const mem = membersByTeam[t.id] ?? [];
+                    const seen = new Set<string>();
+                    const roster: RosterPlayer[] = [];
+                    if (cap) { roster.push(cap); seen.add(cap.id); }
+                    for (const p of mem) if (!seen.has(p.id)) { roster.push(p); seen.add(p.id); }
+                    if (roster.length === 0) return null;
+                    return (
+                      <div className="flex items-center gap-1.5 flex-wrap pb-1">
+                        {roster.map(p => (
+                          <div key={p.id} className="flex items-center gap-1.5 pl-0.5 pr-2 py-0.5 rounded-full bg-secondary/60">
+                            <Avatar className="size-6"><AvatarImage src={p.avatar_url ?? undefined}/><AvatarFallback>{p.display_name[0]}</AvatarFallback></Avatar>
+                            <span className="text-xs">{p.apelido ?? p.display_name}</span>
+                            {p.id === t.captain_id && <Crown className="size-3 text-primary" />}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   <div className={`flex items-center gap-2 p-2 rounded-md ${isCaptain ? "bg-primary/10" : "bg-secondary/40"}`}>
                     {isCaptain ? <Crown className="size-4 text-primary" /> : <Users className="size-4 text-muted-foreground" />}
                     <div className="flex-1 text-sm">{isCaptain ? "Você é o capitão" : "Você é membro"}</div>
