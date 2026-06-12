@@ -216,3 +216,134 @@ function ScheduledChallenges() {
     </div>
   );
 }
+
+type TeamRankRow = {
+  id: string;
+  name: string;
+  category: "dupla" | "quarteto";
+  gender: "M" | "F" | "X";
+  points: number;
+  wins: number;
+  losses: number;
+  created_at: string;
+  captain_id: string;
+};
+
+type TeamMemberLite = { id: string; display_name: string | null; apelido: string | null; avatar_url: string | null };
+
+function TeamRanking({ category, gender }: { category: "dupla" | "quarteto"; gender: GenderFilter }) {
+  const teamsQ = useQuery<TeamRankRow[]>({
+    queryKey: ["ranking-teams", category, gender],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("id, name, category, gender, points, wins, losses, created_at, captain_id")
+        .eq("is_active", true)
+        .eq("category", category)
+        .eq("gender", gender)
+        .order("points", { ascending: false })
+        .order("wins", { ascending: false })
+        .order("losses", { ascending: true })
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as TeamRankRow[];
+    },
+  });
+
+  const teams = teamsQ.data ?? [];
+  const teamIds = teams.map((t) => t.id);
+  const captainIds = Array.from(new Set(teams.map((t) => t.captain_id)));
+
+  const rosterQ = useQuery({
+    queryKey: ["ranking-team-roster", teamIds.join(","), captainIds.join(",")],
+    enabled: teamIds.length > 0,
+    queryFn: async () => {
+      const [membersRes, capsRes] = await Promise.all([
+        supabase
+          .from("team_members")
+          .select("team_id, profile:profile_id(id, display_name, apelido, avatar_url)")
+          .in("team_id", teamIds),
+        supabase
+          .from("profiles")
+          .select("id, display_name, apelido, avatar_url")
+          .in("id", captainIds),
+      ]);
+      if (membersRes.error) throw membersRes.error;
+      if (capsRes.error) throw capsRes.error;
+      const byTeam: Record<string, TeamMemberLite[]> = {};
+      for (const row of (membersRes.data ?? []) as any[]) {
+        if (!row.profile) continue;
+        (byTeam[row.team_id] ??= []).push(row.profile as TeamMemberLite);
+      }
+      const capById: Record<string, TeamMemberLite> = {};
+      for (const p of (capsRes.data ?? []) as TeamMemberLite[]) capById[p.id] = p;
+      return { byTeam, capById };
+    },
+  });
+
+  if (teamsQ.isLoading) {
+    return <p className="text-sm text-muted-foreground text-center py-8">Carregando…</p>;
+  }
+  if (teams.length === 0) {
+    const label = gender === "F" ? "femininos" : gender === "X" ? "mistos" : "masculinos";
+    return (
+      <Card className="p-6 text-center text-sm text-muted-foreground">
+        Nenhum time {category === "dupla" ? "de duplas" : "de quartetos"} {label} cadastrado ainda.
+      </Card>
+    );
+  }
+
+  const byTeam = rosterQ.data?.byTeam ?? {};
+  const capById = rosterQ.data?.capById ?? {};
+
+  return (
+    <>
+      {teams.map((t, i) => {
+        const members = byTeam[t.id] ?? [];
+        const cap = capById[t.captain_id];
+        const roster: TeamMemberLite[] = [];
+        const seen = new Set<string>();
+        if (cap) { roster.push(cap); seen.add(cap.id); }
+        for (const m of members) if (!seen.has(m.id)) { roster.push(m); seen.add(m.id); }
+        const games = t.wins + t.losses;
+        const categoryLabel = (t.gender === "F" ? "Feminino" : t.gender === "X" ? "Misto" : "Masculino");
+        return (
+          <Card key={t.id} className="p-4 shadow-card hover:shadow-glow transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className={`size-10 rounded-full flex items-center justify-center font-display text-lg shrink-0 ${
+                i === 0 ? "gradient-beach text-white shadow-glow" :
+                i === 1 ? "bg-secondary text-foreground" :
+                i === 2 ? "bg-accent/30 text-accent-foreground" : "bg-muted text-muted-foreground"
+              }`}>
+                {i === 0 ? <Crown className="size-5"/> : i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="font-semibold truncate">{t.name}</div>
+                  <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{categoryLabel}</span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                  {roster.map((p) => (
+                    <div key={p.id} className="flex items-center gap-1.5 pl-0.5 pr-2 py-0.5 rounded-full bg-secondary/60">
+                      <AvatarThumb src={p.avatar_url} name={p.display_name ?? ""} className="size-5" />
+                      <span className="text-[11px] truncate max-w-[120px]">{p.apelido ?? p.display_name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-display text-2xl text-gradient">{t.points}</div>
+                <div className="text-[10px] text-muted-foreground flex items-center gap-1 justify-end"><Medal className="size-3"/>pts</div>
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+              <div><div className="font-display text-base text-success">{t.wins}</div><div className="text-muted-foreground">V</div></div>
+              <div><div className="font-display text-base text-destructive">{t.losses}</div><div className="text-muted-foreground">D</div></div>
+              <div><div className="font-display text-base text-primary">{games}</div><div className="text-muted-foreground">Jogos</div></div>
+            </div>
+          </Card>
+        );
+      })}
+    </>
+  );
+}
