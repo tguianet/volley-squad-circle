@@ -86,6 +86,7 @@ export function ProfileCompletionModal() {
         posicao_principal: profile.posicao_principal ?? "",
         level: profile.level ?? "",
         mao_dominante: profile.mao_dominante ?? "",
+        genero: profile.genero ?? "",
         avatar_url: profile.avatar_url ?? "",
         data_nascimento: profile.data_nascimento ?? "",
         altura: profile.altura ? String(profile.altura) : "",
