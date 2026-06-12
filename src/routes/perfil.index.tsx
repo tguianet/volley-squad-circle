@@ -332,7 +332,7 @@ function ProfilePage() {
         </div>
 
         {/* Montar time */}
-        <TeamBuilder currentId={profile.id} />
+        <TeamBuilder currentId={profile.id} currentGender={profile.genero} />
 
         {/* Galeria de fotos */}
         <ProfileGallery />
