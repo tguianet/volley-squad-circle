@@ -218,7 +218,30 @@ function ChallengeRankingButton({
   const [categoryKey, setCategoryKey] = useState<CatKey | "">("");
   const [teamId, setTeamId] = useState<string>("");
   const [targetId, setTargetId] = useState<string>("");
+  const [sunday, setSunday] = useState<string>("");
+  const [slot1, setSlot1] = useState<string>("");
+  const [slot2, setSlot2] = useState<string>("");
+  const [slot3, setSlot3] = useState<string>("");
   const createFn = useServerFn(createChallenge);
+
+  const nextSundays = useMemo(() => {
+    const out: string[] = [];
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    const offset = (7 - d.getDay()) % 7 || 7;
+    d.setDate(d.getDate() + offset);
+    for (let i = 0; i < 8; i++) {
+      out.push(d.toISOString().slice(0, 10));
+      d.setDate(d.getDate() + 7);
+    }
+    return out;
+  }, []);
+
+  const timeOptions = useMemo(() => {
+    const out: string[] = [];
+    for (let h = 8; h <= 16; h++) out.push(`${String(h).padStart(2, "0")}:00`);
+    return out;
+  }, []);
 
   const isCaptain = captainedTeams.length > 0;
 
@@ -255,7 +278,7 @@ function ChallengeRankingButton({
     mutationFn: createFn,
     onSuccess: () => {
       toast.success("Desafio enviado. Aguarde a equipe aceitar para agendar.");
-      setOpen(false); setTargetId("");
+      setOpen(false); setTargetId(""); setSunday(""); setSlot1(""); setSlot2(""); setSlot3("");
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -356,18 +379,70 @@ function ChallengeRankingButton({
 
 
             {target && (
-              <Card className="p-3">
-                <div className="text-xs text-muted-foreground">Pontuação estimada</div>
-                <div className="text-sm">Vitória: <strong className="text-primary">+{delta} pontos</strong></div>
-                <div className="text-sm">Derrota: <strong className="text-destructive">-{delta} pontos</strong></div>
-              </Card>
+              <>
+                <div>
+                  <Label>Domingo do desafio</Label>
+                  <Select value={sunday} onValueChange={setSunday}>
+                    <SelectTrigger><SelectValue placeholder="Escolha o domingo"/></SelectTrigger>
+                    <SelectContent>
+                      {nextSundays.map((s) => (
+                        <SelectItem key={s} value={s}>{formatSunday(s)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Horários sugeridos (3 opções)</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { v: slot1, set: setSlot1, ph: "1ª opção" },
+                      { v: slot2, set: setSlot2, ph: "2ª opção" },
+                      { v: slot3, set: setSlot3, ph: "3ª opção" },
+                    ].map((s, i) => (
+                      <Select key={i} value={s.v} onValueChange={s.set}>
+                        <SelectTrigger><SelectValue placeholder={s.ph}/></SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((t) => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Janela permitida: 08:00 às 17:00. A equipe desafiada escolherá um dos horários.
+                  </p>
+                </div>
+
+                <Card className="p-3">
+                  <div className="text-xs text-muted-foreground">Pontuação estimada</div>
+                  <div className="text-sm">Vitória: <strong className="text-primary">+{delta} pontos</strong></div>
+                  <div className="text-sm">Derrota: <strong className="text-destructive">-{delta} pontos</strong></div>
+                </Card>
+              </>
             )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
-              disabled={!targetId || !effectiveTeamId || m.isPending}
-              onClick={() => m.mutate({ data: { challengerTeamId: effectiveTeamId, challengedTeamId: targetId } })}
+              disabled={!targetId || !effectiveTeamId || !sunday || !slot1 || m.isPending}
+              onClick={() => {
+                const slots = [slot1, slot2, slot3].filter(Boolean);
+                const unique = new Set(slots);
+                if (unique.size !== slots.length) {
+                  toast.error("Os horários devem ser diferentes.");
+                  return;
+                }
+                m.mutate({
+                  data: {
+                    challengerTeamId: effectiveTeamId,
+                    challengedTeamId: targetId,
+                    date: sunday,
+                    time: slot1,
+                  },
+                });
+              }}
             >
               <Swords className="size-4 mr-1"/>Enviar desafio
             </Button>
