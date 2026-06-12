@@ -70,7 +70,10 @@ function RankingPage() {
   const effectiveGender: GenderFilter = tab === "ind" && gender === "X" ? "M" : gender;
 
   const q = useQuery({ queryKey: ["ranking-players"], queryFn: fetchRanking });
-  const players = q.data ?? [];
+  const allPlayers = q.data ?? [];
+  const players = tab === "ind"
+    ? allPlayers.filter((p) => p.genero === effectiveGender)
+    : allPlayers;
 
   return (
     <AppLayout>
