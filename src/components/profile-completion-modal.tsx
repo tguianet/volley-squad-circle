@@ -65,6 +65,7 @@ export function ProfileCompletionModal() {
     posicao_principal: "",
     level: "",
     mao_dominante: "",
+    genero: "",
     avatar_url: "",
     data_nascimento: "",
     altura: "",
