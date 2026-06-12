@@ -22,10 +22,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   listArenas, listTeams, getMyTeams, createTeam, listProfiles,
   getTeamAvailability, upsertSundayAvailability,
-  findCommonSundays, createChallenge, respondToChallenge, listMyChallenges,
+  createChallenge, respondToChallenge, listMyChallenges,
+  listCourts, getCourtAvailability, scheduleChallenge, reportWalkover,
 } from "@/lib/ranking.functions";
 import {
-  CalendarDays, Swords, Plus, Clock, MapPin, Check, X, RotateCcw, Crown,
+  CalendarDays, Swords, Plus, Clock, MapPin, Check, X, RotateCcw, Crown, Timer, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
