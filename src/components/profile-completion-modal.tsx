@@ -36,7 +36,7 @@ async function fetchMyProfile(): Promise<ProfileRow | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, avatar_url, data_nascimento, altura, observacoes, bio, instagram, status")
+    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, genero, avatar_url, data_nascimento, altura, observacoes, bio, instagram, status")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
