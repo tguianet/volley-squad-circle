@@ -433,6 +433,44 @@ function TeamBuilder({ currentId }: { currentId: string }) {
   for (const t of captainTeams) teamsMap.set(t.id, t);
   const teams = Array.from(teamsMap.values()).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+  // Membros (com perfil) de todos os meus times — para exibir miniaturas
+  const teamIds = teams.map(t => t.id);
+  const membersQ = useQuery<Record<string, RosterPlayer[]>>({
+    queryKey: ["my-teams-members", teamIds.join(",")],
+    enabled: teamIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("team_id, profile:profile_id(id, display_name, apelido, username, avatar_url)")
+        .in("team_id", teamIds);
+      if (error) throw error;
+      const map: Record<string, RosterPlayer[]> = {};
+      for (const r of (data ?? []) as any[]) {
+        if (!r.profile) continue;
+        (map[r.team_id] ??= []).push(r.profile as RosterPlayer);
+      }
+      return map;
+    },
+  });
+  const membersByTeam = membersQ.data ?? {};
+  // Capitães dos times (para incluir nas miniaturas)
+  const captainIds = Array.from(new Set(teams.map(t => t.captain_id)));
+  const captainsQ = useQuery<Record<string, RosterPlayer>>({
+    queryKey: ["my-teams-captains", captainIds.join(",")],
+    enabled: captainIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, apelido, username, avatar_url")
+        .in("id", captainIds);
+      if (error) throw error;
+      const map: Record<string, RosterPlayer> = {};
+      for (const p of (data ?? []) as RosterPlayer[]) map[p.id] = p;
+      return map;
+    },
+  });
+  const captainsById = captainsQ.data ?? {};
+
   // Convites recebidos
   const receivedQ = useQuery<ReceivedInvite[]>({
     queryKey: ["my-received-invites", currentId],
@@ -657,6 +695,26 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                   )}
                 </div>
                 <div className="space-y-1.5">
+                  {(() => {
+                    const cap = captainsById[t.captain_id];
+                    const mem = membersByTeam[t.id] ?? [];
+                    const seen = new Set<string>();
+                    const roster: RosterPlayer[] = [];
+                    if (cap) { roster.push(cap); seen.add(cap.id); }
+                    for (const p of mem) if (!seen.has(p.id)) { roster.push(p); seen.add(p.id); }
+                    if (roster.length === 0) return null;
+                    return (
+                      <div className="flex items-center gap-1.5 flex-wrap pb-1">
+                        {roster.map(p => (
+                          <div key={p.id} className="flex items-center gap-1.5 pl-0.5 pr-2 py-0.5 rounded-full bg-secondary/60">
+                            <Avatar className="size-6"><AvatarImage src={p.avatar_url ?? undefined}/><AvatarFallback>{p.display_name[0]}</AvatarFallback></Avatar>
+                            <span className="text-xs">{p.apelido ?? p.display_name}</span>
+                            {p.id === t.captain_id && <Crown className="size-3 text-primary" />}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   <div className={`flex items-center gap-2 p-2 rounded-md ${isCaptain ? "bg-primary/10" : "bg-secondary/40"}`}>
                     {isCaptain ? <Crown className="size-4 text-primary" /> : <Users className="size-4 text-muted-foreground" />}
                     <div className="flex-1 text-sm">{isCaptain ? "Você é o capitão" : "Você é membro"}</div>
