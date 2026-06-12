@@ -153,16 +153,12 @@ function RankingPage() {
             })}
           </TabsContent>
 
-          <TabsContent value="dupla" className="mt-4">
-            <Card className="p-6 text-center text-sm text-muted-foreground">
-              Ranking de duplas {effectiveGender === "F" ? "femininas" : effectiveGender === "X" ? "mistas" : "masculinas"} em breve.
-            </Card>
+          <TabsContent value="dupla" className="mt-4 space-y-3">
+            <TeamRanking category="dupla" gender={effectiveGender} />
           </TabsContent>
 
-          <TabsContent value="quarteto" className="mt-4">
-            <Card className="p-6 text-center text-sm text-muted-foreground">
-              Ranking de quartetos em breve.
-            </Card>
+          <TabsContent value="quarteto" className="mt-4 space-y-3">
+            <TeamRanking category="quarteto" gender={effectiveGender} />
           </TabsContent>
         </Tabs>
 
