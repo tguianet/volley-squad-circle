@@ -250,6 +250,15 @@ export function ProfileCompletionModal() {
                 </SelectContent>
               </Select>
             </Field>
+            <Field label="Gênero *">
+              <Select value={form.genero} onValueChange={(v) => setForm({ ...form, genero: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M">Masculino</SelectItem>
+                  <SelectItem value="F">Feminino</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
           </div>
 
           <div className="border-t pt-3 space-y-3">
