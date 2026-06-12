@@ -569,11 +569,74 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     qc.invalidateQueries({ queryKey: ["my-received-invites"] });
   };
 
-  const removeTeam = async (teamId: string) => {
-    const { error } = await supabase.from("teams").update({ is_active: false }).eq("id", teamId);
-    if (error) return toast.error(error.message);
-    toast.success("Time removido");
+  const refetchTeams = () => {
     qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
+    qc.invalidateQueries({ queryKey: ["my-member-teams"] });
+    qc.invalidateQueries({ queryKey: ["my-teams-members"] });
+    qc.invalidateQueries({ queryKey: ["my-teams-captains"] });
+  };
+
+  const deleteTeam = async (teamId: string, captainId: string) => {
+    if (captainId !== currentId) return toast.error("Apenas o capitão pode deletar o time");
+    const { error: mErr } = await supabase.from("team_members").delete().eq("team_id", teamId);
+    if (mErr) return toast.error(mErr.message);
+    await supabase.from("team_invitations").delete().eq("team_id", teamId);
+    const { error } = await supabase.from("teams").delete().eq("id", teamId);
+    if (error) return toast.error(error.message);
+    toast.success("Time deletado com sucesso");
+    refetchTeams();
+  };
+
+  const leaveTeam = async (teamId: string, captainId: string) => {
+    const isCap = captainId === currentId;
+    if (isCap) {
+      // Buscar outros membros ordenados por joined_at
+      const { data: others, error: oErr } = await supabase
+        .from("team_members")
+        .select("profile_id, joined_at")
+        .eq("team_id", teamId)
+        .neq("profile_id", currentId)
+        .order("joined_at", { ascending: true });
+      if (oErr) return toast.error(oErr.message);
+
+      if (!others || others.length === 0) {
+        // Único membro: deletar time
+        await supabase.from("team_invitations").delete().eq("team_id", teamId);
+        await supabase.from("team_members").delete().eq("team_id", teamId);
+        const { error } = await supabase.from("teams").delete().eq("id", teamId);
+        if (error) return toast.error(error.message);
+        toast.success("Time removido porque não havia outros membros.");
+        refetchTeams();
+        return;
+      }
+
+      // Transferir capitania para o membro mais antigo
+      const newCaptainId = others[0].profile_id;
+      const { error: uErr } = await supabase
+        .from("teams")
+        .update({ captain_id: newCaptainId })
+        .eq("id", teamId);
+      if (uErr) return toast.error(uErr.message);
+
+      const { error: dErr } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("profile_id", currentId);
+      if (dErr) return toast.error(dErr.message);
+
+      toast.success("Você saiu do time. Um novo capitão foi definido.");
+      refetchTeams();
+    } else {
+      const { error } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", teamId)
+        .eq("profile_id", currentId);
+      if (error) return toast.error(error.message);
+      toast.success("Você saiu do time");
+      refetchTeams();
+    }
   };
 
   const cancelInvite = async (inviteId: string) => {
