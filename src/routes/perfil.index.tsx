@@ -716,7 +716,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
           <div className="text-xs uppercase tracking-wide text-muted-foreground">Convites recebidos</div>
           {received.map(r => (
             <div key={r.id} className="flex items-center gap-2 p-2.5 rounded-md border bg-primary/5">
-              <Avatar className="size-8"><AvatarImage src={r.inviter?.avatar_url ?? undefined}/><AvatarFallback>{r.inviter?.display_name?.[0] ?? "?"}</AvatarFallback></Avatar>
+              <AvatarThumb src={r.inviter?.avatar_url} name={r.inviter?.display_name} />
               <div className="flex-1 min-w-0 text-sm">
                 <div className="font-medium truncate">{r.team?.name ?? "Time"}</div>
                 <div className="text-[11px] text-muted-foreground truncate">
