@@ -754,9 +754,46 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     </div>
                     {isCaptain && <div className="text-[11px] text-muted-foreground">{accepted}/{total} confirmados</div>}
                   </div>
-                  {isCaptain && (
-                    <Button size="icon" variant="ghost" onClick={() => removeTeam(t.id)}><Trash2 className="size-4"/></Button>
-                  )}
+                  <div className="flex items-center gap-1">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="icon" variant="ghost" title="Sair do time"><LogOut className="size-4"/></Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Sair do time</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {isCaptain
+                              ? "Tem certeza que deseja sair deste time? Se houver outros membros, a capitania será transferida ao membro mais antigo. Caso contrário, o time será removido."
+                              : "Tem certeza que deseja sair deste time?"}
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => leaveTeam(t.id, t.captain_id)}>Sair</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                    {isCaptain && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="icon" variant="ghost" title="Deletar time"><Trash2 className="size-4 text-destructive"/></Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Deletar time</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja deletar este time? Essa ação removerá todos os membros e não poderá ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteTeam(t.id, t.captain_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Deletar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   {(() => {
