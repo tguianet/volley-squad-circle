@@ -50,6 +50,7 @@ type MyProfile = {
   altura: number | null;
   avatar_url: string | null;
   banner_url: string | null;
+  genero: string | null;
   pontos: number | null;
   vitorias: number | null;
   derrotas: number | null;
@@ -60,7 +61,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, pontos, vitorias, derrotas")
+    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, pontos, vitorias, derrotas")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -73,7 +74,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
     ...(data ?? {
       display_name: null, username: null, apelido: null, bio: null, city: null, state: null,
       whatsapp: null, instagram: null, posicao_principal: null, level: null, mao_dominante: null,
-      altura: null, avatar_url: null, banner_url: null, pontos: 0, vitorias: 0, derrotas: 0,
+      altura: null, avatar_url: null, banner_url: null, genero: null, pontos: 0, vitorias: 0, derrotas: 0,
     }),
   } as MyProfile;
 }
@@ -105,7 +106,7 @@ function ProfilePage() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     apelido: "", bio: "", city: "", state: "", whatsapp: "", instagram: "",
-    posicao_principal: "", level: "", mao_dominante: "", altura: "",
+    posicao_principal: "", level: "", mao_dominante: "", altura: "", genero: "",
   });
   const [saving, setSaving] = useState(false);
 
@@ -123,6 +124,7 @@ function ProfilePage() {
       level: profile.level ?? "",
       mao_dominante: profile.mao_dominante ?? "",
       altura: profile.altura ? String(profile.altura) : "",
+      genero: profile.genero ?? "",
     });
   }, [open, profile?.id]);
 
@@ -141,6 +143,7 @@ function ProfilePage() {
         level: form.level || null,
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
+        genero: form.genero || null,
       };
       const { data, error } = await supabase
         .from("profiles")
@@ -236,6 +239,16 @@ function ProfilePage() {
                         <SelectContent>
                           <SelectItem value="Direita">Direita</SelectItem>
                           <SelectItem value="Esquerda">Esquerda</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Gênero</Label>
+                      <Select value={form.genero} onValueChange={(v) => setForm({ ...form, genero: v })}>
+                        <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="M">Masculino</SelectItem>
+                          <SelectItem value="F">Feminino</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

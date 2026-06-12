@@ -524,6 +524,7 @@ export type Database = {
           data_nascimento: string | null
           derrotas: number
           display_name: string
+          genero: string | null
           id: string
           instagram: string | null
           is_suspended: boolean
@@ -553,6 +554,7 @@ export type Database = {
           data_nascimento?: string | null
           derrotas?: number
           display_name?: string
+          genero?: string | null
           id: string
           instagram?: string | null
           is_suspended?: boolean
@@ -582,6 +584,7 @@ export type Database = {
           data_nascimento?: string | null
           derrotas?: number
           display_name?: string
+          genero?: string | null
           id?: string
           instagram?: string | null
           is_suspended?: boolean

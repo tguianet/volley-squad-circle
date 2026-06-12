@@ -21,6 +21,7 @@ type ProfileRow = {
   posicao_principal: string | null;
   level: string | null;
   mao_dominante: string | null;
+  genero: string | null;
   avatar_url: string | null;
   data_nascimento: string | null;
   altura: number | null;
@@ -35,7 +36,7 @@ async function fetchMyProfile(): Promise<ProfileRow | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, avatar_url, data_nascimento, altura, observacoes, bio, instagram, status")
+    .select("id, display_name, apelido, city, state, whatsapp, posicao_principal, level, mao_dominante, genero, avatar_url, data_nascimento, altura, observacoes, bio, instagram, status")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -64,6 +65,7 @@ export function ProfileCompletionModal() {
     posicao_principal: "",
     level: "",
     mao_dominante: "",
+    genero: "",
     avatar_url: "",
     data_nascimento: "",
     altura: "",
@@ -84,6 +86,7 @@ export function ProfileCompletionModal() {
         posicao_principal: profile.posicao_principal ?? "",
         level: profile.level ?? "",
         mao_dominante: profile.mao_dominante ?? "",
+        genero: profile.genero ?? "",
         avatar_url: profile.avatar_url ?? "",
         data_nascimento: profile.data_nascimento ?? "",
         altura: profile.altura ? String(profile.altura) : "",
@@ -144,7 +147,8 @@ export function ProfileCompletionModal() {
     form.whatsapp.trim() &&
     form.posicao_principal &&
     form.level &&
-    form.mao_dominante;
+    form.mao_dominante &&
+    form.genero;
 
   const onSave = async () => {
     if (!requiredOk || !profile) return;
@@ -158,6 +162,7 @@ export function ProfileCompletionModal() {
         posicao_principal: form.posicao_principal,
         level: form.level,
         mao_dominante: form.mao_dominante,
+        genero: form.genero,
         avatar_url: form.avatar_url || null,
         data_nascimento: form.data_nascimento || null,
         altura: normalizeAltura(form.altura),
@@ -242,6 +247,15 @@ export function ProfileCompletionModal() {
                 <SelectContent>
                   <SelectItem value="Direita">Direita</SelectItem>
                   <SelectItem value="Esquerda">Esquerda</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Gênero *">
+              <Select value={form.genero} onValueChange={(v) => setForm({ ...form, genero: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M">Masculino</SelectItem>
+                  <SelectItem value="F">Feminino</SelectItem>
                 </SelectContent>
               </Select>
             </Field>

@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS genero TEXT CHECK (genero IN ('M','F'));
