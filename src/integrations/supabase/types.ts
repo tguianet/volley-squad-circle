@@ -883,6 +883,13 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      recompute_ranks_below_podium: {
+        Args: {
+          _category: Database["public"]["Enums"]["team_category"]
+          _gender: Database["public"]["Enums"]["team_gender"]
+        }
+        Returns: undefined
+      }
       recompute_team_gender: { Args: { _team_id: string }; Returns: undefined }
     }
     Enums: {
