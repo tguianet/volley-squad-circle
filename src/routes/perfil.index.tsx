@@ -61,7 +61,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, pontos, vitorias, derrotas")
+    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, pontos, vitorias, derrotas")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -74,7 +74,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
     ...(data ?? {
       display_name: null, username: null, apelido: null, bio: null, city: null, state: null,
       whatsapp: null, instagram: null, posicao_principal: null, level: null, mao_dominante: null,
-      altura: null, avatar_url: null, banner_url: null, pontos: 0, vitorias: 0, derrotas: 0,
+      altura: null, avatar_url: null, banner_url: null, genero: null, pontos: 0, vitorias: 0, derrotas: 0,
     }),
   } as MyProfile;
 }
