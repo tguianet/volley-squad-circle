@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
+import { AvatarThumb } from "@/components/avatar-thumb";
 
 const TEAM_FORMATS = ["Dupla", "Dupla mista", "Quarteto", "Quarteto misto"] as const;
 type TeamFormat = typeof TEAM_FORMATS[number];
@@ -715,7 +716,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
           <div className="text-xs uppercase tracking-wide text-muted-foreground">Convites recebidos</div>
           {received.map(r => (
             <div key={r.id} className="flex items-center gap-2 p-2.5 rounded-md border bg-primary/5">
-              <Avatar className="size-8"><AvatarImage src={r.inviter?.avatar_url ?? undefined}/><AvatarFallback>{r.inviter?.display_name?.[0] ?? "?"}</AvatarFallback></Avatar>
+              <AvatarThumb src={r.inviter?.avatar_url} name={r.inviter?.display_name} />
               <div className="flex-1 min-w-0 text-sm">
                 <div className="font-medium truncate">{r.team?.name ?? "Time"}</div>
                 <div className="text-[11px] text-muted-foreground truncate">
@@ -808,7 +809,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                       <div className="flex items-center gap-1.5 flex-wrap pb-1">
                         {roster.map(p => (
                           <div key={p.id} className="flex items-center gap-1.5 pl-0.5 pr-2 py-0.5 rounded-full bg-secondary/60">
-                            <Avatar className="size-6"><AvatarImage src={p.avatar_url ?? undefined}/><AvatarFallback>{p.display_name[0]}</AvatarFallback></Avatar>
+                            <AvatarThumb src={p.avatar_url} name={p.display_name} className="size-6" />
                             <span className="text-xs">{p.apelido ?? p.display_name}</span>
                             {p.id === t.captain_id && <Crown className="size-3 text-primary" />}
                           </div>
@@ -825,7 +826,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     if (!pl) return null;
                     return (
                       <div key={inv.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/40">
-                        <Avatar className="size-7"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
+                        <AvatarThumb src={pl.avatar_url} name={pl.display_name} className="size-7" />
                         <div className="flex-1 text-sm">{pl.display_name}</div>
                         {inv.status === "pending" && (
                           <>
