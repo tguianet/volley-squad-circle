@@ -22,11 +22,38 @@ import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { AvatarThumb } from "@/components/avatar-thumb";
 
-const TEAM_FORMATS = ["Dupla", "Dupla mista", "Quarteto", "Quarteto misto"] as const;
-type TeamFormat = typeof TEAM_FORMATS[number];
-
 type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
-type Team = { id: string; name: string; format: TeamFormat; captainId: string; invites: Invite[]; createdAt: string };
+type Team = { id: string; name: string; format: string; captainId: string; invites: Invite[]; createdAt: string };
+
+function getTeamFormats(currentGender?: string | null): string[] {
+  if (currentGender === "F") {
+    return ["Dupla feminina", "Dupla mista", "Quarteto feminino", "Quarteto misto"];
+  }
+  return ["Dupla masculina", "Dupla mista", "Quarteto masculino", "Quarteto misto"];
+}
+
+function formatFromCategory(category: string, gender: string): string {
+  if (category === "quarteto") {
+    if (gender === "X") return "Quarteto misto";
+    if (gender === "F") return "Quarteto feminino";
+    return "Quarteto masculino";
+  }
+  if (gender === "X") return "Dupla mista";
+  if (gender === "F") return "Dupla feminina";
+  return "Dupla masculina";
+}
+
+function categoryGenderFromFormat(format: string): { category: "dupla" | "quarteto"; gender: "M" | "F" | "X" } {
+  const isQuarteto = format.startsWith("Quarteto");
+  const category = isQuarteto ? "quarteto" : "dupla";
+  if (format.includes("misto") || format.includes("mista")) {
+    return { category, gender: "X" };
+  }
+  if (format.includes("feminina") || format.includes("feminino")) {
+    return { category, gender: "F" };
+  }
+  return { category, gender: "M" };
+}
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — PlayBeach" }] }),
