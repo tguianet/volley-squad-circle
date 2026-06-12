@@ -31,6 +31,7 @@ type RankRow = {
   altura: number | null;
   mao_dominante: string | null;
   posicao_principal: string | null;
+  genero: string | null;
   pontos: number;
   vitorias: number;
   derrotas: number;
@@ -39,7 +40,7 @@ type RankRow = {
 async function fetchRanking(): Promise<RankRow[]> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, apelido, username, avatar_url, city, state, level, altura, mao_dominante, posicao_principal, pontos, vitorias, derrotas")
+    .select("id, display_name, apelido, username, avatar_url, city, state, level, altura, mao_dominante, posicao_principal, genero, pontos, vitorias, derrotas")
     .order("pontos", { ascending: false })
     .limit(200);
   if (error) throw error;
