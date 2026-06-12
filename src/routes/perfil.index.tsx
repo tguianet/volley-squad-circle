@@ -696,20 +696,30 @@ function TeamBuilder({ currentId, currentGender }: { currentId: string; currentG
               <div className="space-y-2">
                 <Label>Participantes ({selected.length}/{required})</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {others.length === 0 ? (
-                    <div className="text-xs text-muted-foreground p-2 text-center">
-                      Nenhum jogador cadastrado ainda.
-                    </div>
-                  ) : others.map(pl => (
-                    <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
-                      <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
-                      <Avatar className="size-8"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{pl.display_name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">@{pl.apelido ?? pl.username ?? ""}</div>
-                      </div>
-                    </label>
-                  ))}
+                  {(() => {
+                    const filtered = others.filter(p => {
+                      if (!currentGender) return false;
+                      if (format.includes("misto") || format.includes("mista")) return true;
+                      return p.genero === currentGender;
+                    });
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="text-xs text-muted-foreground p-2 text-center">
+                          Nenhum jogador disponível para esta categoria.
+                        </div>
+                      );
+                    }
+                    return filtered.map(pl => (
+                      <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
+                        <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
+                        <Avatar className="size-8"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{pl.display_name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">@{pl.apelido ?? pl.username ?? ""}</div>
+                        </div>
+                      </label>
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
