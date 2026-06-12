@@ -826,7 +826,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     if (!pl) return null;
                     return (
                       <div key={inv.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/40">
-                        <Avatar className="size-7"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
+                        <AvatarThumb src={pl.avatar_url} name={pl.display_name} className="size-7" />
                         <div className="flex-1 text-sm">{pl.display_name}</div>
                         {inv.status === "pending" && (
                           <>
