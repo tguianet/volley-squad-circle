@@ -624,7 +624,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
         </div>
       )}
 
-      {teamsQ.isLoading ? (
+      {captainQ.isLoading || memberQ.isLoading ? (
         <div className="flex justify-center py-6"><Loader2 className="size-5 animate-spin text-muted-foreground"/></div>
       ) : teams.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">
