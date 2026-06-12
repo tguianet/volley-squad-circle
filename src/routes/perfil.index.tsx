@@ -22,11 +22,38 @@ import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { AvatarThumb } from "@/components/avatar-thumb";
 
-const TEAM_FORMATS = ["Dupla", "Dupla mista", "Quarteto", "Quarteto misto"] as const;
-type TeamFormat = typeof TEAM_FORMATS[number];
-
 type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
-type Team = { id: string; name: string; format: TeamFormat; captainId: string; invites: Invite[]; createdAt: string };
+type Team = { id: string; name: string; format: string; captainId: string; invites: Invite[]; createdAt: string };
+
+function getTeamFormats(currentGender?: string | null): string[] {
+  if (currentGender === "F") {
+    return ["Dupla feminina", "Dupla mista", "Quarteto feminino", "Quarteto misto"];
+  }
+  return ["Dupla masculina", "Dupla mista", "Quarteto masculino", "Quarteto misto"];
+}
+
+function formatFromCategory(category: string, gender: string): string {
+  if (category === "quarteto") {
+    if (gender === "X") return "Quarteto misto";
+    if (gender === "F") return "Quarteto feminino";
+    return "Quarteto masculino";
+  }
+  if (gender === "X") return "Dupla mista";
+  if (gender === "F") return "Dupla feminina";
+  return "Dupla masculina";
+}
+
+function categoryGenderFromFormat(format: string): { category: "dupla" | "quarteto"; gender: "M" | "F" | "X" } {
+  const isQuarteto = format.startsWith("Quarteto");
+  const category = isQuarteto ? "quarteto" : "dupla";
+  if (format.includes("misto") || format.includes("mista")) {
+    return { category, gender: "X" };
+  }
+  if (format.includes("feminina") || format.includes("feminino")) {
+    return { category, gender: "F" };
+  }
+  return { category, gender: "M" };
+}
 
 export const Route = createFileRoute("/perfil/")({
   head: () => ({ meta: [{ title: "Perfil — PlayBeach" }] }),
@@ -305,7 +332,7 @@ function ProfilePage() {
         </div>
 
         {/* Montar time */}
-        <TeamBuilder currentId={profile.id} />
+        <TeamBuilder currentId={profile.id} currentGender={profile.genero} />
 
         {/* Galeria de fotos */}
         <ProfileGallery />
@@ -342,7 +369,7 @@ function Stat({ label, value, sub, accent }: { label: string; value: number | st
   );
 }
 
-type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null };
+type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null; genero: string | null };
 
 type DbInvitation = {
   id: string;
@@ -366,17 +393,8 @@ type ReceivedInvite = {
   inviter: RosterPlayer | null;
 };
 
-function formatFromCategory(category: string, gender: string): TeamFormat {
-  if (category === "quarteto") return gender === "X" ? "Quarteto misto" : "Quarteto";
-  return gender === "X" ? "Dupla mista" : "Dupla";
-}
-function categoryGenderFromFormat(format: TeamFormat): { category: "dupla" | "quarteto"; gender: "M" | "X" } {
-  const category = format.startsWith("Quarteto") ? "quarteto" : "dupla";
-  const gender = format.includes("misto") || format.includes("mista") ? "X" : "M";
-  return { category, gender };
-}
 
-function TeamBuilder({ currentId }: { currentId: string }) {
+function TeamBuilder({ currentId, currentGender }: { currentId: string; currentGender?: string | null }) {
   const qc = useQueryClient();
 
   const rosterQ = useQuery<RosterPlayer[]>({
@@ -384,7 +402,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, apelido, username, avatar_url")
+        .select("id, display_name, apelido, username, avatar_url, genero")
         .neq("id", currentId)
         .order("display_name");
       if (error) throw error;
@@ -491,22 +509,18 @@ function TeamBuilder({ currentId }: { currentId: string }) {
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [format, setFormat] = useState<TeamFormat>("Dupla");
+  const defaultFormat = getTeamFormats(currentGender)[0];
+  const [format, setFormat] = useState(defaultFormat);
   const [selected, setSelected] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const formatInvitesCount: Record<TeamFormat, number> = {
-    Dupla: 1,
-    "Dupla mista": 1,
-    Quarteto: 3,
-    "Quarteto misto": 3,
-  };
+  const required = categoryGenderFromFormat(format).category === "quarteto" ? 3 : 1;
 
   // Formatos em que já tenho um time ativo
-  const myExistingFormats = new Set<TeamFormat>(
+  const myExistingFormats = new Set<string>(
     teams.map(t => formatFromCategory(t.category, t.gender))
   );
-  const availableFormats = TEAM_FORMATS.filter(f => !myExistingFormats.has(f));
+  const availableFormats = getTeamFormats(currentGender).filter(f => !myExistingFormats.has(f));
 
   useEffect(() => {
     if (myExistingFormats.has(format) && availableFormats.length > 0) {
@@ -515,7 +529,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     }
   }, [captainQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); };
+  const reset = () => { setName(""); setFormat(availableFormats[0] ?? defaultFormat); setSelected([]); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
@@ -524,7 +538,6 @@ function TeamBuilder({ currentId }: { currentId: string }) {
   const create = async () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
     if (myExistingFormats.has(format)) return toast.error(`Você já tem um time no formato ${format}`);
-    const required = formatInvitesCount[format];
     if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
 
     setSubmitting(true);
@@ -668,7 +681,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
               </div>
               <div className="space-y-1.5">
                 <Label>Formato</Label>
-                <Select value={format} onValueChange={(v) => { setFormat(v as TeamFormat); setSelected([]); }}>
+                <Select value={format} onValueChange={(v) => { setFormat(v); setSelected([]); }}>
                   <SelectTrigger><SelectValue/></SelectTrigger>
                   <SelectContent>
                     {availableFormats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
@@ -681,22 +694,32 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Participantes ({selected.length}/{formatInvitesCount[format]})</Label>
+                <Label>Participantes ({selected.length}/{required})</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {others.length === 0 ? (
-                    <div className="text-xs text-muted-foreground p-2 text-center">
-                      Nenhum jogador cadastrado ainda.
-                    </div>
-                  ) : others.map(pl => (
-                    <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
-                      <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
-                      <Avatar className="size-8"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{pl.display_name}</div>
-                        <div className="text-[11px] text-muted-foreground truncate">@{pl.apelido ?? pl.username ?? ""}</div>
-                      </div>
-                    </label>
-                  ))}
+                  {(() => {
+                    const filtered = others.filter(p => {
+                      if (!currentGender) return false;
+                      if (format.includes("misto") || format.includes("mista")) return true;
+                      return p.genero === currentGender;
+                    });
+                    if (filtered.length === 0) {
+                      return (
+                        <div className="text-xs text-muted-foreground p-2 text-center">
+                          Nenhum jogador disponível para esta categoria.
+                        </div>
+                      );
+                    }
+                    return filtered.map(pl => (
+                      <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
+                        <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
+                        <Avatar className="size-8"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{pl.display_name}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">@{pl.apelido ?? pl.username ?? ""}</div>
+                        </div>
+                      </label>
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
