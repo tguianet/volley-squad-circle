@@ -82,14 +82,21 @@ function DesafiosPage() {
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
             <h1 className="text-3xl">Desafios</h1>
             <p className="text-sm text-muted-foreground">
               Os jogos do ranking acontecem aos domingos. Defina a disponibilidade da sua equipe.
             </p>
           </div>
-          <CreateTeamButton arenas={arenasQ.data ?? []} />
+          <div className="flex items-center gap-2">
+            <ChallengeRankingButton
+              captainedTeams={captainedTeams}
+              allTeams={teamsQ.data ?? []}
+              onCreated={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
+            />
+            <CreateTeamButton arenas={arenasQ.data ?? []} />
+          </div>
         </div>
 
         {captainedTeams.length > 1 && (
