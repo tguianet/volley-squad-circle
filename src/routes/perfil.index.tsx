@@ -509,22 +509,18 @@ function TeamBuilder({ currentId, currentGender }: { currentId: string; currentG
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [format, setFormat] = useState<TeamFormat>("Dupla");
+  const defaultFormat = getTeamFormats(currentGender)[0];
+  const [format, setFormat] = useState(defaultFormat);
   const [selected, setSelected] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
-  const formatInvitesCount: Record<TeamFormat, number> = {
-    Dupla: 1,
-    "Dupla mista": 1,
-    Quarteto: 3,
-    "Quarteto misto": 3,
-  };
+  const required = categoryGenderFromFormat(format).category === "quarteto" ? 3 : 1;
 
   // Formatos em que já tenho um time ativo
-  const myExistingFormats = new Set<TeamFormat>(
+  const myExistingFormats = new Set<string>(
     teams.map(t => formatFromCategory(t.category, t.gender))
   );
-  const availableFormats = TEAM_FORMATS.filter(f => !myExistingFormats.has(f));
+  const availableFormats = getTeamFormats(currentGender).filter(f => !myExistingFormats.has(f));
 
   useEffect(() => {
     if (myExistingFormats.has(format) && availableFormats.length > 0) {
@@ -533,7 +529,7 @@ function TeamBuilder({ currentId, currentGender }: { currentId: string; currentG
     }
   }, [captainQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); };
+  const reset = () => { setName(""); setFormat(availableFormats[0] ?? defaultFormat); setSelected([]); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
