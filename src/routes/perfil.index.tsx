@@ -470,7 +470,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
       setFormat(availableFormats[0]);
       setSelected([]);
     }
-  }, [teamsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [captainQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); };
 
