@@ -197,7 +197,8 @@ function ScheduledChallenges() {
           {items.map((c) => (
             <Card key={c.id} className="p-4">
               <div className="font-semibold">
-                Domingo {formatSunday(c.scheduled_date)} — {c.scheduled_time.slice(0, 5)}
+                {c.scheduled_date ? `Domingo ${formatSunday(c.scheduled_date)}` : "A agendar"}
+                {c.scheduled_time ? ` — ${c.scheduled_time.slice(0, 5)}` : ""}
               </div>
               <div className="text-sm">
                 {c.challenger?.name} {c.challenger?.rank_position ? `(#${c.challenger.rank_position})` : ""}

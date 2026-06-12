@@ -157,14 +157,16 @@ export type Database = {
           arena_id: string | null
           challenged_team_id: string
           challenger_team_id: string
+          court_id: string | null
           created_at: string
           created_by: string
+          duration_minutes: number
           id: string
           loser_team_id: string | null
           reschedule_reason: string | null
           responded_at: string | null
-          scheduled_date: string
-          scheduled_time: string
+          scheduled_date: string | null
+          scheduled_time: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -173,14 +175,16 @@ export type Database = {
           arena_id?: string | null
           challenged_team_id: string
           challenger_team_id: string
+          court_id?: string | null
           created_at?: string
           created_by: string
+          duration_minutes?: number
           id?: string
           loser_team_id?: string | null
           reschedule_reason?: string | null
           responded_at?: string | null
-          scheduled_date: string
-          scheduled_time: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           updated_at?: string
           winner_team_id?: string | null
@@ -189,14 +193,16 @@ export type Database = {
           arena_id?: string | null
           challenged_team_id?: string
           challenger_team_id?: string
+          court_id?: string | null
           created_at?: string
           created_by?: string
+          duration_minutes?: number
           id?: string
           loser_team_id?: string | null
           reschedule_reason?: string | null
           responded_at?: string | null
-          scheduled_date?: string
-          scheduled_time?: string
+          scheduled_date?: string | null
+          scheduled_time?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           updated_at?: string
           winner_team_id?: string | null
@@ -224,6 +230,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "challenges_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "challenges_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -245,6 +258,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      courts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          number: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          number: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          number?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       gallery_comments: {
         Row: {
@@ -783,8 +823,10 @@ export type Database = {
           points: number
           preferred_arena_id: string | null
           rank_position: number | null
+          suspended_until: string | null
           updated_at: string
           wins: number
+          wo_count: number
         }
         Insert: {
           captain_id: string
@@ -799,8 +841,10 @@ export type Database = {
           points?: number
           preferred_arena_id?: string | null
           rank_position?: number | null
+          suspended_until?: string | null
           updated_at?: string
           wins?: number
+          wo_count?: number
         }
         Update: {
           captain_id?: string
@@ -815,8 +859,10 @@ export type Database = {
           points?: number
           preferred_arena_id?: string | null
           rank_position?: number | null
+          suspended_until?: string | null
           updated_at?: string
           wins?: number
+          wo_count?: number
         }
         Relationships: [
           {
@@ -863,6 +909,16 @@ export type Database = {
     Functions: {
       apply_monthly_penalties: { Args: { _month: string }; Returns: number }
       apply_previous_month_penalties: { Args: never; Returns: number }
+      court_availability: {
+        Args: { _date: string }
+        Returns: {
+          court_id: string
+          court_name: string
+          court_number: number
+          is_free: boolean
+          slot_time: string
+        }[]
+      }
       generate_current_month_availability: { Args: never; Returns: number }
       generate_month_availability: { Args: { _month: string }; Returns: number }
       get_sundays_of_month: {
@@ -891,6 +947,38 @@ export type Database = {
         Returns: undefined
       }
       recompute_team_gender: { Args: { _team_id: string }; Returns: undefined }
+      schedule_challenge: {
+        Args: {
+          _challenge_id: string
+          _court_id: string
+          _date: string
+          _time: string
+        }
+        Returns: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          court_id: string | null
+          created_at: string
+          created_by: string
+          duration_minutes: number
+          id: string
+          loser_team_id: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "player"
@@ -901,6 +989,7 @@ export type Database = {
         | "declined"
         | "completed"
         | "wo"
+        | "awaiting_schedule"
       match_modality: "beach_volley" | "indoor_volley" | "futevolei"
       match_player_status: "confirmed" | "waiting" | "cancelled"
       match_status: "open" | "full" | "finished" | "cancelled"
@@ -1044,6 +1133,7 @@ export const Constants = {
         "declined",
         "completed",
         "wo",
+        "awaiting_schedule",
       ],
       match_modality: ["beach_volley", "indoor_volley", "futevolei"],
       match_player_status: ["confirmed", "waiting", "cancelled"],

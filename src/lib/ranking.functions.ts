@@ -314,8 +314,8 @@ export const createChallenge = createServerFn({ method: "POST" })
     z.object({
       challengerTeamId: z.string().uuid(),
       challengedTeamId: z.string().uuid(),
-      date: z.string(), // YYYY-MM-DD
-      time: z.string(), // HH:MM
+      date: z.string().optional().nullable(),
+      time: z.string().optional().nullable(),
       arenaId: z.string().uuid().nullable().optional(),
     }).parse(d),
   )
@@ -325,8 +325,8 @@ export const createChallenge = createServerFn({ method: "POST" })
       .insert({
         challenger_team_id: data.challengerTeamId,
         challenged_team_id: data.challengedTeamId,
-        scheduled_date: data.date,
-        scheduled_time: data.time,
+        scheduled_date: data.date ?? null,
+        scheduled_time: data.time ?? null,
         arena_id: data.arenaId ?? null,
         status: "pending",
         created_by: context.userId,
@@ -349,7 +349,7 @@ export const respondToChallenge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const next =
       data.action === "accept"
-        ? "scheduled"
+        ? "awaiting_schedule"
         : data.action === "decline"
           ? "declined"
           : "reschedule_requested";
@@ -362,8 +362,31 @@ export const respondToChallenge = createServerFn({ method: "POST" })
       })
       .eq("id", data.challengeId);
     if (error) throw new Error(error.message);
+
+    if (data.action === "accept") {
+      // Notifica capitão desafiante para agendar
+      const { data: ch } = await context.supabase
+        .from("challenges")
+        .select("challenger_team_id, challenged:teams!challenges_challenged_team_id_fkey(name)")
+        .eq("id", data.challengeId)
+        .single();
+      if (ch) {
+        const { data: capt } = await context.supabase
+          .from("teams").select("captain_id").eq("id", ch.challenger_team_id).single();
+        if (capt) {
+          await context.supabase.from("notifications").insert({
+            user_id: capt.captain_id,
+            kind: "challenge_accepted",
+            title: "Desafio aceito — agende a partida",
+            body: `${(ch as any).challenged?.name ?? "A equipe"} aceitou. Escolha domingo, horário e quadra.`,
+            link_url: "/desafios",
+          });
+        }
+      }
+    }
     return { ok: true, status: next };
   });
+
 
 export const listMyChallenges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -379,13 +402,14 @@ export const listMyChallenges = createServerFn({ method: "GET" })
     const { data: rows, error } = await context.supabase
       .from("challenges")
       .select(`
-        id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason,
+        id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes,
         challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
         challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),
-        arena:arenas(id, name)
+        arena:arenas(id, name),
+        court:courts(id, number, name)
       `)
       .or(`challenger_team_id.in.(${ids.join(",")}),challenged_team_id.in.(${ids.join(",")})`)
-      .order("scheduled_date", { ascending: true });
+      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
 
     const sent: typeof rows = [];
@@ -417,4 +441,81 @@ export const listScheduledChallenges = createServerFn({ method: "GET" })
       .limit(20);
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+// =====================================================================
+// COURTS & SCHEDULING
+// =====================================================================
+export const listCourts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("courts")
+      .select("id, number, name, is_active")
+      .eq("is_active", true)
+      .order("number");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const getCourtAvailability = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .rpc("court_availability", { _date: data.date });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const scheduleChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      challengeId: z.string().uuid(),
+      date: z.string(),
+      time: z.string(),
+      courtId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("schedule_challenge", {
+      _challenge_id: data.challengeId,
+      _date: data.date,
+      _time: data.time,
+      _court_id: data.courtId,
+    });
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const reportWalkover = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("challenges")
+      .update({ status: "wo" })
+      .eq("id", data.challengeId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const listSundayAgenda = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("challenges")
+      .select(`
+        id, scheduled_date, scheduled_time, duration_minutes, status,
+        court:courts(id, number, name),
+        challenger:teams!challenges_challenger_team_id_fkey(id, name),
+        challenged:teams!challenges_challenged_team_id_fkey(id, name)
+      `)
+      .eq("scheduled_date", data.date)
+      .eq("status", "scheduled")
+      .order("scheduled_time");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
