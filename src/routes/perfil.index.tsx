@@ -330,7 +330,41 @@ function Stat({ label, value, sub, accent }: { label: string; value: number | st
 
 type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null };
 
+type DbInvitation = {
+  id: string;
+  invitee_id: string;
+  status: "pending" | "accepted" | "declined" | "cancelled";
+  invitee?: RosterPlayer | null;
+};
+type DbTeam = {
+  id: string;
+  name: string;
+  category: "dupla" | "quarteto";
+  gender: "M" | "F" | "X";
+  captain_id: string;
+  created_at: string;
+  invitations: DbInvitation[];
+};
+type ReceivedInvite = {
+  id: string;
+  status: string;
+  team: { id: string; name: string; category: string; gender: string; captain_id: string } | null;
+  inviter: RosterPlayer | null;
+};
+
+function formatFromCategory(category: string, gender: string): TeamFormat {
+  if (category === "quarteto") return gender === "X" ? "Quarteto misto" : "Quarteto";
+  return gender === "X" ? "Dupla mista" : "Dupla";
+}
+function categoryGenderFromFormat(format: TeamFormat): { category: "dupla" | "quarteto"; gender: "M" | "X" } {
+  const category = format.startsWith("Quarteto") ? "quarteto" : "dupla";
+  const gender = format.includes("misto") || format.includes("mista") ? "X" : "M";
+  return { category, gender };
+}
+
 function TeamBuilder({ currentId }: { currentId: string }) {
+  const qc = useQueryClient();
+
   const rosterQ = useQuery<RosterPlayer[]>({
     queryKey: ["roster-players"],
     queryFn: async () => {
@@ -345,12 +379,44 @@ function TeamBuilder({ currentId }: { currentId: string }) {
   });
   const others: RosterPlayer[] = rosterQ.data ?? [];
   const getPlayer = (id: string): RosterPlayer | undefined => others.find(p => p.id === id);
-  const [teams, setTeams] = useState<Team[]>([]);
+
+  // Times onde eu sou capitão (com convites)
+  const teamsQ = useQuery<DbTeam[]>({
+    queryKey: ["my-captain-teams", currentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("id, name, category, gender, captain_id, created_at, invitations:team_invitations(id, invitee_id, status, invitee:invitee_id(id, display_name, apelido, username, avatar_url))")
+        .eq("captain_id", currentId)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as DbTeam[];
+    },
+  });
+  const teams: DbTeam[] = teamsQ.data ?? [];
+
+  // Convites recebidos
+  const receivedQ = useQuery<ReceivedInvite[]>({
+    queryKey: ["my-received-invites", currentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_invitations")
+        .select("id, status, team:team_id(id, name, category, gender, captain_id), inviter:inviter_id(id, display_name, apelido, username, avatar_url)")
+        .eq("invitee_id", currentId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as ReceivedInvite[];
+    },
+  });
+  const received: ReceivedInvite[] = receivedQ.data ?? [];
+
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [format, setFormat] = useState<TeamFormat>("Dupla");
   const [selected, setSelected] = useState<string[]>([]);
-  const [captainId, setCaptainId] = useState<string>(currentId);
+  const [submitting, setSubmitting] = useState(false);
 
   const formatInvitesCount: Record<TeamFormat, number> = {
     Dupla: 1,
@@ -359,74 +425,85 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     "Quarteto misto": 3,
   };
 
-  // Formatos em que já estou no ranking (não posso abrir outro time no mesmo formato)
-  const myRankedFormats = new Set<TeamFormat>(
-    teams
-      .filter(t => t.invites.length > 0 && t.invites.every(i => i.status === "accepted"))
-      .map(t => t.format)
+  // Formatos em que já tenho um time ativo
+  const myExistingFormats = new Set<TeamFormat>(
+    teams.map(t => formatFromCategory(t.category, t.gender))
   );
+  const availableFormats = TEAM_FORMATS.filter(f => !myExistingFormats.has(f));
 
-  // Jogadores que já estão num time meu (no ranking) do formato selecionado — não aparecem
-  const playersInRankedFormat = new Set<string>(
-    teams
-      .filter(t => t.format === format && t.invites.length > 0 && t.invites.every(i => i.status === "accepted"))
-      .flatMap(t => [t.captainId, ...t.invites.map(i => i.playerId)])
-  );
-
-  const availableFormats = TEAM_FORMATS.filter(f => !myRankedFormats.has(f));
-  const visibleOthers = others.filter(pl => !playersInRankedFormat.has(pl.id));
-
-  // Se o formato atual ficou bloqueado, troca para o primeiro disponível
   useEffect(() => {
-    if (myRankedFormats.has(format) && availableFormats.length > 0) {
+    if (myExistingFormats.has(format) && availableFormats.length > 0) {
       setFormat(availableFormats[0]);
       setSelected([]);
     }
-  }, [teams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [teamsQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); setCaptainId(currentId); };
+  const reset = () => { setName(""); setFormat(availableFormats[0] ?? "Dupla"); setSelected([]); };
 
   const toggle = (id: string) => {
     setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   };
 
-  const create = () => {
+  const create = async () => {
     if (!name.trim()) return toast.error("Dê um nome ao time");
-    if (myRankedFormats.has(format)) return toast.error(`Você já participa de um time no formato ${format}`);
+    if (myExistingFormats.has(format)) return toast.error(`Você já tem um time no formato ${format}`);
     const required = formatInvitesCount[format];
     if (selected.length !== required) return toast.error(`Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`);
 
-    const eligible = [currentId, ...selected];
-    if (!eligible.includes(captainId)) return toast.error("Escolha um capitão dentre os membros");
-    const team: Team = {
-      id: `t${Date.now()}`,
-      name: name.trim(),
-      format,
-      captainId,
-      invites: selected.map(pid => ({ playerId: pid, status: "pending" })),
-      createdAt: new Date().toISOString(),
-    };
-    setTeams(t => [team, ...t]);
-    setOpen(false);
-    reset();
-    toast.success(`Convites enviados para ${selected.length} jogador(es)`);
+    setSubmitting(true);
+    try {
+      const { category, gender } = categoryGenderFromFormat(format);
+      const { data: team, error: tErr } = await supabase
+        .from("teams")
+        .insert({ name: name.trim(), category, gender, captain_id: currentId })
+        .select("id")
+        .single();
+      if (tErr) throw tErr;
+
+      // Capitão entra como membro imediatamente
+      await supabase.from("team_members").insert({ team_id: team.id, profile_id: currentId });
+
+      const rows = selected.map(pid => ({
+        team_id: team.id,
+        inviter_id: currentId,
+        invitee_id: pid,
+      }));
+      const { error: iErr } = await supabase.from("team_invitations").insert(rows);
+      if (iErr) throw iErr;
+
+      toast.success(`Convites enviados para ${selected.length} jogador(es)`);
+      setOpen(false);
+      reset();
+      qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e.message ?? "Falha ao enviar convites");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const respond = (teamId: string, playerId: string, status: "accepted" | "declined") => {
-    setTeams(ts => ts.map(t => {
-      if (t.id !== teamId) return t;
-      const next = { ...t, invites: t.invites.map(i => i.playerId === playerId ? { ...i, status } : i) };
-      const allAccepted = next.invites.every(i => i.status === "accepted");
-      if (status === "accepted" && allAccepted) {
-        toast.success(`${next.name} entrou no ranking! 🏆`);
-      }
-      return next;
-    }));
+  const respondToReceived = async (inviteId: string, status: "accepted" | "declined") => {
+    const { error } = await supabase
+      .from("team_invitations")
+      .update({ status })
+      .eq("id", inviteId);
+    if (error) return toast.error(error.message);
+    toast.success(status === "accepted" ? "Convite aceito!" : "Convite recusado");
+    qc.invalidateQueries({ queryKey: ["my-received-invites"] });
   };
 
-  const remove = (teamId: string) => {
-    setTeams(ts => ts.filter(t => t.id !== teamId));
+  const removeTeam = async (teamId: string) => {
+    const { error } = await supabase.from("teams").update({ is_active: false }).eq("id", teamId);
+    if (error) return toast.error(error.message);
     toast.success("Time removido");
+    qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
+  };
+
+  const cancelInvite = async (inviteId: string) => {
+    const { error } = await supabase.from("team_invitations").delete().eq("id", inviteId);
+    if (error) return toast.error(error.message);
+    qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
   };
 
   return (
@@ -457,20 +534,20 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     {availableFormats.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {myRankedFormats.size > 0 && (
+                {myExistingFormats.size > 0 && (
                   <p className="text-[11px] text-muted-foreground">
-                    Você já está no ranking em: {[...myRankedFormats].join(", ")}.
+                    Você já tem time em: {[...myExistingFormats].join(", ")}.
                   </p>
                 )}
               </div>
               <div className="space-y-2">
-                <Label>Participantes</Label>
+                <Label>Participantes ({selected.length}/{formatInvitesCount[format]})</Label>
                 <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {visibleOthers.length === 0 ? (
+                  {others.length === 0 ? (
                     <div className="text-xs text-muted-foreground p-2 text-center">
-                      Nenhum jogador disponível para este formato.
+                      Nenhum jogador cadastrado ainda.
                     </div>
-                  ) : visibleOthers.map(pl => (
+                  ) : others.map(pl => (
                     <label key={pl.id} className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer">
                       <Checkbox checked={selected.includes(pl.id)} onCheckedChange={() => toggle(pl.id)} />
                       <Avatar className="size-8"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
@@ -482,81 +559,86 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                   ))}
                 </div>
               </div>
-
-              <div className="space-y-1.5">
-                <Label>Capitão</Label>
-                <Select value={captainId} onValueChange={setCaptainId}>
-                  <SelectTrigger><SelectValue/></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={currentId}>Eu (capitão)</SelectItem>
-                    {selected.map(id => {
-                      const pl = getPlayer(id);
-                      return pl ? <SelectItem key={id} value={id}>{pl.display_name}</SelectItem> : null;
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={create}><Send className="size-4 mr-1"/>Enviar convites</Button>
+              <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancelar</Button>
+              <Button onClick={create} disabled={submitting}>
+                {submitting ? <Loader2 className="size-4 mr-1 animate-spin"/> : <Send className="size-4 mr-1"/>}
+                Enviar convites
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {teams.length === 0 ? (
+      {received.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Convites recebidos</div>
+          {received.map(r => (
+            <div key={r.id} className="flex items-center gap-2 p-2.5 rounded-md border bg-primary/5">
+              <Avatar className="size-8"><AvatarImage src={r.inviter?.avatar_url ?? undefined}/><AvatarFallback>{r.inviter?.display_name?.[0] ?? "?"}</AvatarFallback></Avatar>
+              <div className="flex-1 min-w-0 text-sm">
+                <div className="font-medium truncate">{r.team?.name ?? "Time"}</div>
+                <div className="text-[11px] text-muted-foreground truncate">
+                  Convite de {r.inviter?.display_name ?? "—"} · {r.team ? formatFromCategory(r.team.category, r.team.gender) : ""}
+                </div>
+              </div>
+              <Button size="icon" variant="ghost" className="size-7" onClick={() => respondToReceived(r.id, "accepted")}><Check className="size-3.5 text-success"/></Button>
+              <Button size="icon" variant="ghost" className="size-7" onClick={() => respondToReceived(r.id, "declined")}><X className="size-3.5 text-destructive"/></Button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {teamsQ.isLoading ? (
+        <div className="flex justify-center py-6"><Loader2 className="size-5 animate-spin text-muted-foreground"/></div>
+      ) : teams.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">
           Você ainda não montou nenhum time. Clique em <strong>Montar time</strong> para começar.
         </div>
       ) : (
         <div className="space-y-3">
           {teams.map(t => {
-            const accepted = t.invites.filter(i => i.status === "accepted").length;
-            const allIn = t.invites.length > 0 && accepted === t.invites.length;
+            const fmt = formatFromCategory(t.category, t.gender);
+            const accepted = t.invitations.filter(i => i.status === "accepted").length;
+            const total = t.invitations.length;
+            const allIn = total > 0 && accepted === total;
             return (
               <div key={t.id} className="rounded-lg border p-3 space-y-3">
                 <div className="flex items-center gap-3">
-                <div className="flex-1">
+                  <div className="flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="font-display text-base">{t.name}</div>
-                      <Badge variant="outline" className="text-[10px]">{t.format}</Badge>
+                      <Badge variant="outline" className="text-[10px]">{fmt}</Badge>
                       {allIn && <Badge className="gradient-beach text-white border-0 text-[10px]">No ranking</Badge>}
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{accepted}/{t.invites.length} confirmados</div>
+                    <div className="text-[11px] text-muted-foreground">{accepted}/{total} confirmados</div>
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => remove(t.id)}><Trash2 className="size-4"/></Button>
+                  <Button size="icon" variant="ghost" onClick={() => removeTeam(t.id)}><Trash2 className="size-4"/></Button>
                 </div>
                 <div className="space-y-1.5">
-                  {t.invites.map(inv => {
-                    const pl = getPlayer(inv.playerId);
+                  <div className="flex items-center gap-2 p-2 rounded-md bg-primary/10">
+                    <Crown className="size-4 text-primary" />
+                    <div className="flex-1 text-sm">Você é o capitão</div>
+                  </div>
+                  {t.invitations.map(inv => {
+                    const pl = inv.invitee ?? getPlayer(inv.invitee_id);
                     if (!pl) return null;
-                    const isCaptain = t.captainId === pl.id;
                     return (
-                      <div key={inv.playerId} className="flex items-center gap-2 p-2 rounded-md bg-secondary/40">
+                      <div key={inv.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/40">
                         <Avatar className="size-7"><AvatarImage src={pl.avatar_url ?? undefined}/><AvatarFallback>{pl.display_name[0]}</AvatarFallback></Avatar>
-                        <div className="flex-1 text-sm flex items-center gap-1.5">
-                          {pl.display_name}
-                          {isCaptain && <Crown className="size-3.5 text-primary" />}
-                        </div>
+                        <div className="flex-1 text-sm">{pl.display_name}</div>
                         {inv.status === "pending" && (
-                          <div className="flex items-center gap-1">
+                          <>
                             <Badge variant="secondary" className="text-[10px]">Pendente</Badge>
-                            <Button size="icon" variant="ghost" className="size-7" onClick={() => respond(t.id, inv.playerId, "accepted")}><Check className="size-3.5 text-success"/></Button>
-                            <Button size="icon" variant="ghost" className="size-7" onClick={() => respond(t.id, inv.playerId, "declined")}><X className="size-3.5 text-destructive"/></Button>
-                          </div>
+                            <Button size="icon" variant="ghost" className="size-7" onClick={() => cancelInvite(inv.id)}><X className="size-3.5 text-destructive"/></Button>
+                          </>
                         )}
                         {inv.status === "accepted" && <Badge className="bg-success/20 text-success border-0 text-[10px]">Aceitou</Badge>}
                         {inv.status === "declined" && <Badge variant="destructive" className="text-[10px]">Recusou</Badge>}
                       </div>
                     );
                   })}
-                  {t.captainId === currentId && (
-                    <div className="flex items-center gap-2 p-2 rounded-md bg-primary/10">
-                      <Crown className="size-4 text-primary" />
-                      <div className="flex-1 text-sm">Você é o capitão</div>
-                    </div>
-                  )}
                 </div>
               </div>
             );
