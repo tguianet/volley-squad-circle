@@ -413,13 +413,16 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_members")
-        .select("team:team_id(id, name, category, gender, captain_id, created_at)")
+        .select("team:team_id!inner(id, name, category, gender, captain_id, created_at, is_active)")
         .eq("profile_id", currentId)
-        .eq("team.is_active", true)
-        .order("created_at", { ascending: false });
+        .order("joined_at", { ascending: false });
       if (error) throw error;
-      return ((data ?? []).map((r: any) => r.team).filter(Boolean) as DbTeam[]).map(t => ({ ...t, invitations: [] }));
+      return ((data ?? [])
+        .map((r: any) => r.team)
+        .filter((t: any) => t && t.is_active) as DbTeam[])
+        .map(t => ({ ...t, invitations: [] }));
     },
+    enabled: !!currentId,
   });
 
   const captainTeams: DbTeam[] = captainQ.data ?? [];
