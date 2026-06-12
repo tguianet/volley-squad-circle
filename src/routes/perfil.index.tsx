@@ -393,15 +393,6 @@ type ReceivedInvite = {
   inviter: RosterPlayer | null;
 };
 
-function formatFromCategory(category: string, gender: string): TeamFormat {
-  if (category === "quarteto") return gender === "X" ? "Quarteto misto" : "Quarteto";
-  return gender === "X" ? "Dupla mista" : "Dupla";
-}
-function categoryGenderFromFormat(format: TeamFormat): { category: "dupla" | "quarteto"; gender: "M" | "X" } {
-  const category = format.startsWith("Quarteto") ? "quarteto" : "dupla";
-  const gender = format.includes("misto") || format.includes("mista") ? "X" : "M";
-  return { category, gender };
-}
 
 function TeamBuilder({ currentId }: { currentId: string }) {
   const qc = useQueryClient();
