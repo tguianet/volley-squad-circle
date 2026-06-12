@@ -634,6 +634,7 @@ function TeamBuilder({ currentId }: { currentId: string }) {
         <div className="space-y-3">
           {teams.map(t => {
             const fmt = formatFromCategory(t.category, t.gender);
+            const isCaptain = t.captain_id === currentId;
             const accepted = t.invitations.filter(i => i.status === "accepted").length;
             const total = t.invitations.length;
             const allIn = total > 0 && accepted === total;
@@ -644,18 +645,20 @@ function TeamBuilder({ currentId }: { currentId: string }) {
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="font-display text-base">{t.name}</div>
                       <Badge variant="outline" className="text-[10px]">{fmt}</Badge>
-                      {allIn && <Badge className="gradient-beach text-white border-0 text-[10px]">No ranking</Badge>}
+                      {isCaptain && allIn && <Badge className="gradient-beach text-white border-0 text-[10px]">No ranking</Badge>}
                     </div>
-                    <div className="text-[11px] text-muted-foreground">{accepted}/{total} confirmados</div>
+                    {isCaptain && <div className="text-[11px] text-muted-foreground">{accepted}/{total} confirmados</div>}
                   </div>
-                  <Button size="icon" variant="ghost" onClick={() => removeTeam(t.id)}><Trash2 className="size-4"/></Button>
+                  {isCaptain && (
+                    <Button size="icon" variant="ghost" onClick={() => removeTeam(t.id)}><Trash2 className="size-4"/></Button>
+                  )}
                 </div>
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 p-2 rounded-md bg-primary/10">
-                    <Crown className="size-4 text-primary" />
-                    <div className="flex-1 text-sm">Você é o capitão</div>
+                  <div className={`flex items-center gap-2 p-2 rounded-md ${isCaptain ? "bg-primary/10" : "bg-secondary/40"}`}>
+                    {isCaptain ? <Crown className="size-4 text-primary" /> : <Users className="size-4 text-muted-foreground" />}
+                    <div className="flex-1 text-sm">{isCaptain ? "Você é o capitão" : "Você é membro"}</div>
                   </div>
-                  {t.invitations.map(inv => {
+                  {isCaptain && t.invitations.map(inv => {
                     const pl = inv.invitee ?? getPlayer(inv.invitee_id);
                     if (!pl) return null;
                     return (
