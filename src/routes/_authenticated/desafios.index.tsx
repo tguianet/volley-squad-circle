@@ -278,7 +278,7 @@ function ChallengeRankingButton({
     mutationFn: createFn,
     onSuccess: () => {
       toast.success("Desafio enviado. Aguarde a equipe aceitar para agendar.");
-      setOpen(false); setTargetId("");
+      setOpen(false); setTargetId(""); setSunday(""); setSlot1(""); setSlot2(""); setSlot3("");
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
