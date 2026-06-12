@@ -162,6 +162,7 @@ export function ProfileCompletionModal() {
         posicao_principal: form.posicao_principal,
         level: form.level,
         mao_dominante: form.mao_dominante,
+        genero: form.genero,
         avatar_url: form.avatar_url || null,
         data_nascimento: form.data_nascimento || null,
         altura: normalizeAltura(form.altura),
