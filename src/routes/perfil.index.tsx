@@ -369,7 +369,7 @@ function Stat({ label, value, sub, accent }: { label: string; value: number | st
   );
 }
 
-type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null };
+type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null; genero: string | null };
 
 type DbInvitation = {
   id: string;
