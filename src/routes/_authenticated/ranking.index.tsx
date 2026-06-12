@@ -237,10 +237,11 @@ function TeamRanking({ category, gender }: { category: "dupla" | "quarteto"; gen
     queryFn: async () => {
       const { data, error } = await supabase
         .from("teams")
-        .select("id, name, category, gender, points, wins, losses, created_at, captain_id")
+        .select("id, name, category, gender, points, wins, losses, created_at, captain_id, rank_position")
         .eq("is_active", true)
         .eq("category", category)
         .eq("gender", gender)
+        .order("rank_position", { ascending: true, nullsFirst: false })
         .order("points", { ascending: false })
         .order("wins", { ascending: false })
         .order("losses", { ascending: true })
