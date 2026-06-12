@@ -147,7 +147,8 @@ export function ProfileCompletionModal() {
     form.whatsapp.trim() &&
     form.posicao_principal &&
     form.level &&
-    form.mao_dominante;
+    form.mao_dominante &&
+    form.genero;
 
   const onSave = async () => {
     if (!requiredOk || !profile) return;
