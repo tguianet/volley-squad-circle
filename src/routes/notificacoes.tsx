@@ -52,12 +52,28 @@ async function fetchPendingInvites(): Promise<PendingInvite[]> {
   if (!user) return [];
   const { data, error } = await supabase
     .from("team_invitations")
-    .select("id, team_id, created_at, team:teams(name), inviter:profiles!team_invitations_inviter_id_fkey(display_name, username)")
+    .select("id, team_id, inviter_id, created_at, team:teams(name)")
     .eq("invitee_id", user.id)
     .eq("status", "pending")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return (data ?? []) as any;
+  const rows = (data ?? []) as any[];
+  const inviterIds = Array.from(new Set(rows.map(r => r.inviter_id)));
+  let profilesMap: Record<string, { display_name: string | null; username: string | null }> = {};
+  if (inviterIds.length) {
+    const { data: profs } = await supabase
+      .from("profiles")
+      .select("id, display_name, username")
+      .in("id", inviterIds);
+    profilesMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+  }
+  return rows.map(r => ({
+    id: r.id,
+    team_id: r.team_id,
+    created_at: r.created_at,
+    team: r.team,
+    inviter: profilesMap[r.inviter_id] ?? null,
+  }));
 }
 
 function timeAgo(iso: string) {
