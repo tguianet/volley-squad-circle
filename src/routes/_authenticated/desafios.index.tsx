@@ -215,14 +215,22 @@ function ChallengeRankingButton({
   onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [categoryKey, setCategoryKey] = useState<CatKey | "">("");
   const [teamId, setTeamId] = useState<string>("");
   const [targetId, setTargetId] = useState<string>("");
   const createFn = useServerFn(createChallenge);
 
   const isCaptain = captainedTeams.length > 0;
-  const effectiveTeamId = teamId || captainedTeams[0]?.id || "";
+
+  const teamsInCategory = useMemo(() => {
+    if (!categoryKey) return captainedTeams;
+    return captainedTeams.filter((t) => teamCategoryKey(t) === categoryKey);
+  }, [captainedTeams, categoryKey]);
+
+  const effectiveTeamId = teamId || teamsInCategory[0]?.id || "";
   const effectiveMyTeam =
-    allTeams.find((t) => t.id === effectiveTeamId) ?? captainedTeams.find((t) => t.id === effectiveTeamId);
+    allTeams.find((t) => t.id === effectiveTeamId) ?? teamsInCategory.find((t) => t.id === effectiveTeamId);
+
 
   const candidates = useMemo(() => {
     if (!effectiveMyTeam) return [];
