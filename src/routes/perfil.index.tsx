@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2 } from "lucide-react";
+import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2, LogOut } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
