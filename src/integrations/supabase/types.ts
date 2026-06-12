@@ -883,6 +883,7 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      recompute_team_gender: { Args: { _team_id: string }; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "moderator" | "player"
