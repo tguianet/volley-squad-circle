@@ -185,6 +185,26 @@ function pointsDelta(myPos: number | null, targetPos: number | null): number {
   return Math.max(10, Math.min(60, d));
 }
 
+type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
+
+const CATEGORY_OPTIONS: Array<{ key: CatKey; label: string; category: "dupla" | "quarteto"; gender?: "X" }> = [
+  { key: "dupla", label: "Dupla", category: "dupla" },
+  { key: "quarteto", label: "Quarteto", category: "quarteto" },
+  { key: "dupla_mista", label: "Dupla Mista", category: "dupla", gender: "X" },
+  { key: "quarteto_misto", label: "Quarteto Misto", category: "quarteto", gender: "X" },
+];
+
+function teamCategoryKey(t: { category: string; gender?: string }): CatKey | null {
+  if (t.category === "dupla") return t.gender === "X" ? "dupla_mista" : "dupla";
+  if (t.category === "quarteto") return t.gender === "X" ? "quarteto_misto" : "quarteto";
+  return null;
+}
+
+function categoryLabel(t: { category: string; gender?: string }): string {
+  const k = teamCategoryKey(t);
+  return CATEGORY_OPTIONS.find((o) => o.key === k)?.label ?? t.category;
+}
+
 function ChallengeRankingButton({
   captainedTeams,
   allTeams,
@@ -195,14 +215,22 @@ function ChallengeRankingButton({
   onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [categoryKey, setCategoryKey] = useState<CatKey | "">("");
   const [teamId, setTeamId] = useState<string>("");
   const [targetId, setTargetId] = useState<string>("");
   const createFn = useServerFn(createChallenge);
 
   const isCaptain = captainedTeams.length > 0;
-  const effectiveTeamId = teamId || captainedTeams[0]?.id || "";
+
+  const teamsInCategory = useMemo(() => {
+    if (!categoryKey) return captainedTeams;
+    return captainedTeams.filter((t) => teamCategoryKey(t) === categoryKey);
+  }, [captainedTeams, categoryKey]);
+
+  const effectiveTeamId = teamId || teamsInCategory[0]?.id || "";
   const effectiveMyTeam =
-    allTeams.find((t) => t.id === effectiveTeamId) ?? captainedTeams.find((t) => t.id === effectiveTeamId);
+    allTeams.find((t) => t.id === effectiveTeamId) ?? teamsInCategory.find((t) => t.id === effectiveTeamId);
+
 
   const candidates = useMemo(() => {
     if (!effectiveMyTeam) return [];
@@ -250,15 +278,30 @@ function ChallengeRankingButton({
         <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Novo desafio de ranking</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            {captainedTeams.length > 1 && (
+            <div>
+              <Label>Categoria</Label>
+              <Select
+                value={categoryKey}
+                onValueChange={(v) => { setCategoryKey(v as CatKey); setTeamId(""); setTargetId(""); }}
+              >
+                <SelectTrigger><SelectValue placeholder="Todas as categorias"/></SelectTrigger>
+                <SelectContent>
+                  {CATEGORY_OPTIONS.map((o) => (
+                    <SelectItem key={o.key} value={o.key}>{o.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {teamsInCategory.length > 1 && (
               <div>
                 <Label>Minha equipe</Label>
                 <Select value={effectiveTeamId} onValueChange={(v) => { setTeamId(v); setTargetId(""); }}>
                   <SelectTrigger><SelectValue placeholder="Selecione sua equipe"/></SelectTrigger>
                   <SelectContent>
-                    {captainedTeams.map((t) => (
+                    {teamsInCategory.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
-                        {t.name} ({t.category}{t.gender ? `/${t.gender}` : ""})
+                        {t.name} — {categoryLabel(t)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -266,30 +309,35 @@ function ChallengeRankingButton({
               </div>
             )}
 
-            {effectiveMyTeam && (
+            {effectiveMyTeam ? (
               <Card className="p-3 bg-secondary/40">
                 <div className="text-xs text-muted-foreground">Minha equipe</div>
                 <div className="font-semibold">{effectiveMyTeam.name}</div>
-                <div className="text-xs">
-                  Categoria: {effectiveMyTeam.category}
-                  {effectiveMyTeam.gender ? ` · ${effectiveMyTeam.gender}` : ""}
-                </div>
+                <div className="text-xs">Categoria: {categoryLabel(effectiveMyTeam)}</div>
                 <div className="text-xs">
                   Posição atual:{" "}
                   <strong>{effectiveMyTeam.rank_position ? `${effectiveMyTeam.rank_position}º` : "—"}</strong>
                   {typeof effectiveMyTeam.points === "number" ? ` · ${effectiveMyTeam.points} pts` : ""}
                 </div>
               </Card>
+            ) : (
+              categoryKey && (
+                <p className="text-xs text-muted-foreground">
+                  Você não é capitão de nenhuma equipe nesta categoria.
+                </p>
+              )
             )}
 
             <div>
               <Label>Equipes disponíveis para desafiar</Label>
-              <Select value={targetId} onValueChange={setTargetId}>
+              <Select value={targetId} onValueChange={setTargetId} disabled={!effectiveMyTeam}>
                 <SelectTrigger>
                   <SelectValue placeholder={
-                    candidates.length === 0
-                      ? "Nenhuma equipe elegível (até 3 acima / 2 abaixo)"
-                      : "Escolha o adversário"
+                    !effectiveMyTeam
+                      ? "Selecione a categoria primeiro"
+                      : candidates.length === 0
+                        ? "Nenhuma equipe elegível (até 3 acima / 2 abaixo)"
+                        : "Escolha o adversário"
                   }/>
                 </SelectTrigger>
                 <SelectContent>
@@ -302,9 +350,10 @@ function ChallengeRankingButton({
                 </SelectContent>
               </Select>
               <p className="text-[11px] text-muted-foreground mt-1">
-                Permitido: até 3 posições acima e até 2 abaixo, mesma categoria/gênero.
+                Permitido: até 3 posições acima e até 2 abaixo, mesma categoria.
               </p>
             </div>
+
 
             {target && (
               <Card className="p-3">
