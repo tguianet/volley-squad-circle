@@ -233,7 +233,7 @@ function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm"><Plus className="size-4 mr-1"/>Nova equipe</Button>
+        <Button size="sm"><Plus className="size-4 mr-1"/>Desafios</Button>
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Criar equipe (você será o capitão)</DialogTitle></DialogHeader>
