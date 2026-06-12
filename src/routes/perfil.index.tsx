@@ -553,3 +553,48 @@ function TeamBuilder({ currentId }: { currentId: string }) {
     </Card>
   );
 }
+
+function MatchHistory({ userId }: { userId: string }) {
+  const { data = [] } = useQuery({
+    queryKey: ["profile-matches", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("match_players")
+        .select("match:match_id(id, title, date, start_time, modality, match_type, status, arena:arena_id(name))")
+        .eq("player_id", userId)
+        .order("joined_at", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return (data ?? []).map((r: any) => r.match).filter(Boolean);
+    },
+  });
+
+  return (
+    <Card className="p-5 shadow-card">
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg">Histórico recente</h2>
+        <Link to="/h2h" className="text-xs text-primary font-semibold">Comparar H2H →</Link>
+      </div>
+      {data.length === 0 ? (
+        <div className="text-center text-sm text-muted-foreground py-6">
+          Nenhuma partida registrada ainda.
+        </div>
+      ) : (
+        <ul className="space-y-2">
+          {data.map((m: any) => (
+            <li key={m.id} className="flex items-center justify-between p-2.5 rounded-lg bg-secondary/60 text-sm">
+              <div className="min-w-0">
+                <div className="font-semibold truncate">{m.title}</div>
+                <div className="text-xs text-muted-foreground truncate">
+                  {m.arena?.name ?? "—"} · {m.date} · {m.start_time?.slice(0,5)}
+                </div>
+              </div>
+              <Badge variant="outline" className="ml-2 capitalize">{m.match_type}</Badge>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
