@@ -51,6 +51,7 @@ type MyProfile = {
   avatar_url: string | null;
   banner_url: string | null;
   genero: string | null;
+  status: string | null;
   pontos: number | null;
   vitorias: number | null;
   derrotas: number | null;
@@ -61,7 +62,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
   if (!u.user) return null;
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, pontos, vitorias, derrotas")
+    .select("id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, status, pontos, vitorias, derrotas")
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
@@ -74,7 +75,7 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
     ...(data ?? {
       display_name: null, username: null, apelido: null, bio: null, city: null, state: null,
       whatsapp: null, instagram: null, posicao_principal: null, level: null, mao_dominante: null,
-      altura: null, avatar_url: null, banner_url: null, genero: null, pontos: 0, vitorias: 0, derrotas: 0,
+      altura: null, avatar_url: null, banner_url: null, genero: null, status: null, pontos: 0, vitorias: 0, derrotas: 0,
     }),
   } as MyProfile;
 }
@@ -132,6 +133,16 @@ function ProfilePage() {
     if (!profile) return;
     setSaving(true);
     try {
+      const isProfileComplete =
+        form.apelido.trim() &&
+        form.city.trim() &&
+        form.state.trim() &&
+        form.whatsapp.trim() &&
+        form.posicao_principal &&
+        form.level &&
+        form.mao_dominante &&
+        form.genero;
+
       const payload = {
         apelido: form.apelido.trim() || null,
         bio: form.bio.trim() || null,
@@ -144,6 +155,7 @@ function ProfilePage() {
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
         genero: form.genero || null,
+        status: isProfileComplete ? "completo" : undefined,
       };
       const { data, error } = await supabase
         .from("profiles")
