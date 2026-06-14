@@ -418,13 +418,15 @@ function ChallengeRankingButton({
             <Button
               disabled={!targetId || !effectiveTeamId || !sunday || !slot1 || m.isPending}
               onClick={() => {
-                const slots = [slot1, slot2, slot3].filter(Boolean);
-                const unique = new Set(slots);
-                if (unique.size !== slots.length) {
-                  toast.error("Os horários devem ser diferentes.");
-                  return;
-                }
                 m.mutate({
+                  data: {
+                    challengerTeamId: effectiveTeamId,
+                    challengedTeamId: targetId,
+                    date: sunday,
+                    time: slot1,
+                  },
+                });
+              }}
                   data: {
                     challengerTeamId: effectiveTeamId,
                     challengedTeamId: targetId,
