@@ -758,6 +758,7 @@ export type Database = {
       team_monthly_availability: {
         Row: {
           arena_id: string | null
+          court_id: string | null
           created_at: string
           id: string
           is_available: boolean
@@ -770,6 +771,7 @@ export type Database = {
         }
         Insert: {
           arena_id?: string | null
+          court_id?: string | null
           created_at?: string
           id?: string
           is_available?: boolean
@@ -782,6 +784,7 @@ export type Database = {
         }
         Update: {
           arena_id?: string | null
+          court_id?: string | null
           created_at?: string
           id?: string
           is_available?: boolean
@@ -798,6 +801,13 @@ export type Database = {
             columns: ["arena_id"]
             isOneToOne: false
             referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_monthly_availability_court_id_fkey"
+            columns: ["court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
             referencedColumns: ["id"]
           },
           {
