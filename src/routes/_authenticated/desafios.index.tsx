@@ -284,12 +284,13 @@ function ChallengeRankingButton({
   const m = useMutation({
     mutationFn: createFn,
     onSuccess: () => {
-      toast.success("Desafio enviado. A quadra foi reservada automaticamente.");
-      setOpen(false); setTargetId(""); setSunday(""); setSlot1("");
+      toast.success("Desafio enviado. Quadra reservada.");
+      setOpen(false); setTargetId(""); setSunday(""); setSlot1(""); setCourtId("");
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   const handleClick = () => {
     if (!isCaptain) {
