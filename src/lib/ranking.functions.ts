@@ -316,6 +316,7 @@ export const createChallenge = createServerFn({ method: "POST" })
       challengedTeamId: z.string().uuid(),
       date: z.string(), // YYYY-MM-DD (domingo)
       time: z.string(), // HH:MM
+      courtId: z.string().uuid(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
@@ -330,23 +331,24 @@ export const createChallenge = createServerFn({ method: "POST" })
       ? setting.value.replace(/"/g, "")
       : String(setting.value).replace(/"/g, "");
 
-    const { data: courts, error: cErr } = await context.supabase
-      .from("courts").select("id, number").eq("is_active", true).order("number");
+    const { data: court, error: cErr } = await context.supabase
+      .from("courts").select("id").eq("id", data.courtId).eq("is_active", true).maybeSingle();
     if (cErr) throw new Error(cErr.message);
-    if (!courts || courts.length === 0) throw new Error("Nenhuma quadra ativa.");
+    if (!court) throw new Error("Quadra inválida ou inativa.");
 
     const { data: busy, error: bErr } = await context.supabase
       .from("challenges")
-      .select("court_id")
+      .select("id")
       .eq("scheduled_date", data.date)
       .eq("scheduled_time", data.time)
+      .eq("court_id", data.courtId)
       .in("status", ["pending", "scheduled", "awaiting_schedule", "reschedule_requested"]);
     if (bErr) throw new Error(bErr.message);
-    const busyIds = new Set((busy ?? []).map((r) => r.court_id).filter(Boolean));
-    const freeCourt = courts.find((c) => !busyIds.has(c.id));
-    if (!freeCourt) {
-      throw new Error("Todas as 7 quadras já estão ocupadas neste horário. Escolha outro horário.");
+    if (busy && busy.length > 0) {
+      throw new Error("Esta quadra já está reservada nesse horário. Escolha outra.");
     }
+    const freeCourt = { id: data.courtId };
+
 
     const { data: row, error } = await context.supabase
       .from("challenges")
