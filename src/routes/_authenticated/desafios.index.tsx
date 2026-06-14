@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -742,6 +742,14 @@ function AvailabilityRow({
     enabled: r.is_available,
   });
 
+  const [pendingTime, setPendingTime] = useState(r.time_start?.slice(0, 5) ?? "");
+  const [pendingCourtId, setPendingCourtId] = useState(r.court_id ?? "");
+
+  useEffect(() => {
+    setPendingTime(r.time_start?.slice(0, 5) ?? "");
+    setPendingCourtId(r.court_id ?? "");
+  }, [r.time_start, r.court_id]);
+
   const timeOptions = useMemo(() => {
     const out: string[] = [];
     for (let h = 8; h <= 16; h++) out.push(`${String(h).padStart(2, "0")}:00`);
@@ -749,11 +757,13 @@ function AvailabilityRow({
   }, []);
 
   const rows = (availQ.data ?? []) as CourtAvailRow[];
-  const currentTime = r.time_start?.slice(0, 5) ?? "";
 
   const freeCourtsForSlot = rows.filter(
-    (x) => x.slot_time?.slice(0, 5) === currentTime && (x.is_free || x.court_id === r.court_id),
+    (x) => x.slot_time?.slice(0, 5) === pendingTime && (x.is_free || x.court_id === pendingCourtId),
   );
+
+  const isDirty = pendingTime !== (r.time_start?.slice(0, 5) ?? "")
+    || pendingCourtId !== (r.court_id ?? "");
 
   return (
     <Card className="p-4">
@@ -782,73 +792,78 @@ function AvailabilityRow({
       </div>
 
       {r.is_available && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-          <div>
-            <Label className="text-xs">Horário (1h)</Label>
-            <Select
-              value={currentTime}
-              onValueChange={(v) => {
-                const endH = String(parseInt(v.slice(0, 2), 10) + 1).padStart(2, "0") + ":00";
-                mutate({
-                  data: {
-                    teamId,
-                    sundayDate: r.sunday_date,
-                    isAvailable: true,
-                    timeStart: v,
-                    timeEnd: endH,
-                    courtId: null,
-                  },
-                });
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={availQ.isLoading ? "Carregando…" : "Escolha o horário"} />
-              </SelectTrigger>
-              <SelectContent>
-                {timeOptions.map((t) => {
-                  const free = rows.filter((x) => x.slot_time?.slice(0, 5) === t && x.is_free).length;
-                  const total = rows.filter((x) => x.slot_time?.slice(0, 5) === t).length || 7;
-                  return (
-                    <SelectItem key={t} value={t} disabled={free === 0}>
-                      {t} — {free}/{total} quadras livres
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+            <div>
+              <Label className="text-xs">Horário (1h)</Label>
+              <Select
+                value={pendingTime}
+                onValueChange={(v) => {
+                  setPendingTime(v);
+                  setPendingCourtId("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={availQ.isLoading ? "Carregando…" : "Escolha o horário"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {timeOptions.map((t) => {
+                    const free = rows.filter((x) => x.slot_time?.slice(0, 5) === t && x.is_free).length;
+                    const total = rows.filter((x) => x.slot_time?.slice(0, 5) === t).length || 7;
+                    return (
+                      <SelectItem key={t} value={t} disabled={free === 0}>
+                        {t} — {free}/{total} quadras livres
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs">Quadra</Label>
+              <Select
+                value={pendingCourtId}
+                onValueChange={(v) => setPendingCourtId(v)}
+                disabled={!pendingTime}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={!pendingTime ? "Escolha o horário primeiro" : "Escolha a quadra"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {freeCourtsForSlot.map((x) => (
+                    <SelectItem key={x.court_id} value={x.court_id}>
+                      {x.court_name ?? `Quadra ${x.court_number}`}
                     </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div>
-            <Label className="text-xs">Quadra</Label>
-            <Select
-              value={r.court_id ?? ""}
-              onValueChange={(v) =>
-                mutate({
-                  data: {
-                    teamId,
-                    sundayDate: r.sunday_date,
-                    isAvailable: true,
-                    timeStart: r.time_start,
-                    timeEnd: r.time_end,
-                    courtId: v || null,
-                  },
-                })
-              }
-              disabled={!currentTime}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={!currentTime ? "Escolha o horário primeiro" : "Escolha a quadra"} />
-              </SelectTrigger>
-              <SelectContent>
-                {freeCourtsForSlot.map((x) => (
-                  <SelectItem key={x.court_id} value={x.court_id}>
-                    {x.court_name ?? `Quadra ${x.court_number}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          <Button
+            className="w-full mt-3"
+            disabled={!isDirty}
+            onClick={() => {
+              const endH = pendingTime
+                ? String(parseInt(pendingTime.slice(0, 2), 10) + 1).padStart(2, "0") + ":00"
+                : null;
+              mutate({
+                data: {
+                  teamId,
+                  sundayDate: r.sunday_date,
+                  isAvailable: true,
+                  timeStart: pendingTime || null,
+                  timeEnd: endH,
+                  courtId: pendingCourtId || null,
+                },
+              });
+              toast.success("Agendamento confirmado!");
+            }}
+          >
+            <Check className="size-4 mr-1"/>Confirmar Agendamento
+          </Button>
+        </>
       )}
     </Card>
   );
