@@ -804,62 +804,14 @@ function ChallengePanel({
   allTeams: Array<{ id: string; name: string; category: string; gender?: string; rank_position: number | null; captain_id: string }>;
   onCreated: () => void;
 }) {
-  const myTeam = allTeams.find((t) => t.id === myTeamId);
-  const candidates = allTeams.filter(
-    (t) =>
-      t.id !== myTeamId &&
-      t.category === myTeam?.category &&
-      (myTeam?.gender ? t.gender === myTeam.gender : true),
-  );
-  const [targetId, setTargetId] = useState<string>("");
-  const createFn = useServerFn(createChallenge);
-
-  const m = useMutation({
-    mutationFn: createFn,
-    onSuccess: () => {
-      toast.success("Desafio enviado. Aguarde a equipe aceitar para agendar.");
-      setTargetId("");
-      onCreated();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
+  void myTeamId; void allTeams; void onCreated;
   return (
-    <Card className="p-4 space-y-3">
-      <div>
-        <Label>Equipe a desafiar</Label>
-        <Select value={targetId} onValueChange={setTargetId}>
-          <SelectTrigger><SelectValue placeholder="Escolha o adversário (mesma categoria)"/></SelectTrigger>
-          <SelectContent>
-            {candidates.length === 0 && (
-              <div className="px-2 py-3 text-xs text-muted-foreground">
-                Nenhuma equipe compatível disponível.
-              </div>
-            )}
-            {candidates.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name} {t.rank_position ? `(#${t.rank_position})` : ""}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-[11px] text-muted-foreground mt-2">
-          Após o aceite, você escolherá <strong>domingo, horário e quadra</strong> (08:00–17:00).
-        </p>
-      </div>
-      <Button
-        disabled={!targetId || m.isPending}
-        onClick={() =>
-          m.mutate({
-            data: {
-              challengerTeamId: myTeamId,
-              challengedTeamId: targetId,
-            },
-          })
-        }
-      >
-        <Swords className="size-4 mr-1"/>Enviar desafio
-      </Button>
+    <Card className="p-4">
+      <p className="text-sm">
+        Use o botão <strong>Desafiar</strong> no topo da tela para enviar um novo desafio.
+        Escolha categoria, equipe, domingo e horário — uma das 7 quadras da arena será reservada
+        automaticamente se estiver livre.
+      </p>
     </Card>
   );
 }
