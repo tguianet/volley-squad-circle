@@ -314,20 +314,49 @@ export const createChallenge = createServerFn({ method: "POST" })
     z.object({
       challengerTeamId: z.string().uuid(),
       challengedTeamId: z.string().uuid(),
-      date: z.string().optional().nullable(),
-      time: z.string().optional().nullable(),
-      arenaId: z.string().uuid().nullable().optional(),
+      date: z.string(), // YYYY-MM-DD (domingo)
+      time: z.string(), // HH:MM
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    const hour = parseInt(data.time.slice(0, 2), 10);
+    if (Number.isNaN(hour) || hour < 8 || hour > 16) {
+      throw new Error("Horário fora da janela permitida (08:00 às 17:00).");
+    }
+    const { data: setting, error: sErr } = await context.supabase
+      .from("app_settings").select("value").eq("key", "default_arena_id").single();
+    if (sErr || !setting?.value) throw new Error("Arena padrão não configurada.");
+    const arenaId = typeof setting.value === "string"
+      ? setting.value.replace(/"/g, "")
+      : String(setting.value).replace(/"/g, "");
+
+    const { data: courts, error: cErr } = await context.supabase
+      .from("courts").select("id, number").eq("is_active", true).order("number");
+    if (cErr) throw new Error(cErr.message);
+    if (!courts || courts.length === 0) throw new Error("Nenhuma quadra ativa.");
+
+    const { data: busy, error: bErr } = await context.supabase
+      .from("challenges")
+      .select("court_id")
+      .eq("scheduled_date", data.date)
+      .eq("scheduled_time", data.time)
+      .in("status", ["pending", "scheduled", "awaiting_schedule", "reschedule_requested"]);
+    if (bErr) throw new Error(bErr.message);
+    const busyIds = new Set((busy ?? []).map((r) => r.court_id).filter(Boolean));
+    const freeCourt = courts.find((c) => !busyIds.has(c.id));
+    if (!freeCourt) {
+      throw new Error("Todas as 7 quadras já estão ocupadas neste horário. Escolha outro horário.");
+    }
+
     const { data: row, error } = await context.supabase
       .from("challenges")
       .insert({
         challenger_team_id: data.challengerTeamId,
         challenged_team_id: data.challengedTeamId,
-        scheduled_date: data.date ?? null,
-        scheduled_time: data.time ?? null,
-        arena_id: data.arenaId ?? null,
+        scheduled_date: data.date,
+        scheduled_time: data.time,
+        arena_id: arenaId,
+        court_id: freeCourt.id,
         status: "pending",
         created_by: context.userId,
       })
@@ -349,7 +378,7 @@ export const respondToChallenge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const next =
       data.action === "accept"
-        ? "awaiting_schedule"
+        ? "scheduled"
         : data.action === "decline"
           ? "declined"
           : "reschedule_requested";
@@ -364,21 +393,27 @@ export const respondToChallenge = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     if (data.action === "accept") {
-      // Notifica capitão desafiante para agendar
       const { data: ch } = await context.supabase
         .from("challenges")
-        .select("challenger_team_id, challenged:teams!challenges_challenged_team_id_fkey(name)")
+        .select(`
+          challenger_team_id, scheduled_date, scheduled_time,
+          challenged:teams!challenges_challenged_team_id_fkey(name),
+          court:courts(number, name)
+        `)
         .eq("id", data.challengeId)
         .single();
       if (ch) {
         const { data: capt } = await context.supabase
           .from("teams").select("captain_id").eq("id", ch.challenger_team_id).single();
         if (capt) {
+          const dt = ch.scheduled_date ? new Date(ch.scheduled_date + "T12:00:00")
+            .toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : "";
+          const courtName = (ch as any).court?.name ?? `Quadra ${(ch as any).court?.number ?? ""}`;
           await context.supabase.from("notifications").insert({
             user_id: capt.captain_id,
             kind: "challenge_accepted",
-            title: "Desafio aceito — agende a partida",
-            body: `${(ch as any).challenged?.name ?? "A equipe"} aceitou. Escolha domingo, horário e quadra.`,
+            title: "Desafio aceito e agendado",
+            body: `${(ch as any).challenged?.name ?? "A equipe"} aceitou. Domingo ${dt} às ${ch.scheduled_time ?? ""} — ${courtName}.`,
             link_url: "/desafios",
           });
         }
