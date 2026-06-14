@@ -220,7 +220,16 @@ function ChallengeRankingButton({
   const [targetId, setTargetId] = useState<string>("");
   const [sunday, setSunday] = useState<string>("");
   const [slot1, setSlot1] = useState<string>("");
+  const [courtId, setCourtId] = useState<string>("");
   const createFn = useServerFn(createChallenge);
+  const fetchCourtAvail = useServerFn(getCourtAvailability);
+
+  const availQ = useQuery({
+    queryKey: ["court-avail", sunday],
+    queryFn: () => fetchCourtAvail({ data: { date: sunday } }),
+    enabled: !!sunday,
+  });
+
 
   const nextSundays = useMemo(() => {
     const out: string[] = [];
