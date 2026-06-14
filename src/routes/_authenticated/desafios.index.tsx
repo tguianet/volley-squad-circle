@@ -220,8 +220,6 @@ function ChallengeRankingButton({
   const [targetId, setTargetId] = useState<string>("");
   const [sunday, setSunday] = useState<string>("");
   const [slot1, setSlot1] = useState<string>("");
-  const [slot2, setSlot2] = useState<string>("");
-  const [slot3, setSlot3] = useState<string>("");
   const createFn = useServerFn(createChallenge);
 
   const nextSundays = useMemo(() => {
