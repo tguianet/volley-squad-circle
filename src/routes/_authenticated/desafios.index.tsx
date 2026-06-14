@@ -390,7 +390,7 @@ function ChallengeRankingButton({
               <>
                 <div>
                   <Label>Domingo do desafio</Label>
-                  <Select value={sunday} onValueChange={setSunday}>
+                  <Select value={sunday} onValueChange={(v) => { setSunday(v); setSlot1(""); setCourtId(""); }}>
                     <SelectTrigger><SelectValue placeholder="Escolha o domingo"/></SelectTrigger>
                     <SelectContent>
                       {nextSundays.map((s) => (
@@ -400,20 +400,48 @@ function ChallengeRankingButton({
                   </Select>
                 </div>
 
-                <div>
-                  <Label>Horário</Label>
-                  <Select value={slot1} onValueChange={setSlot1}>
-                    <SelectTrigger><SelectValue placeholder="Escolha o horário"/></SelectTrigger>
-                    <SelectContent>
-                      {timeOptions.map((t) => (
-                        <SelectItem key={t} value={t}>{t}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[11px] text-muted-foreground mt-1">
-                    Janela 08:00–17:00. Uma das 7 quadras da arena será reservada automaticamente se estiver livre nesse horário.
-                  </p>
-                </div>
+                {sunday && (
+                  <div>
+                    <Label>Horário (1h) — PlayBeach Arena</Label>
+                    <Select value={slot1} onValueChange={(v) => { setSlot1(v); setCourtId(""); }}>
+                      <SelectTrigger><SelectValue placeholder={availQ.isLoading ? "Carregando…" : "Escolha o horário"}/></SelectTrigger>
+                      <SelectContent>
+                        {timeOptions.map((t) => {
+                          const rows = (availQ.data ?? []) as Array<{ slot_time: string; is_free: boolean }>;
+                          const freeCount = rows.filter((r) => r.slot_time?.slice(0, 5) === t && r.is_free).length;
+                          const total = rows.filter((r) => r.slot_time?.slice(0, 5) === t).length || 7;
+                          const disabled = freeCount === 0;
+                          return (
+                            <SelectItem key={t} value={t} disabled={disabled}>
+                              {t} — {freeCount}/{total} quadras livres
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {sunday && slot1 && (
+                  <div>
+                    <Label>Quadra disponível</Label>
+                    <Select value={courtId} onValueChange={setCourtId}>
+                      <SelectTrigger><SelectValue placeholder="Escolha a quadra"/></SelectTrigger>
+                      <SelectContent>
+                        {((availQ.data ?? []) as Array<{ court_id: string; court_number: number; court_name: string; slot_time: string; is_free: boolean }>)
+                          .filter((r) => r.slot_time?.slice(0, 5) === slot1 && r.is_free)
+                          .map((r) => (
+                            <SelectItem key={r.court_id} value={r.court_id}>
+                              {r.court_name ?? `Quadra ${r.court_number}`}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Apenas quadras livres no horário selecionado aparecem aqui.
+                    </p>
+                  </div>
+                )}
 
                 <Card className="p-3">
                   <div className="text-xs text-muted-foreground">Pontuação estimada</div>
@@ -426,7 +454,7 @@ function ChallengeRankingButton({
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
-              disabled={!targetId || !effectiveTeamId || !sunday || !slot1 || m.isPending}
+              disabled={!targetId || !effectiveTeamId || !sunday || !slot1 || !courtId || m.isPending}
               onClick={() => {
                 m.mutate({
                   data: {
@@ -434,12 +462,14 @@ function ChallengeRankingButton({
                     challengedTeamId: targetId,
                     date: sunday,
                     time: slot1,
+                    courtId,
                   },
                 });
               }}
             >
               <Swords className="size-4 mr-1"/>Enviar desafio
             </Button>
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
