@@ -200,7 +200,7 @@ export const getTeamAvailability = createServerFn({ method: "GET" })
     }
     const { data: rows, error } = await context.supabase
       .from("team_monthly_availability")
-      .select("id, sunday_date, is_available, time_start, time_end, arena_id")
+      .select("id, sunday_date, is_available, time_start, time_end, arena_id, court_id")
       .eq("team_id", data.teamId)
       .eq("month", month)
       .order("sunday_date");
@@ -218,10 +218,21 @@ export const upsertSundayAvailability = createServerFn({ method: "POST" })
       timeStart: z.string().nullable().optional(),
       timeEnd: z.string().nullable().optional(),
       arenaId: z.string().uuid().nullable().optional(),
+      courtId: z.string().uuid().nullable().optional(),
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const month = data.sundayDate.slice(0, 7) + "-01";
+    let arenaId = data.arenaId ?? null;
+    if (data.isAvailable && !arenaId) {
+      const { data: setting } = await context.supabase
+        .from("app_settings").select("value").eq("key", "default_arena_id").single();
+      if (setting?.value) {
+        arenaId = typeof setting.value === "string"
+          ? setting.value.replace(/"/g, "")
+          : String(setting.value).replace(/"/g, "");
+      }
+    }
     const { error } = await context.supabase
       .from("team_monthly_availability")
       .upsert(
@@ -232,13 +243,15 @@ export const upsertSundayAvailability = createServerFn({ method: "POST" })
           is_available: data.isAvailable,
           time_start: data.isAvailable ? data.timeStart || null : null,
           time_end: data.isAvailable ? data.timeEnd || null : null,
-          arena_id: data.isAvailable ? data.arenaId || null : null,
+          arena_id: data.isAvailable ? arenaId : null,
+          court_id: data.isAvailable ? data.courtId || null : null,
         },
         { onConflict: "team_id,sunday_date" },
       );
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 // =====================================================================
 // CHALLENGES

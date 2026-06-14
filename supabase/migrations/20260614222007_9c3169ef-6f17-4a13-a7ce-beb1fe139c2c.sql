@@ -1,0 +1,1 @@
+ALTER TABLE public.team_monthly_availability ADD COLUMN IF NOT EXISTS court_id uuid REFERENCES public.courts(id) ON DELETE SET NULL;

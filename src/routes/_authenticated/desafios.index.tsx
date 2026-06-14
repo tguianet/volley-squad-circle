@@ -705,11 +705,157 @@ type Availability = {
   time_start: string | null;
   time_end: string | null;
   arena_id: string | null;
+  court_id: string | null;
 };
+
+type CourtAvailRow = {
+  court_id: string;
+  court_number: number;
+  court_name: string;
+  slot_time: string;
+  is_free: boolean;
+};
+
+function AvailabilityRow({
+  r,
+  teamId,
+  mutate,
+}: {
+  r: Availability;
+  teamId: string;
+  mutate: (vars: {
+    data: {
+      teamId: string;
+      sundayDate: string;
+      isAvailable: boolean;
+      timeStart?: string | null;
+      timeEnd?: string | null;
+      arenaId?: string | null;
+      courtId?: string | null;
+    };
+  }) => void;
+}) {
+  const fetchCourtAvail = useServerFn(getCourtAvailability);
+  const availQ = useQuery({
+    queryKey: ["court-avail", r.sunday_date],
+    queryFn: () => fetchCourtAvail({ data: { date: r.sunday_date } }),
+    enabled: r.is_available,
+  });
+
+  const timeOptions = useMemo(() => {
+    const out: string[] = [];
+    for (let h = 8; h <= 16; h++) out.push(`${String(h).padStart(2, "0")}:00`);
+    return out;
+  }, []);
+
+  const rows = (availQ.data ?? []) as CourtAvailRow[];
+  const currentTime = r.time_start?.slice(0, 5) ?? "";
+
+  const freeCourtsForSlot = rows.filter(
+    (x) => x.slot_time?.slice(0, 5) === currentTime && (x.is_free || x.court_id === r.court_id),
+  );
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="font-semibold">Domingo {formatSunday(r.sunday_date)}</div>
+          <div className="text-xs text-muted-foreground">
+            {r.is_available ? "Disponível — PlayBeach Arena" : "Indisponível"}
+          </div>
+        </div>
+        <Switch
+          checked={r.is_available}
+          onCheckedChange={(checked) =>
+            mutate({
+              data: {
+                teamId,
+                sundayDate: r.sunday_date,
+                isAvailable: checked,
+                timeStart: r.time_start,
+                timeEnd: r.time_end,
+                courtId: r.court_id,
+              },
+            })
+          }
+        />
+      </div>
+
+      {r.is_available && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+          <div>
+            <Label className="text-xs">Horário (1h)</Label>
+            <Select
+              value={currentTime}
+              onValueChange={(v) => {
+                const endH = String(parseInt(v.slice(0, 2), 10) + 1).padStart(2, "0") + ":00";
+                mutate({
+                  data: {
+                    teamId,
+                    sundayDate: r.sunday_date,
+                    isAvailable: true,
+                    timeStart: v,
+                    timeEnd: endH,
+                    courtId: null,
+                  },
+                });
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={availQ.isLoading ? "Carregando…" : "Escolha o horário"} />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map((t) => {
+                  const free = rows.filter((x) => x.slot_time?.slice(0, 5) === t && x.is_free).length;
+                  const total = rows.filter((x) => x.slot_time?.slice(0, 5) === t).length || 7;
+                  return (
+                    <SelectItem key={t} value={t} disabled={free === 0}>
+                      {t} — {free}/{total} quadras livres
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label className="text-xs">Quadra</Label>
+            <Select
+              value={r.court_id ?? ""}
+              onValueChange={(v) =>
+                mutate({
+                  data: {
+                    teamId,
+                    sundayDate: r.sunday_date,
+                    isAvailable: true,
+                    timeStart: r.time_start,
+                    timeEnd: r.time_end,
+                    courtId: v || null,
+                  },
+                })
+              }
+              disabled={!currentTime}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={!currentTime ? "Escolha o horário primeiro" : "Escolha a quadra"} />
+              </SelectTrigger>
+              <SelectContent>
+                {freeCourtsForSlot.map((x) => (
+                  <SelectItem key={x.court_id} value={x.court_id}>
+                    {x.court_name ?? `Quadra ${x.court_number}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
 
 function AvailabilityPanel({
   teamId,
-  arenas,
 }: {
   teamId: string;
   arenas: Array<{ id: string; name: string }>;
@@ -723,116 +869,28 @@ function AvailabilityPanel({
   });
   const m = useMutation({
     mutationFn: upsertFn,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["availability", teamId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["availability", teamId] });
+      qc.invalidateQueries({ queryKey: ["court-avail"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
   if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando domingos…</p>;
   const rows = q.data ?? [];
   if (rows.length === 0) {
-    return <EmptyState title="Sem domingos neste mês" hint="Tente novamente em instantes."/>;
+    return <EmptyState title="Sem domingos neste mês" hint="Tente novamente em instantes." />;
   }
 
   return (
     <div className="space-y-3">
       {rows.map((r) => (
-        <Card key={r.id} className="p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="font-semibold">Domingo {formatSunday(r.sunday_date)}</div>
-              <div className="text-xs text-muted-foreground">
-                {r.is_available ? "Disponível" : "Indisponível"}
-              </div>
-            </div>
-            <Switch
-              checked={r.is_available}
-              onCheckedChange={(checked) =>
-                m.mutate({
-                  data: {
-                    teamId,
-                    sundayDate: r.sunday_date,
-                    isAvailable: checked,
-                    timeStart: r.time_start,
-                    timeEnd: r.time_end,
-                    arenaId: r.arena_id,
-                  },
-                })
-              }
-            />
-          </div>
-
-          {r.is_available && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3">
-              <div>
-                <Label className="text-xs">Início</Label>
-                <Input
-                  type="time"
-                  defaultValue={r.time_start ?? "08:00"}
-                  onBlur={(e) =>
-                    m.mutate({
-                      data: {
-                        teamId,
-                        sundayDate: r.sunday_date,
-                        isAvailable: true,
-                        timeStart: e.target.value,
-                        timeEnd: r.time_end ?? "12:00",
-                        arenaId: r.arena_id,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Fim</Label>
-                <Input
-                  type="time"
-                  defaultValue={r.time_end ?? "12:00"}
-                  onBlur={(e) =>
-                    m.mutate({
-                      data: {
-                        teamId,
-                        sundayDate: r.sunday_date,
-                        isAvailable: true,
-                        timeStart: r.time_start ?? "08:00",
-                        timeEnd: e.target.value,
-                        arenaId: r.arena_id,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Arena</Label>
-                <Select
-                  value={r.arena_id ?? ""}
-                  onValueChange={(v) =>
-                    m.mutate({
-                      data: {
-                        teamId,
-                        sundayDate: r.sunday_date,
-                        isAvailable: true,
-                        timeStart: r.time_start,
-                        timeEnd: r.time_end,
-                        arenaId: v || null,
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger><SelectValue placeholder="Arena"/></SelectTrigger>
-                  <SelectContent>
-                    {arenas.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
-        </Card>
+        <AvailabilityRow key={r.id} r={r} teamId={teamId} mutate={m.mutate} />
       ))}
     </div>
   );
 }
+
 
 // =====================================================================
 function ChallengePanel({
