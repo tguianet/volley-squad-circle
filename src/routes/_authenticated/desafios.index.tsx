@@ -427,14 +427,6 @@ function ChallengeRankingButton({
                   },
                 });
               }}
-                  data: {
-                    challengerTeamId: effectiveTeamId,
-                    challengedTeamId: targetId,
-                    date: sunday,
-                    time: slot1,
-                  },
-                });
-              }}
             >
               <Swords className="size-4 mr-1"/>Enviar desafio
             </Button>
