@@ -391,25 +391,17 @@ function ChallengeRankingButton({
                 </div>
 
                 <div>
-                  <Label>Horários sugeridos (3 opções)</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { v: slot1, set: setSlot1, ph: "1ª opção" },
-                      { v: slot2, set: setSlot2, ph: "2ª opção" },
-                      { v: slot3, set: setSlot3, ph: "3ª opção" },
-                    ].map((s, i) => (
-                      <Select key={i} value={s.v} onValueChange={s.set}>
-                        <SelectTrigger><SelectValue placeholder={s.ph}/></SelectTrigger>
-                        <SelectContent>
-                          {timeOptions.map((t) => (
-                            <SelectItem key={t} value={t}>{t}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    ))}
-                  </div>
+                  <Label>Horário</Label>
+                  <Select value={slot1} onValueChange={setSlot1}>
+                    <SelectTrigger><SelectValue placeholder="Escolha o horário"/></SelectTrigger>
+                    <SelectContent>
+                      {timeOptions.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Janela permitida: 08:00 às 17:00. A equipe desafiada escolherá um dos horários.
+                    Janela 08:00–17:00. Uma das 7 quadras da arena será reservada automaticamente se estiver livre nesse horário.
                   </p>
                 </div>
 
