@@ -167,6 +167,12 @@ export type Database = {
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -185,6 +191,12 @@ export type Database = {
           responded_at?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
+          score_challenged?: number | null
+          score_challenger?: number | null
+          score_confirmed_at?: string | null
+          score_confirmed_by?: string | null
+          score_registered_at?: string | null
+          score_registered_by?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           updated_at?: string
           winner_team_id?: string | null
@@ -203,6 +215,12 @@ export type Database = {
           responded_at?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
+          score_challenged?: number | null
+          score_challenger?: number | null
+          score_confirmed_at?: string | null
+          score_confirmed_by?: string | null
+          score_registered_at?: string | null
+          score_registered_by?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
           updated_at?: string
           winner_team_id?: string | null
@@ -248,6 +266,20 @@ export type Database = {
             columns: ["loser_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_score_confirmed_by_fkey"
+            columns: ["score_confirmed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_score_registered_by_fkey"
+            columns: ["score_registered_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -978,6 +1010,12 @@ export type Database = {
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1000,6 +1038,7 @@ export type Database = {
         | "completed"
         | "wo"
         | "awaiting_schedule"
+        | "awaiting_confirmation"
       match_modality: "beach_volley" | "indoor_volley" | "futevolei"
       match_player_status: "confirmed" | "waiting" | "cancelled"
       match_status: "open" | "full" | "finished" | "cancelled"
@@ -1144,6 +1183,7 @@ export const Constants = {
         "completed",
         "wo",
         "awaiting_schedule",
+        "awaiting_confirmation",
       ],
       match_modality: ["beach_volley", "indoor_volley", "futevolei"],
       match_player_status: ["confirmed", "waiting", "cancelled"],
