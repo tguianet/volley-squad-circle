@@ -142,8 +142,8 @@ function ChallengeRow({ c }: { c: any }) {
             {c.scheduled_time && <span className="flex items-center gap-1"><Clock className="size-3"/>{String(c.scheduled_time).slice(0,5)}</span>}
           </div>
         </div>
-        <Badge variant={c.status === "completed" ? "secondary" : "outline"}>
-          {c.status === "completed" ? "Finalizado" : "Desafio"}
+        <Badge variant={c.status === "completed" ? "secondary" : c.status === "scheduled" ? "default" : "outline"}>
+          {c.status === "completed" ? "Finalizado" : c.status === "scheduled" ? "Agendado" : c.status === "pending" ? "Pendente" : c.status === "awaiting_schedule" ? "A agendar" : c.status === "reschedule_requested" ? "Reagendar" : "Desafio"}
         </Badge>
       </div>
     </Card>
