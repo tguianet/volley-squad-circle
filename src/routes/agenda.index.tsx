@@ -52,6 +52,30 @@ function AgendaPage() {
     },
   });
 
+  const { data: availability, isLoading: loadingAv } = useQuery({
+    queryKey: ["my-availability-agenda", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [{ data: cap }, { data: mem }] = await Promise.all([
+        supabase.from("teams").select("id").eq("captain_id", user!.id),
+        supabase.from("team_members").select("team_id").eq("profile_id", user!.id),
+      ]);
+      const teamIds = Array.from(new Set([
+        ...((cap ?? []) as any[]).map((t) => t.id),
+        ...((mem ?? []) as any[]).map((t) => t.team_id),
+      ]));
+      if (teamIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("team_monthly_availability")
+        .select("id, sunday_date, time_start, time_end, is_available, team:team_id(name), court:court_id(name, number)")
+        .in("team_id", teamIds)
+        .eq("is_available", true)
+        .order("sunday_date", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const matches = data ?? [];
   const today = new Date().toISOString().slice(0, 10);
   const upcomingM = matches.filter((m: any) => m.date >= today && m.status !== "cancelled" && m.status !== "finished");
@@ -60,9 +84,12 @@ function AgendaPage() {
   const chs = challenges ?? [];
   const upcomingC = chs.filter((c: any) => c.status !== "completed" && c.status !== "declined" && c.status !== "wo" && (!c.scheduled_date || c.scheduled_date >= today));
   const pastC = chs.filter((c: any) => c.status === "completed" || (c.scheduled_date && c.scheduled_date < today));
+  const avs = availability ?? [];
+  const upcomingA = avs.filter((a: any) => a.sunday_date >= today);
+  const pastA = avs.filter((a: any) => a.sunday_date < today);
 
-  const upcomingEmpty = upcomingM.length === 0 && upcomingC.length === 0;
-  const pastEmpty = pastM.length === 0 && pastC.length === 0;
+  const upcomingEmpty = upcomingM.length === 0 && upcomingC.length === 0 && upcomingA.length === 0;
+  const pastEmpty = pastM.length === 0 && pastC.length === 0 && pastA.length === 0;
 
   return (
     <AppLayout>
@@ -73,9 +100,9 @@ function AgendaPage() {
           </div>
           <h1 className="text-3xl">Agenda</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">Suas partidas e desafios confirmados.</p>
+        <p className="text-sm text-muted-foreground mb-6">Suas partidas, desafios e horários confirmados.</p>
 
-        {(isLoading || loadingCh) && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
+        {(isLoading || loadingCh || loadingAv) && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
 
         <section className="mb-6">
           <h2 className="text-sm uppercase tracking-wide text-muted-foreground mb-2">Próximas</h2>
@@ -83,6 +110,7 @@ function AgendaPage() {
             <Card className="p-8 text-center text-sm text-muted-foreground">Nenhuma partida agendada.</Card>
           ) : (
             <div className="space-y-3">
+              {upcomingA.map((a: any) => <AvailabilityAgendaRow key={a.id} a={a} />)}
               {upcomingC.map((c: any) => <ChallengeRow key={c.id} c={c} />)}
               {upcomingM.map((m: any) => <MatchRow key={m.id} m={m} />)}
             </div>
@@ -95,6 +123,7 @@ function AgendaPage() {
             <Card className="p-8 text-center text-sm text-muted-foreground">Nenhuma partida no histórico.</Card>
           ) : (
             <div className="space-y-3">
+              {pastA.map((a: any) => <AvailabilityAgendaRow key={a.id} a={a} />)}
               {pastC.map((c: any) => <ChallengeRow key={c.id} c={c} />)}
               {pastM.map((m: any) => <MatchRow key={m.id} m={m} />)}
             </div>
