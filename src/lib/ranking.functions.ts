@@ -622,3 +622,70 @@ export const disputeScore = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return row;
   });
+
+// =====================================================================
+// PROFILE LINKS
+// =====================================================================
+export const searchProfiles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      searchTerm: z.string().min(1),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.rpc("search_profiles", {
+      search_term: data.searchTerm,
+      exclude_id: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const sendProfileLinkRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      targetId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("send_profile_link_request", {
+      p_target_id: data.targetId,
+    });
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const respondToProfileLinkRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      linkId: z.string().uuid(),
+      status: z.enum(["accepted", "rejected"]),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("respond_to_profile_link_request", {
+      p_link_id: data.linkId,
+      p_status: data.status,
+    });
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const listMyProfileLinks = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("list_my_profile_links");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listPendingLinkRequests = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("list_pending_link_requests");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });

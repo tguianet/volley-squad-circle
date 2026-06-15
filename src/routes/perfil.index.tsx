@@ -11,17 +11,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2, LogOut } from "lucide-react";
+import { MapPin, Ruler, Hand, Instagram, MessageCircle, Settings, Target, Users, Crown, Send, Check, X, Plus, Trash2, Loader2, LogOut, Link as LinkIcon, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ProfileGallery } from "@/components/profile-gallery";
 import { ProfileBanner } from "@/components/profile-banner";
 import { ProfileAvatar } from "@/components/profile-avatar";
 import { AvatarThumb } from "@/components/avatar-thumb";
 import { getTeamFormats, formatFromCategory, categoryGenderFromFormat } from "@/lib/team-format";
+import { searchProfiles, sendProfileLinkRequest, listMyProfileLinks } from "@/lib/ranking.functions";
 
 type Invite = { playerId: string; status: "pending" | "accepted" | "declined" };
 type Team = { id: string; name: string; format: string; captainId: string; invites: Invite[]; createdAt: string };
@@ -305,6 +307,9 @@ function ProfilePage() {
         {/* Montar time */}
         <TeamBuilder currentId={profile.id} currentGender={profile.genero} />
 
+        {/* Perfis vinculados */}
+        <ProfileLinksSection />
+
         {/* Galeria de fotos */}
         <ProfileGallery />
 
@@ -340,7 +345,191 @@ function Stat({ label, value, sub, accent }: { label: string; value: number | st
   );
 }
 
+function ProfileLinksSection() {
+  const queryClient = useQueryClient();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchProfileResult[]>([]);
+
+  const fetchLinkedProfiles = useServerFn(listMyProfileLinks);
+  const searchProfilesFn = useServerFn(searchProfiles);
+  const sendProfileLinkRequestFn = useServerFn(sendProfileLinkRequest);
+
+  const { data: linkedProfiles = [], isLoading: isLoadingLinks } = useQuery({
+    queryKey: ["my-profile-links"],
+    queryFn: () => fetchLinkedProfiles(),
+  });
+
+  const searchMutation = useMutation({
+    mutationFn: async (term: string) => {
+      const results = await searchProfilesFn({ data: { searchTerm: term } });
+      return results as SearchProfileResult[];
+    },
+    onSuccess: (data) => {
+      setSearchResults(data);
+    },
+  });
+
+  const sendLinkMutation = useMutation({
+    mutationFn: async (targetId: string) => {
+      await sendProfileLinkRequestFn({ data: { targetId } });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-profile-links"] });
+      setSearchOpen(false);
+      setSearchTerm("");
+      setSearchResults([]);
+    },
+  });
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      searchMutation.mutate(searchTerm);
+    }
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold flex items-center gap-2">
+          <LinkIcon className="size-4 text-primary" />
+          Perfis vinculados
+        </h3>
+        <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline" className="gap-1">
+              <Plus className="size-3.5" />
+              Adicionar
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Buscar perfil</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <Input
+                placeholder="Nome, username ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <Button type="submit" disabled={searchMutation.isPending}>
+                {searchMutation.isPending ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Search className="size-4" />
+                )}
+              </Button>
+            </form>
+            {searchResults.length > 0 && (
+              <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+                {searchResults.map((profile) => (
+                  <div
+                    key={profile.id}
+                    className="flex items-center gap-3 p-2 rounded-md bg-secondary/60"
+                  >
+                    <Avatar className="size-8">
+                      <AvatarImage src={profile.avatar_url ?? undefined} />
+                      <AvatarFallback>{profile.display_name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{profile.display_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        @{profile.apelido ?? profile.username ?? ""}
+                      </div>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => sendLinkMutation.mutate(profile.id)}
+                      disabled={sendLinkMutation.isPending}
+                    >
+                      {sendLinkMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Send className="size-4" />
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {searchResults.length === 0 && searchTerm && !searchMutation.isPending && (
+              <div className="text-center text-sm text-muted-foreground mt-4">
+                Nenhum perfil encontrado
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {isLoadingLinks ? (
+        <div className="flex justify-center py-4">
+          <Loader2 className="size-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : linkedProfiles.length === 0 ? (
+        <div className="text-center py-6 text-sm text-muted-foreground bg-secondary/30 rounded-lg">
+          Nenhum perfil vinculado ainda
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {linkedProfiles.map((link) => (
+            <div
+              key={link.id}
+              className="flex items-center gap-3 p-2.5 rounded-md bg-secondary/60"
+            >
+              <Avatar className="size-9">
+                <AvatarImage src={link.linked_user_avatar_url ?? undefined} />
+                <AvatarFallback>{link.linked_user_name[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate">{link.linked_user_name}</div>
+                <div className="text-xs text-muted-foreground">
+                  @{link.linked_user_apelido ?? link.linked_user_username ?? ""}
+                </div>
+                {link.linked_user_city && (
+                  <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                    <MapPin className="size-3" />
+                    {link.linked_user_city}
+                  </div>
+                )}
+              </div>
+              <Badge variant="secondary" className="text-[10px]">
+                {link.is_requester ? "Solicitado" : "Aceito"}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 type RosterPlayer = { id: string; display_name: string; apelido: string | null; username: string | null; avatar_url: string | null; genero: string | null };
+
+type LinkedProfile = {
+  id: string;
+  linked_user_id: string;
+  linked_user_name: string;
+  linked_user_apelido: string | null;
+  linked_user_username: string | null;
+  linked_user_avatar_url: string | null;
+  linked_user_city: string | null;
+  status: "accepted";
+  created_at: string;
+  is_requester: boolean;
+};
+
+type SearchProfileResult = {
+  id: string;
+  display_name: string;
+  username: string | null;
+  apelido: string | null;
+  email: string | null;
+  whatsapp: string | null;
+  avatar_url: string | null;
+  city: string | null;
+};
 
 type DbInvitation = {
   id: string;

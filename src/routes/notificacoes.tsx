@@ -2,10 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bell, Trophy, Users, Heart, Calendar, MessageCircle, Check, X } from "lucide-react";
+import { Bell, Trophy, Users, Heart, Calendar, MessageCircle, Check, X, Link as LinkIcon } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { respondToProfileLinkRequest, listPendingLinkRequests } from "@/lib/ranking.functions";
 
 export const Route = createFileRoute("/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações — PlayBeach" }] }),
@@ -27,6 +29,13 @@ type PendingInvite = {
   created_at: string;
   team: { name: string } | null;
   inviter: { display_name: string | null; username: string | null } | null;
+};
+
+type PendingProfileLink = {
+  id: string;
+  requester_id: string;
+  created_at: string;
+  requester: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
 };
 
 const iconMap: Record<string, any> = {
@@ -94,6 +103,15 @@ function NotifPage() {
   const items = q.data ?? [];
   const invites = invitesQ.data ?? [];
 
+  const fetchPendingProfileLinks = useServerFn(listPendingLinkRequests);
+  const respondToProfileLink = useServerFn(respondToProfileLinkRequest);
+
+  const profileLinksQ = useQuery({
+    queryKey: ["pending-profile-links"],
+    queryFn: () => fetchPendingProfileLinks(),
+  });
+  const profileLinks = (profileLinksQ.data ?? []) as PendingProfileLink[];
+
   const respond = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "accepted" | "declined" }) => {
       const { error } = await supabase.from("team_invitations").update({ status }).eq("id", id);
@@ -104,6 +122,18 @@ function NotifPage() {
       qc.invalidateQueries({ queryKey: ["pending-invites"] });
       qc.invalidateQueries({ queryKey: ["notifications"] });
       qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erro ao responder"),
+  });
+
+  const respondToLink = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: "accepted" | "declined" }) => {
+      await respondToProfileLink({ data: { linkId: id, status } });
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.status === "accepted" ? "Vínculo aceito!" : "Vínculo recusado");
+      qc.invalidateQueries({ queryKey: ["pending-profile-links"] });
+      qc.invalidateQueries({ queryKey: ["my-profile-links"] });
     },
     onError: (e: any) => toast.error(e.message ?? "Erro ao responder"),
   });
@@ -151,8 +181,41 @@ function NotifPage() {
           </div>
         )}
 
+        {profileLinks.length > 0 && (
+          <div className="space-y-3 mb-4">
+            {profileLinks.map(link => {
+              const who = link.requester?.display_name ?? link.requester?.username ?? "Alguém";
+              const loading = respondToLink.isPending;
+              return (
+                <Card key={link.id} className="p-4 flex items-center gap-3 bg-primary/5">
+                  <div className="size-10 rounded-full gradient-beach text-white flex items-center justify-center shrink-0">
+                    <LinkIcon className="size-4"/>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">Solicitação de vínculo de perfil</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {who} quer vincular o perfil ao seu
+                    </div>
+                    <div className="text-xs text-muted-foreground">{timeAgo(link.created_at)}</div>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" disabled={loading}
+                      onClick={() => respondToLink.mutate({ id: link.id, status: "accepted" })}>
+                      <Check className="size-4 mr-1"/> Aceitar
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={loading}
+                      onClick={() => respondToLink.mutate({ id: link.id, status: "declined" })}>
+                      <X className="size-4 mr-1"/> Recusar
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
         {q.isLoading && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
-        {!q.isLoading && items.length === 0 && invites.length === 0 && (
+        {!q.isLoading && items.length === 0 && invites.length === 0 && profileLinks.length === 0 && (
           <Card className="p-6 text-center text-sm text-muted-foreground">Nenhuma notificação por enquanto.</Card>
         )}
         {items.length > 0 && (
