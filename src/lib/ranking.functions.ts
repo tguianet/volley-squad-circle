@@ -597,7 +597,7 @@ export const confirmScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase.rpc("confirm_score", {
+    const { data: row, error } = await context.supabase.rpc("confirm_challenge_score", {
       _challenge_id: data.challengeId,
     });
     if (error) throw new Error(error.message);
