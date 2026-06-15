@@ -44,8 +44,9 @@ function AgendaPage() {
       const { data, error } = await supabase
         .from("challenges")
         .select("id, scheduled_date, scheduled_time, duration_minutes, status, challenger_team_id, challenged_team_id, court:court_id(name, number), challenger:challenger_team_id(name), challenged:challenged_team_id(name)")
-        .in("status", ["scheduled", "completed"])
-        .or(`challenger_team_id.in.(${list}),challenged_team_id.in.(${list})`);
+        .in("status", ["pending", "awaiting_schedule", "reschedule_requested", "scheduled", "completed"])
+        .or(`challenger_team_id.in.(${list}),challenged_team_id.in.(${list})`)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
@@ -57,7 +58,7 @@ function AgendaPage() {
   const pastM = matches.filter((m: any) => m.date < today || m.status === "finished");
 
   const chs = challenges ?? [];
-  const upcomingC = chs.filter((c: any) => c.status === "scheduled" && (!c.scheduled_date || c.scheduled_date >= today));
+  const upcomingC = chs.filter((c: any) => c.status !== "completed" && c.status !== "declined" && c.status !== "wo" && (!c.scheduled_date || c.scheduled_date >= today));
   const pastC = chs.filter((c: any) => c.status === "completed" || (c.scheduled_date && c.scheduled_date < today));
 
   const upcomingEmpty = upcomingM.length === 0 && upcomingC.length === 0;
@@ -141,8 +142,8 @@ function ChallengeRow({ c }: { c: any }) {
             {c.scheduled_time && <span className="flex items-center gap-1"><Clock className="size-3"/>{String(c.scheduled_time).slice(0,5)}</span>}
           </div>
         </div>
-        <Badge variant={c.status === "completed" ? "secondary" : "outline"}>
-          {c.status === "completed" ? "Finalizado" : "Desafio"}
+        <Badge variant={c.status === "completed" ? "secondary" : c.status === "scheduled" ? "default" : "outline"}>
+          {c.status === "completed" ? "Finalizado" : c.status === "scheduled" ? "Agendado" : c.status === "pending" ? "Pendente" : c.status === "awaiting_schedule" ? "A agendar" : c.status === "reschedule_requested" ? "Reagendar" : "Desafio"}
         </Badge>
       </div>
     </Card>
