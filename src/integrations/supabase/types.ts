@@ -1214,7 +1214,6 @@ export type Database = {
           avatar_url: string
           city: string
           display_name: string
-          email: string
           id: string
           username: string
           whatsapp: string
