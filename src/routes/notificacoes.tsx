@@ -110,7 +110,7 @@ function NotifPage() {
     queryKey: ["pending-profile-links"],
     queryFn: () => fetchPendingProfileLinks(),
   });
-  const profileLinks = (profileLinksQ.data ?? []) as PendingProfileLink[];
+  const profileLinks = (profileLinksQ.data ?? []) as unknown as PendingProfileLink[];
 
   const respond = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "accepted" | "declined" }) => {
