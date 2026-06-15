@@ -44,8 +44,9 @@ function AgendaPage() {
       const { data, error } = await supabase
         .from("challenges")
         .select("id, scheduled_date, scheduled_time, duration_minutes, status, challenger_team_id, challenged_team_id, court:court_id(name, number), challenger:challenger_team_id(name), challenged:challenged_team_id(name)")
-        .in("status", ["scheduled", "completed"])
-        .or(`challenger_team_id.in.(${list}),challenged_team_id.in.(${list})`);
+        .in("status", ["pending", "awaiting_schedule", "reschedule_requested", "scheduled", "completed"])
+        .or(`challenger_team_id.in.(${list}),challenged_team_id.in.(${list})`)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
     },
