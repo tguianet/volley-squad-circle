@@ -614,10 +614,8 @@ export const disputeScore = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase.rpc("dispute_score", {
+    const { data: row, error } = await context.supabase.rpc("reject_challenge_score", {
       _challenge_id: data.challengeId,
-      _score_challenger: data.scoreChallenger,
-      _score_challenged: data.scoreChallenged,
     });
     if (error) throw new Error(error.message);
     return row;
