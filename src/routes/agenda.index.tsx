@@ -134,6 +134,30 @@ function AgendaPage() {
   );
 }
 
+function AvailabilityAgendaRow({ a }: { a: any }) {
+  const courtLabel = a.court?.name
+    ? ` — ${a.court.name}`
+    : a.court?.number
+    ? ` — Quadra ${a.court.number}`
+    : "";
+
+  return (
+    <Card className="p-4 shadow-card">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-display text-lg">{a.team?.name ?? "Equipe"}</div>
+          <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
+            <span className="flex items-center gap-1"><MapPin className="size-3"/>PlayBeach Arena{courtLabel}</span>
+            <span className="flex items-center gap-1"><CalendarDays className="size-3"/>{a.sunday_date}</span>
+            {a.time_start && <span className="flex items-center gap-1"><Clock className="size-3"/>{String(a.time_start).slice(0, 5)}</span>}
+          </div>
+        </div>
+        <Badge variant="default">Horário confirmado</Badge>
+      </div>
+    </Card>
+  );
+}
+
 function MatchRow({ m }: { m: any }) {
   return (
     <Card className="p-4 shadow-card">
