@@ -453,6 +453,7 @@ export const listMyChallenges = createServerFn({ method: "GET" })
       .from("challenges")
       .select(`
         id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes,
+        score_challenger, score_challenged, score_registered_by, score_registered_at, score_confirmed_by, score_confirmed_at,
         challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
         challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),
         arena:arenas(id, name),
@@ -568,4 +569,56 @@ export const listSundayAgenda = createServerFn({ method: "GET" })
       .order("scheduled_time");
     if (error) throw new Error(error.message);
     return rows ?? [];
+  });
+
+// =====================================================================
+// SCORE CONFIRMATION
+// =====================================================================
+export const registerScore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      challengeId: z.string().uuid(),
+      scoreChallenger: z.number().int().min(0),
+      scoreChallenged: z.number().int().min(0),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("register_score", {
+      _challenge_id: data.challengeId,
+      _score_challenger: data.scoreChallenger,
+      _score_challenged: data.scoreChallenged,
+    });
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const confirmScore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("confirm_score", {
+      _challenge_id: data.challengeId,
+    });
+    if (error) throw new Error(error.message);
+    return row;
+  });
+
+export const disputeScore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      challengeId: z.string().uuid(),
+      scoreChallenger: z.number().int().min(0),
+      scoreChallenged: z.number().int().min(0),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("dispute_score", {
+      _challenge_id: data.challengeId,
+      _score_challenger: data.scoreChallenger,
+      _score_challenged: data.scoreChallenged,
+    });
+    if (error) throw new Error(error.message);
+    return row;
   });

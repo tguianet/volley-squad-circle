@@ -24,6 +24,7 @@ import {
   getTeamAvailability, upsertSundayAvailability,
   createChallenge, respondToChallenge, listMyChallenges,
   listCourts, getCourtAvailability, scheduleChallenge, reportWalkover,
+  registerScore, confirmScore, disputeScore,
 } from "@/lib/ranking.functions";
 import {
   CalendarDays, Swords, Plus, Clock, MapPin, Check, X, RotateCcw, Crown, Timer, AlertTriangle,
@@ -941,6 +942,12 @@ type ChallengeRow = {
   challenged: { id: string; name: string; rank_position: number | null };
   arena: { id: string; name: string } | null;
   court: { id: string; number: number; name: string } | null;
+  score_challenger: number | null;
+  score_challenged: number | null;
+  score_registered_by: string | null;
+  score_registered_at: string | null;
+  score_confirmed_by: string | null;
+  score_confirmed_at: string | null;
 };
 
 function MyChallengesPanel({
@@ -953,6 +960,9 @@ function MyChallengesPanel({
   const qc = useQueryClient();
   const respond = useServerFn(respondToChallenge);
   const wo = useServerFn(reportWalkover);
+  const register = useServerFn(registerScore);
+  const confirm = useServerFn(confirmScore);
+  const dispute = useServerFn(disputeScore);
   const respondM = useMutation({
     mutationFn: respond,
     onSuccess: () => { toast.success("Resposta enviada"); qc.invalidateQueries({ queryKey: ["my-challenges"] }); },
@@ -961,6 +971,21 @@ function MyChallengesPanel({
   const woM = useMutation({
     mutationFn: wo,
     onSuccess: () => { toast.success("W.O. registrado"); qc.invalidateQueries({ queryKey: ["my-challenges"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const registerM = useMutation({
+    mutationFn: register,
+    onSuccess: () => { toast.success("Placar registrado"); qc.invalidateQueries({ queryKey: ["my-challenges"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const confirmM = useMutation({
+    mutationFn: confirm,
+    onSuccess: () => { toast.success("Placar confirmado"); qc.invalidateQueries({ queryKey: ["my-challenges"] }); },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const disputeM = useMutation({
+    mutationFn: dispute,
+    onSuccess: () => { toast.success("Disputa registrada"); qc.invalidateQueries({ queryKey: ["my-challenges"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -986,10 +1011,25 @@ function MyChallengesPanel({
               </div>
             )}
             {c.status === "scheduled" && c.scheduled_date && isPast(c.scheduled_date, c.scheduled_time) && (
-              <Button size="sm" variant="destructive" className="mt-3"
-                onClick={() => woM.mutate({ data: { challengeId: c.id } })}>
-                <AlertTriangle className="size-4 mr-1"/>Não compareceu (W.O.)
-              </Button>
+              <div className="flex flex-wrap gap-2 mt-3">
+                <ScoreRegistrationDialog
+                  challengeId={c.id}
+                  challengerName={c.challenger.name}
+                  challengedName={c.challenged.name}
+                  onRegistered={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
+                />
+                <Button size="sm" variant="destructive"
+                  onClick={() => woM.mutate({ data: { challengeId: c.id } })}>
+                  <AlertTriangle className="size-4 mr-1"/>W.O.
+                </Button>
+              </div>
+            )}
+            {c.status === "awaiting_confirmation" && (
+              <ScoreConfirmationDialog
+                challenge={c}
+                onConfirmed={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
+                onDisputed={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
+              />
             )}
           </Card>
         ))}
@@ -1179,6 +1219,196 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+function ScoreRegistrationDialog({
+  challengeId,
+  challengerName,
+  challengedName,
+  onRegistered,
+}: {
+  challengeId: string;
+  challengerName: string;
+  challengedName: string;
+  onRegistered: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [scoreChallenger, setScoreChallenger] = useState<number>(0);
+  const [scoreChallenged, setScoreChallenged] = useState<number>(0);
+  const register = useServerFn(registerScore);
+  const qc = useQueryClient();
+
+  const m = useMutation({
+    mutationFn: register,
+    onSuccess: () => {
+      toast.success("Placar registrado com sucesso");
+      setOpen(false);
+      setScoreChallenger(0);
+      setScoreChallenged(0);
+      qc.invalidateQueries({ queryKey: ["my-challenges"] });
+      onRegistered();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm"><Check className="size-4 mr-1"/>Registrar placar</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Registrar placar</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex-1 text-center">
+              <Label className="block mb-2">{challengerName}</Label>
+              <Input
+                type="number"
+                min="0"
+                value={scoreChallenger}
+                onChange={(e) => setScoreChallenger(parseInt(e.target.value) || 0)}
+                className="text-center text-2xl font-bold"
+              />
+            </div>
+            <span className="text-2xl font-bold">x</span>
+            <div className="flex-1 text-center">
+              <Label className="block mb-2">{challengedName}</Label>
+              <Input
+                type="number"
+                min="0"
+                value={scoreChallenged}
+                onChange={(e) => setScoreChallenged(parseInt(e.target.value) || 0)}
+                className="text-center text-2xl font-bold"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => m.mutate({ data: { challengeId, scoreChallenger, scoreChallenged } })}>
+              Confirmar registro
+            </Button>
+          </DialogFooter>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ScoreConfirmationDialog({
+  challenge,
+  onConfirmed,
+  onDisputed,
+}: {
+  challenge: ChallengeRow;
+  onConfirmed: () => void;
+  onDisputed: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [scoreChallenger, setScoreChallenger] = useState<number>(challenge.score_challenger || 0);
+  const [scoreChallenged, setScoreChallenged] = useState<number>(challenge.score_challenged || 0);
+  const confirm = useServerFn(confirmScore);
+  const dispute = useServerFn(disputeScore);
+  const qc = useQueryClient();
+
+  const confirmM = useMutation({
+    mutationFn: confirm,
+    onSuccess: () => {
+      toast.success("Placar confirmado");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["my-challenges"] });
+      onConfirmed();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const disputeM = useMutation({
+    mutationFn: dispute,
+    onSuccess: () => {
+      toast.success("Disputa registrada - novo placar enviado para confirmação");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["my-challenges"] });
+      onDisputed();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div className="bg-muted/50 p-3 rounded-lg">
+        <p className="text-sm font-medium mb-2">Placar registrado:</p>
+        <div className="flex items-center justify-center gap-4 text-2xl font-bold">
+          <span>{challenge.score_challenger}</span>
+          <span>x</span>
+          <span>{challenge.score_challenged}</span>
+        </div>
+        {challenge.score_registered_by && (
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            Registrado por: {challenge.score_registered_by}
+          </p>
+        )}
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button size="sm" variant="outline" className="w-full">
+            <Check className="size-4 mr-1"/>Confirmar ou disputar placar
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar placar</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 text-center">
+                <Label className="block mb-2">{challenge.challenger.name}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={scoreChallenger}
+                  onChange={(e) => setScoreChallenger(parseInt(e.target.value) || 0)}
+                  className="text-center text-2xl font-bold"
+                />
+              </div>
+              <span className="text-2xl font-bold">x</span>
+              <div className="flex-1 text-center">
+                <Label className="block mb-2">{challenge.challenged.name}</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={scoreChallenged}
+                  onChange={(e) => setScoreChallenged(parseInt(e.target.value) || 0)}
+                  className="text-center text-2xl font-bold"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex gap-2">
+              <Button
+                variant="default"
+                onClick={() => confirmM.mutate({ data: { challengeId: challenge.id } })}
+                disabled={
+                  scoreChallenger !== challenge.score_challenger ||
+                  scoreChallenged !== challenge.score_challenged
+                }
+              >
+                <Check className="size-4 mr-1"/>Confirmar
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => disputeM.mutate({ data: { challengeId: challenge.id, scoreChallenger, scoreChallenged } })}
+                disabled={
+                  scoreChallenger === challenge.score_challenger &&
+                  scoreChallenged === challenge.score_challenged
+                }
+              >
+                <X className="size-4 mr-1"/>Disputar
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function statusLabel(s: string) {
   switch (s) {
     case "pending": return { label: "Pendente", v: "secondary" as const };
@@ -1188,6 +1418,7 @@ function statusLabel(s: string) {
     case "declined": return { label: "Recusado", v: "destructive" as const };
     case "completed": return { label: "Concluído", v: "default" as const };
     case "wo": return { label: "W.O.", v: "destructive" as const };
+    case "awaiting_confirmation": return { label: "Aguardando confirmação", v: "outline" as const };
     default: return { label: s, v: "secondary" as const };
   }
 }

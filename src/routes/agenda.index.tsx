@@ -82,8 +82,8 @@ function AgendaPage() {
   const pastM = matches.filter((m: any) => m.date < today || m.status === "finished");
 
   const chs = challenges ?? [];
-  const upcomingC = chs.filter((c: any) => c.status !== "completed" && c.status !== "declined" && c.status !== "wo" && (!c.scheduled_date || c.scheduled_date >= today));
-  const pastC = chs.filter((c: any) => c.status === "completed" || (c.scheduled_date && c.scheduled_date < today));
+  const upcomingC = chs.filter((c: any) => c.status !== "completed" && c.status !== "declined" && c.status !== "wo" && c.status !== "awaiting_confirmation" && (!c.scheduled_date || c.scheduled_date >= today));
+  const pastC = chs.filter((c: any) => c.status === "completed" || c.status === "wo");
   const avs = availability ?? [];
   const upcomingA = avs.filter((a: any) => a.sunday_date >= today);
   const pastA = avs.filter((a: any) => a.sunday_date < today);
