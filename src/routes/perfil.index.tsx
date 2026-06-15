@@ -531,7 +531,6 @@ type SearchProfileResult = {
   display_name: string;
   username: string | null;
   apelido: string | null;
-  email: string | null;
   whatsapp: string | null;
   avatar_url: string | null;
   city: string | null;
