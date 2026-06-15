@@ -469,9 +469,14 @@ function ProfileLinksSection() {
           <Loader2 className="size-5 animate-spin text-muted-foreground" />
         </div>
       ) : linkedProfiles.length === 0 ? (
-        <div className="text-center py-6 text-sm text-muted-foreground bg-secondary/30 rounded-lg">
-          Nenhum perfil vinculado ainda
+        <div className="flex flex-col items-center gap-3 py-6 text-sm text-muted-foreground bg-secondary/30 rounded-lg">
+          <span>Nenhum perfil vinculado ainda</span>
+          <Button size="sm" variant="outline" className="gap-1" onClick={() => setSearchOpen(true)}>
+            <Plus className="size-3.5" />
+            Adicionar perfil
+          </Button>
         </div>
+
       ) : (
         <div className="space-y-2">
           {linkedProfiles.map((link) => (
