@@ -304,11 +304,12 @@ function ProfilePage() {
           <Stat label="Jogos" value={matches}/>
         </div>
 
+        {/* Perfis vinculados */}
+        <ProfileLinksSection />
+
         {/* Montar time */}
         <TeamBuilder currentId={profile.id} currentGender={profile.genero} />
 
-        {/* Perfis vinculados */}
-        <ProfileLinksSection />
 
         {/* Galeria de fotos */}
         <ProfileGallery />
