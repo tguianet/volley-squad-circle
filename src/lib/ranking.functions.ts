@@ -584,7 +584,7 @@ export const registerScore = createServerFn({ method: "POST" })
     }).parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase.rpc("register_score", {
+    const { data: row, error } = await context.supabase.rpc("register_challenge_score", {
       _challenge_id: data.challengeId,
       _score_challenger: data.scoreChallenger,
       _score_challenged: data.scoreChallenged,
