@@ -584,6 +584,48 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_links: {
+        Row: {
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["link_status"]
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["link_status"]
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["link_status"]
+          target_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_links_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_links_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           altura: number | null
@@ -1014,6 +1056,34 @@ export type Database = {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
       }
+      list_my_profile_links: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_requester: boolean
+          linked_user_apelido: string
+          linked_user_avatar_url: string
+          linked_user_city: string
+          linked_user_id: string
+          linked_user_name: string
+          linked_user_username: string
+          status: Database["public"]["Enums"]["link_status"]
+        }[]
+      }
+      list_pending_link_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          requester_apelido: string
+          requester_avatar_url: string
+          requester_city: string
+          requester_id: string
+          requester_name: string
+          requester_username: string
+        }[]
+      }
       recompute_ranks_below_podium: {
         Args: {
           _category: Database["public"]["Enums"]["team_category"]
@@ -1092,6 +1162,13 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      respond_to_profile_link_request: {
+        Args: {
+          p_link_id: string
+          p_status: Database["public"]["Enums"]["link_status"]
+        }
+        Returns: Json
+      }
       schedule_challenge: {
         Args: {
           _challenge_id: string
@@ -1130,6 +1207,23 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      search_profiles: {
+        Args: { exclude_id?: string; search_term: string }
+        Returns: {
+          apelido: string
+          avatar_url: string
+          city: string
+          display_name: string
+          email: string
+          id: string
+          username: string
+          whatsapp: string
+        }[]
+      }
+      send_profile_link_request: {
+        Args: { p_target_id: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "player"
@@ -1142,6 +1236,7 @@ export type Database = {
         | "wo"
         | "awaiting_schedule"
         | "awaiting_confirmation"
+      link_status: "pending" | "accepted" | "rejected"
       match_modality: "beach_volley" | "indoor_volley" | "futevolei"
       match_player_status: "confirmed" | "waiting" | "cancelled"
       match_status: "open" | "full" | "finished" | "cancelled"
@@ -1288,6 +1383,7 @@ export const Constants = {
         "awaiting_schedule",
         "awaiting_confirmation",
       ],
+      link_status: ["pending", "accepted", "rejected"],
       match_modality: ["beach_volley", "indoor_volley", "futevolei"],
       match_player_status: ["confirmed", "waiting", "cancelled"],
       match_status: ["open", "full", "finished", "cancelled"],
