@@ -22,7 +22,7 @@ export function FollowProfilesSection() {
     queryKey: ["my-followed-profiles"],
     queryFn: async () => {
       const rows = await fetchFollowed();
-      return rows as FollowedProfile[];
+      return rows as unknown as FollowedProfile[];
     },
   });
 
