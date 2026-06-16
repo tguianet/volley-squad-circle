@@ -204,7 +204,7 @@ const bannerSchema = z.object({
 
 export const saveBanner = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => bannerSchema.parse(d))
+  .inputValidator((d: unknown) => bannerSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
     if (data.id) {
@@ -225,7 +225,7 @@ export const saveBanner = createServerFn({ method: "POST" })
 
 export const deleteBanner = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
     const { error } = await context.supabase.from("banners").delete().eq("id", data.id);
@@ -237,7 +237,7 @@ export const deleteBanner = createServerFn({ method: "POST" })
 // ===== Notifications =====
 export const broadcastNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { title: string; body?: string; link_url?: string; city?: string }) =>
+  .inputValidator((d: { title: string; body?: string; link_url?: string; city?: string }) =>
     z
       .object({
         title: z.string().min(1).max(120),
