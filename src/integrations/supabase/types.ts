@@ -1072,6 +1072,45 @@ export type Database = {
         Args: { p_profile_id: string }
         Returns: Json
       }
+      get_public_profile_by_username: {
+        Args: { p_username: string }
+        Returns: {
+          altura: number | null
+          apelido: string | null
+          avatar_url: string | null
+          banner_url: string | null
+          bio: string | null
+          city: string | null
+          created_at: string
+          data_nascimento: string | null
+          derrotas: number
+          display_name: string
+          genero: string | null
+          id: string
+          instagram: string | null
+          is_suspended: boolean
+          is_verified: boolean
+          level: string | null
+          mao_dominante: string | null
+          observacoes: string | null
+          pontos: number
+          posicao_principal: string | null
+          state: string | null
+          status: string
+          suspended_until: string | null
+          ultimo_acesso: string | null
+          updated_at: string
+          username: string | null
+          vitorias: number
+          whatsapp: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_sundays_of_month: {
         Args: { _month: string }
         Returns: {
