@@ -899,7 +899,7 @@ export const listPublicProfileFollows = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await supabase.rpc("list_public_profile_follows", {
+    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_follows", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
     });
