@@ -690,7 +690,7 @@ export const searchProfiles = createServerFn({ method: "GET" })
 
 export const sendProfileLinkRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         targetId: z.string().uuid(),
@@ -707,7 +707,7 @@ export const sendProfileLinkRequest = createServerFn({ method: "POST" })
 
 export const respondToProfileLinkRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         linkId: z.string().uuid(),
@@ -741,7 +741,7 @@ export const listPendingLinkRequests = createServerFn({ method: "GET" })
   });
 
 export const searchPublicProfiles = createServerFn({ method: "GET" })
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         searchTerm: z.string().min(1),
