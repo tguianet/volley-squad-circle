@@ -92,7 +92,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
 // ===== Users =====
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { search?: string } | undefined) => d ?? {})
+  .inputValidator((d: { search?: string } | undefined) => d ?? {})
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     let q = context.supabase
@@ -125,7 +125,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { userId: string; role: "admin" | "moderator" | "player"; grant: boolean }) =>
+  .inputValidator((d: { userId: string; role: "admin" | "moderator" | "player"; grant: boolean }) =>
     z
       .object({
         userId: z.string().uuid(),
@@ -157,7 +157,7 @@ export const setUserRole = createServerFn({ method: "POST" })
 
 export const setUserFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { userId: string; field: "is_verified" | "is_suspended"; value: boolean }) =>
+  .inputValidator((d: { userId: string; field: "is_verified" | "is_suspended"; value: boolean }) =>
     z
       .object({
         userId: z.string().uuid(),
