@@ -917,7 +917,7 @@ export const listPublicProfileUpdates = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await supabase.rpc("list_public_profile_updates", {
+    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_updates", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 10,
     });
