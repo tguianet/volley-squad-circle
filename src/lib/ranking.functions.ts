@@ -639,7 +639,7 @@ export const registerScore = createServerFn({ method: "POST" })
 
 export const confirmScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase.rpc("confirm_challenge_score", {
       _challenge_id: data.challengeId,
@@ -650,7 +650,7 @@ export const confirmScore = createServerFn({ method: "POST" })
 
 export const disputeScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
@@ -672,7 +672,7 @@ export const disputeScore = createServerFn({ method: "POST" })
 // =====================================================================
 export const searchProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         searchTerm: z.string().min(1),
