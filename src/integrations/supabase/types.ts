@@ -1096,36 +1096,6 @@ export type Database = {
           vitorias: number
         }[]
       }
-      list_public_profile_follows: {
-        Args: { p_profile_id: string; p_limit?: number }
-        Returns: {
-          apelido: string
-          avatar_url: string
-          category: string
-          display_name: string
-          profile_id: string
-          username: string
-        }[]
-      }
-      list_public_profile_gallery: {
-        Args: { p_profile_id: string; p_limit?: number }
-        Returns: {
-          created_at: string
-          description: string
-          id: string
-          image_url: string
-        }[]
-      }
-      list_public_profile_updates: {
-        Args: { p_profile_id: string; p_limit?: number }
-        Returns: {
-          created_at: string
-          description: string
-          id: string
-          title: string
-          type: string
-        }[]
-      }
       get_sundays_of_month: {
         Args: { _month: string }
         Returns: {
@@ -1169,7 +1139,6 @@ export type Database = {
           follow_id: string
           followed_at: string
           last_updated_at: string
-          mutual_connections_count: number
           profile_id: string
           username: string
         }[]
@@ -1200,6 +1169,36 @@ export type Database = {
           requester_id: string
           requester_name: string
           requester_username: string
+        }[]
+      }
+      list_public_profile_follows: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          apelido: string
+          avatar_url: string
+          category: string
+          display_name: string
+          profile_id: string
+          username: string
+        }[]
+      }
+      list_public_profile_gallery: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+        }[]
+      }
+      list_public_profile_updates: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          title: string
+          type: string
         }[]
       }
       list_scheduled_challenges_public: {
