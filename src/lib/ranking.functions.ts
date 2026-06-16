@@ -758,7 +758,7 @@ export const searchPublicProfiles = createServerFn({ method: "GET" })
   });
 
 export const getPublicProfileByUsername = createServerFn({ method: "GET" })
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         username: z.string().min(1),
@@ -776,7 +776,7 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
 
 export const getProfileLinkStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         targetId: z.string().uuid(),
@@ -812,7 +812,7 @@ export const getProfileLinkStatus = createServerFn({ method: "GET" })
 
 export const followProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         profileId: z.string().uuid(),
