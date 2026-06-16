@@ -510,26 +510,31 @@ export const listMyChallenges = createServerFn({ method: "GET" })
 
 // Public — used in the public /ranking page; no auth required.
 export const listScheduledChallenges = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await supabaseAdmin
-    .from("challenges")
-    .select(
-      `
-        id, scheduled_date, scheduled_time,
-        challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
-        challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),
-        arena:arenas(id, name)
-      `,
-    )
-    .eq("status", "scheduled")
-    .gte("scheduled_date", today)
-    .order("scheduled_date")
-    .order("scheduled_time")
-    .limit(20);
+  const { data, error } = await (supabase.rpc as any)("list_scheduled_challenges_public");
   if (error) throw new Error(error.message);
-  return data ?? [];
+  type Row = {
+    id: string;
+    scheduled_date: string;
+    scheduled_time: string;
+    challenger_id: string;
+    challenger_name: string;
+    challenger_rank: number | null;
+    challenged_id: string;
+    challenged_name: string;
+    challenged_rank: number | null;
+    arena_id: string | null;
+    arena_name: string | null;
+  };
+  return ((data ?? []) as Row[]).map((r) => ({
+    id: r.id,
+    scheduled_date: r.scheduled_date,
+    scheduled_time: r.scheduled_time,
+    challenger: { id: r.challenger_id, name: r.challenger_name, rank_position: r.challenger_rank },
+    challenged: { id: r.challenged_id, name: r.challenged_name, rank_position: r.challenged_rank },
+    arena: r.arena_id ? { id: r.arena_id, name: r.arena_name } : null,
+  }));
 });
+
 
 // =====================================================================
 // COURTS & SCHEDULING

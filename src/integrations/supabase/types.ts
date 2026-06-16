@@ -1171,6 +1171,22 @@ export type Database = {
           requester_username: string
         }[]
       }
+      list_scheduled_challenges_public: {
+        Args: never
+        Returns: {
+          arena_id: string
+          arena_name: string
+          challenged_id: string
+          challenged_name: string
+          challenged_rank: number
+          challenger_id: string
+          challenger_name: string
+          challenger_rank: number
+          id: string
+          scheduled_date: string
+          scheduled_time: string
+        }[]
+      }
       recompute_ranks_below_podium: {
         Args: {
           _category: Database["public"]["Enums"]["team_category"]
