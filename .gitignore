@@ -16,6 +16,15 @@ dist-ssr
 .nitro
 *.local
 
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Prevent nested git repositories from being tracked
+**/.git/
+volley-squad-circle/
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

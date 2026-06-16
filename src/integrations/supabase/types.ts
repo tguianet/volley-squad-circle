@@ -584,6 +584,42 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_follows: {
+        Row: {
+          id: string
+          follower_id: string
+          following_profile_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          follower_id: string
+          following_profile_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          follower_id?: string
+          following_profile_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_follows_following_profile_id_fkey"
+            columns: ["following_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_links: {
         Row: {
           created_at: string
@@ -620,6 +656,41 @@ export type Database = {
           {
             foreignKeyName: "profile_links_target_id_fkey"
             columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profile_updates: {
+        Row: {
+          id: string
+          profile_id: string
+          title: string
+          description: string | null
+          type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          title: string
+          description?: string | null
+          type?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          title?: string
+          description?: string | null
+          type?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_updates_profile_id_fkey"
+            columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1034,6 +1105,38 @@ export type Database = {
           court_number: number
           is_free: boolean
           slot_time: string
+        }[]
+      }
+      follow_profile: { Args: { p_profile_id: string }; Returns: Json }
+      unfollow_profile: { Args: { p_profile_id: string }; Returns: Json }
+      get_profile_follow_status: { Args: { p_profile_id: string }; Returns: Json }
+      list_my_followed_profiles: {
+        Args: never
+        Returns: {
+          follow_id: string
+          profile_id: string
+          display_name: string
+          username: string | null
+          apelido: string | null
+          avatar_url: string | null
+          category: string | null
+          last_updated_at: string
+          followed_at: string
+        }[]
+      }
+      list_followed_profiles_feed: {
+        Args: { p_limit?: number }
+        Returns: {
+          id: string
+          profile_id: string
+          title: string
+          description: string | null
+          type: string
+          created_at: string
+          profile_name: string
+          profile_avatar_url: string | null
+          profile_username: string | null
+          profile_apelido: string | null
         }[]
       }
       generate_current_month_availability: { Args: never; Returns: number }

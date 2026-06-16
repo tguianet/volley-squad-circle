@@ -21,6 +21,7 @@ import { Route as PartidasIndexRouteImport } from './routes/partidas.index'
 import { Route as ArenasIndexRouteImport } from './routes/arenas.index'
 import { Route as AgendaIndexRouteImport } from './routes/agenda.index'
 import { Route as TorneiosIdRouteImport } from './routes/torneios.$id'
+import { Route as PerfilUsernameRouteImport } from './routes/perfil.$username'
 import { Route as PartidasNovaRouteImport } from './routes/partidas.nova'
 import { Route as ArenasIdRouteImport } from './routes/arenas.$id'
 import { Route as AuthenticatedAdminRouteRouteImport } from './routes/_authenticated/admin/route'
@@ -93,6 +94,11 @@ const AgendaIndexRoute = AgendaIndexRouteImport.update({
 const TorneiosIdRoute = TorneiosIdRouteImport.update({
   id: '/torneios/$id',
   path: '/torneios/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PerfilUsernameRoute = PerfilUsernameRouteImport.update({
+  id: '/perfil/$username',
+  path: '/perfil/$username',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartidasNovaRoute = PartidasNovaRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
+  '/perfil/$username': typeof PerfilUsernameRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/agenda/': typeof AgendaIndexRoute
   '/arenas/': typeof ArenasIndexRoute
@@ -210,6 +217,7 @@ export interface FileRoutesByTo {
   '/notificacoes': typeof NotificacoesRoute
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
+  '/perfil/$username': typeof PerfilUsernameRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/agenda': typeof AgendaIndexRoute
   '/arenas': typeof ArenasIndexRoute
@@ -239,6 +247,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
+  '/perfil/$username': typeof PerfilUsernameRoute
   '/torneios/$id': typeof TorneiosIdRoute
   '/agenda/': typeof AgendaIndexRoute
   '/arenas/': typeof ArenasIndexRoute
@@ -268,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/arenas/$id'
     | '/partidas/nova'
+    | '/perfil/$username'
     | '/torneios/$id'
     | '/agenda/'
     | '/arenas/'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/notificacoes'
     | '/arenas/$id'
     | '/partidas/nova'
+    | '/perfil/$username'
     | '/torneios/$id'
     | '/agenda'
     | '/arenas'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/arenas/$id'
     | '/partidas/nova'
+    | '/perfil/$username'
     | '/torneios/$id'
     | '/agenda/'
     | '/arenas/'
@@ -350,6 +362,7 @@ export interface RootRouteChildren {
   NotificacoesRoute: typeof NotificacoesRoute
   ArenasIdRoute: typeof ArenasIdRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
+  PerfilUsernameRoute: typeof PerfilUsernameRoute
   TorneiosIdRoute: typeof TorneiosIdRoute
   AgendaIndexRoute: typeof AgendaIndexRoute
   ArenasIndexRoute: typeof ArenasIndexRoute
@@ -444,6 +457,13 @@ declare module '@tanstack/react-router' {
       path: '/torneios/$id'
       fullPath: '/torneios/$id'
       preLoaderRoute: typeof TorneiosIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/perfil/$username': {
+      id: '/perfil/$username'
+      path: '/perfil/$username'
+      fullPath: '/perfil/$username'
+      preLoaderRoute: typeof PerfilUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partidas/nova': {
@@ -598,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificacoesRoute: NotificacoesRoute,
   ArenasIdRoute: ArenasIdRoute,
   PartidasNovaRoute: PartidasNovaRoute,
+  PerfilUsernameRoute: PerfilUsernameRoute,
   TorneiosIdRoute: TorneiosIdRoute,
   AgendaIndexRoute: AgendaIndexRoute,
   ArenasIndexRoute: ArenasIndexRoute,
@@ -610,3 +631,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

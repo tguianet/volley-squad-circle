@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 // =====================================================================
 // ARENAS
@@ -686,4 +687,157 @@ export const listPendingLinkRequests = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase.rpc("list_pending_link_requests");
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+export const searchPublicProfiles = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z.object({
+      searchTerm: z.string().min(1),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabase.rpc("search_profiles", {
+      search_term: data.searchTerm,
+      exclude_id: undefined,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const getPublicProfileByUsername = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z.object({
+      username: z.string().min(1),
+    }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select(`
+        id,
+        display_name,
+        username,
+        apelido,
+        bio,
+        city,
+        state,
+        whatsapp,
+        instagram,
+        posicao_principal,
+        level,
+        altura,
+        mao_dominante,
+        banner_url,
+        avatar_url,
+        genero,
+        status,
+        pontos,
+        vitorias,
+        derrotas
+      `)
+      .or(`username.eq.${data.username},apelido.eq.${data.username}`)
+      .single();
+
+    if (error) throw new Error(error.message);
+    return profile;
+  });
+
+export const getProfileLinkStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      targetId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: link, error } = await context.supabase
+      .from("profile_links")
+      .select("*")
+      .or(`and(requester_id.eq.${context.userId},target_id.eq.${data.targetId}),and(requester_id.eq.${data.targetId},target_id.eq.${context.userId})`)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      throw new Error(error.message);
+    }
+
+    if (!link) {
+      return { status: "none" as const };
+    }
+
+    return {
+      status: link.status as "pending" | "accepted" | "rejected",
+      isRequester: link.requester_id === context.userId,
+    };
+  });
+
+// =====================================================================
+// PROFILE FOLLOWS
+// =====================================================================
+
+export const followProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      profileId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("follow_profile", {
+      p_profile_id: data.profileId,
+    });
+    if (error) throw new Error(error.message);
+    const result = row as { error?: string; success?: boolean };
+    if (result?.error) throw new Error(result.error);
+    return row;
+  });
+
+export const unfollowProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      profileId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("unfollow_profile", {
+      p_profile_id: data.profileId,
+    });
+    if (error) throw new Error(error.message);
+    const result = row as { error?: string; success?: boolean };
+    if (result?.error) throw new Error(result.error);
+    return row;
+  });
+
+export const listMyFollowedProfiles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase.rpc("list_my_followed_profiles");
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const listFollowedProfilesFeed = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: rows, error } = await context.supabase.rpc("list_followed_profiles_feed", {
+      p_limit: 30,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const getProfileFollowStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({
+      profileId: z.string().uuid(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.rpc("get_profile_follow_status", {
+      p_profile_id: data.profileId,
+    });
+    if (error) throw new Error(error.message);
+    const result = row as { following?: boolean };
+    return { following: result?.following ?? false };
   });

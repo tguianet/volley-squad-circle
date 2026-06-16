@@ -20,6 +20,18 @@ export function formatDateBR(value: string) {
   }).format(date);
 }
 
+export function formatRelativeTimeBR(value: string) {
+  const diff = Date.now() - new Date(value).getTime();
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "agora";
+  if (minutes < 60) return `há ${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `há ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `há ${days}d`;
+  return formatDateBR(value);
+}
+
 export function formatDateTimeBR(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
