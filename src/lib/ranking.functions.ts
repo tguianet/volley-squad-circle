@@ -20,7 +20,7 @@ export const listArenas = createServerFn({ method: "GET" })
 
 export const createArena = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         name: z.string().min(1).max(120),
@@ -107,7 +107,7 @@ export const getMyTeams = createServerFn({ method: "GET" })
 
 export const createTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         name: z.string().min(2).max(80),
@@ -174,7 +174,7 @@ function firstOfMonthISO(d = new Date()): string {
 
 export const getTeamAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         teamId: z.string().uuid(),
@@ -220,7 +220,7 @@ export const getTeamAvailability = createServerFn({ method: "GET" })
 
 export const upsertSundayAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         teamId: z.string().uuid(),
@@ -290,7 +290,7 @@ function overlapTimes(
 
 export const findCommonSundays = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengerTeamId: z.string().uuid(),
@@ -338,7 +338,7 @@ export const findCommonSundays = createServerFn({ method: "GET" })
 
 export const createChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengerTeamId: z.string().uuid(),
@@ -407,7 +407,7 @@ export const createChallenge = createServerFn({ method: "POST" })
 
 export const respondToChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
@@ -548,7 +548,7 @@ export const listCourts = createServerFn({ method: "GET" })
 
 export const getCourtAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ date: z.string() }).parse(d))
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.rpc("court_availability", {
       _date: data.date,
@@ -559,7 +559,7 @@ export const getCourtAvailability = createServerFn({ method: "GET" })
 
 export const scheduleChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
@@ -582,7 +582,7 @@ export const scheduleChallenge = createServerFn({ method: "POST" })
 
 export const reportWalkover = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("challenges")
@@ -594,7 +594,7 @@ export const reportWalkover = createServerFn({ method: "POST" })
 
 export const listSundayAgenda = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ date: z.string() }).parse(d))
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("challenges")
@@ -618,7 +618,7 @@ export const listSundayAgenda = createServerFn({ method: "GET" })
 // =====================================================================
 export const registerScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
@@ -639,7 +639,7 @@ export const registerScore = createServerFn({ method: "POST" })
 
 export const confirmScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase.rpc("confirm_challenge_score", {
       _challenge_id: data.challengeId,
@@ -650,7 +650,7 @@ export const confirmScore = createServerFn({ method: "POST" })
 
 export const disputeScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
@@ -672,7 +672,7 @@ export const disputeScore = createServerFn({ method: "POST" })
 // =====================================================================
 export const searchProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         searchTerm: z.string().min(1),
@@ -690,7 +690,7 @@ export const searchProfiles = createServerFn({ method: "GET" })
 
 export const sendProfileLinkRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         targetId: z.string().uuid(),
@@ -707,7 +707,7 @@ export const sendProfileLinkRequest = createServerFn({ method: "POST" })
 
 export const respondToProfileLinkRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         linkId: z.string().uuid(),
@@ -741,7 +741,7 @@ export const listPendingLinkRequests = createServerFn({ method: "GET" })
   });
 
 export const searchPublicProfiles = createServerFn({ method: "GET" })
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         searchTerm: z.string().min(1),
@@ -758,7 +758,7 @@ export const searchPublicProfiles = createServerFn({ method: "GET" })
   });
 
 export const getPublicProfileByUsername = createServerFn({ method: "GET" })
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         username: z.string().min(1),
@@ -776,7 +776,7 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
 
 export const getProfileLinkStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         targetId: z.string().uuid(),
@@ -812,7 +812,7 @@ export const getProfileLinkStatus = createServerFn({ method: "GET" })
 
 export const followProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         profileId: z.string().uuid(),
@@ -831,7 +831,7 @@ export const followProfile = createServerFn({ method: "POST" })
 
 export const unfollowProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         profileId: z.string().uuid(),
@@ -868,7 +868,7 @@ export const listFollowedProfilesFeed = createServerFn({ method: "GET" })
 
 export const getProfileFollowStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         profileId: z.string().uuid(),

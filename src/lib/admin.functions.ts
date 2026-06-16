@@ -92,7 +92,7 @@ export const getAdminStats = createServerFn({ method: "GET" })
 // ===== Users =====
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { search?: string } | undefined) => d ?? {})
+  .inputValidator((d: { search?: string } | undefined) => d ?? {})
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     let q = context.supabase
@@ -125,7 +125,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { userId: string; role: "admin" | "moderator" | "player"; grant: boolean }) =>
+  .inputValidator((d: { userId: string; role: "admin" | "moderator" | "player"; grant: boolean }) =>
     z
       .object({
         userId: z.string().uuid(),
@@ -157,7 +157,7 @@ export const setUserRole = createServerFn({ method: "POST" })
 
 export const setUserFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { userId: string; field: "is_verified" | "is_suspended"; value: boolean }) =>
+  .inputValidator((d: { userId: string; field: "is_verified" | "is_suspended"; value: boolean }) =>
     z
       .object({
         userId: z.string().uuid(),
@@ -204,7 +204,7 @@ const bannerSchema = z.object({
 
 export const saveBanner = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: unknown) => bannerSchema.parse(d))
+  .inputValidator((d: unknown) => bannerSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
     if (data.id) {
@@ -225,7 +225,7 @@ export const saveBanner = createServerFn({ method: "POST" })
 
 export const deleteBanner = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
     const { error } = await context.supabase.from("banners").delete().eq("id", data.id);
@@ -237,7 +237,7 @@ export const deleteBanner = createServerFn({ method: "POST" })
 // ===== Notifications =====
 export const broadcastNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { title: string; body?: string; link_url?: string; city?: string }) =>
+  .inputValidator((d: { title: string; body?: string; link_url?: string; city?: string }) =>
     z
       .object({
         title: z.string().min(1).max(120),
@@ -283,7 +283,7 @@ export const getSettings = createServerFn({ method: "GET" })
 
 export const updateSetting = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { key: string; value: Json }) =>
+  .inputValidator((d: { key: string; value: Json }) =>
     z.object({ key: z.string().min(1).max(80), value: z.any() }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -313,7 +313,7 @@ export const listReports = createServerFn({ method: "GET" })
 
 export const resolveReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string; status: "resolved" | "dismissed" }) =>
+  .inputValidator((d: { id: string; status: "resolved" | "dismissed" }) =>
     z.object({ id: z.string().uuid(), status: z.enum(["resolved", "dismissed"]) }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -359,7 +359,7 @@ function toCsv(rows: Record<string, unknown>[]): string {
 
 export const exportCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator(
+  .inputValidator(
     (d: {
       table: "profiles" | "user_roles" | "banners" | "notifications" | "reports" | "audit_log";
     }) =>
