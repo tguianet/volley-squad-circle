@@ -407,7 +407,7 @@ export const createChallenge = createServerFn({ method: "POST" })
 
 export const respondToChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
@@ -548,7 +548,7 @@ export const listCourts = createServerFn({ method: "GET" })
 
 export const getCourtAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ date: z.string() }).parse(d))
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase.rpc("court_availability", {
       _date: data.date,
@@ -559,7 +559,7 @@ export const getCourtAvailability = createServerFn({ method: "GET" })
 
 export const scheduleChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
