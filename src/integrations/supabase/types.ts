@@ -1171,6 +1171,36 @@ export type Database = {
           requester_username: string
         }[]
       }
+      list_public_profile_follows: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          apelido: string
+          avatar_url: string
+          category: string
+          display_name: string
+          profile_id: string
+          username: string
+        }[]
+      }
+      list_public_profile_gallery: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          image_url: string
+        }[]
+      }
+      list_public_profile_updates: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          title: string
+          type: string
+        }[]
+      }
       list_scheduled_challenges_public: {
         Args: never
         Returns: {
