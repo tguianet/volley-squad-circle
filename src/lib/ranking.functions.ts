@@ -935,7 +935,7 @@ export const listPublicProfileGallery = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await supabase.rpc("list_public_profile_gallery", {
+    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_gallery", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
     });
