@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { isStoragePath } from "@/lib/media-url";
 import { Waves } from "lucide-react";
 
 function useBannerUrl(pathOrUrl: string | null | undefined) {
   return useQuery({
     queryKey: ["banner-signed-url", pathOrUrl ?? ""],
-    enabled: !!pathOrUrl && !/^https?:\/\//i.test(pathOrUrl),
+    enabled: isStoragePath(pathOrUrl),
     staleTime: 1000 * 60 * 30,
+    retry: false,
     queryFn: async () => {
-      if (!pathOrUrl) return null;
+      if (!isStoragePath(pathOrUrl)) return null;
       const { data, error } = await supabase.storage
         .from("banners")
         .createSignedUrl(pathOrUrl, 3600);
@@ -24,7 +26,7 @@ function resolveBannerSrc(
   bannerUrl: string | null | undefined,
   signedUrl: string | null | undefined,
 ): string | null {
-  if (!bannerUrl) return null;
+  if (!bannerUrl || !isStoragePath(bannerUrl) && !/^https?:\/\//i.test(bannerUrl)) return null;
   if (/^https?:\/\//i.test(bannerUrl)) return bannerUrl;
   return signedUrl ?? null;
 }
@@ -36,9 +38,14 @@ type PublicProfileCoverProps = {
 
 export function PublicProfileCover({ bannerUrl, className }: PublicProfileCoverProps) {
   const [imageFailed, setImageFailed] = useState(false);
-  const { data: signedUrl, isLoading } = useBannerUrl(bannerUrl);
+  const { data: signedUrl, isLoading, isFetched } = useBannerUrl(bannerUrl);
   const src = resolveBannerSrc(bannerUrl, signedUrl);
-  const showImage = !!src && !imageFailed && !isLoading;
+  const waitingForSignedUrl = isStoragePath(bannerUrl) && !isFetched;
+  const showImage = !!src && !imageFailed && !waitingForSignedUrl;
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [bannerUrl]);
 
   return (
     <div className={cn("relative h-44 sm:h-52 md:h-56 w-full overflow-hidden", className)}>
@@ -63,7 +70,7 @@ export function PublicProfileCover({ bannerUrl, className }: PublicProfileCoverP
         />
       ) : null}
 
-      {isLoading && bannerUrl ? (
+      {waitingForSignedUrl ? (
         <div className="absolute inset-0 animate-pulse bg-primary/10" aria-hidden />
       ) : null}
     </div>

@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { isStoragePath } from "@/lib/media-url";
 
 /**
  * Resolves an avatar path stored in the private `avatars` bucket into a
@@ -10,12 +11,17 @@ import { cn } from "@/lib/utils";
 export function useAvatarUrl(pathOrUrl: string | null | undefined) {
   return useQuery({
     queryKey: ["avatar-signed-url", pathOrUrl ?? ""],
-    enabled: !!pathOrUrl,
+    enabled: !!pathOrUrl && (isStoragePath(pathOrUrl) || /^https?:\/\//i.test(pathOrUrl)),
     staleTime: 1000 * 60 * 30,
+    retry: false,
     queryFn: async () => {
       if (!pathOrUrl) return null;
       if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-      const { data } = await supabase.storage.from("avatars").createSignedUrl(pathOrUrl, 3600);
+      if (!isStoragePath(pathOrUrl)) return null;
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .createSignedUrl(pathOrUrl, 3600);
+      if (error) return null;
       return data?.signedUrl ?? null;
     },
   });

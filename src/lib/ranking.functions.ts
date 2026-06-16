@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { isMissingRpcError, normalizeProfileHandle } from "@/lib/media-url";
 
 // =====================================================================
 // ARENAS
@@ -771,12 +772,12 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: profile, error } = await (supabase.rpc as any)(
-      "get_public_profile_by_username",
-      { p_username: data.username },
-    ).maybeSingle();
+    const username = normalizeProfileHandle(data.username);
+    const { data: rows, error } = await supabase.rpc("get_public_profile_by_username", {
+      p_username: username,
+    });
     if (error) throw new Error(error.message);
-    return profile;
+    return rows?.[0] ?? null;
   });
 
 export const getProfileLinkStatus = createServerFn({ method: "GET" })
@@ -903,7 +904,10 @@ export const listPublicProfileFollows = createServerFn({ method: "GET" })
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (isMissingRpcError(error.message)) return [];
+      throw new Error(error.message);
+    }
     return rows ?? [];
   });
 
@@ -921,7 +925,10 @@ export const listPublicProfileUpdates = createServerFn({ method: "GET" })
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 10,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (isMissingRpcError(error.message)) return [];
+      throw new Error(error.message);
+    }
     return rows ?? [];
   });
 
@@ -939,6 +946,9 @@ export const listPublicProfileGallery = createServerFn({ method: "GET" })
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
     });
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (isMissingRpcError(error.message)) return [];
+      throw new Error(error.message);
+    }
     return rows ?? [];
   });

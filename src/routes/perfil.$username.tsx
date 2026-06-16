@@ -34,6 +34,7 @@ import { PublicProfileConnections } from "@/components/public-profile-connection
 import { PublicProfileGallery } from "@/components/public-profile-gallery";
 import { PublicProfileUpdates } from "@/components/public-profile-updates";
 import { getErrorMessage } from "@/lib/utils";
+import { normalizeProfileHandle } from "@/lib/media-url";
 
 type PublicProfile = {
   id: string;
@@ -132,7 +133,25 @@ function PublicProfilePage() {
     error: profileError,
   } = useQuery({
     queryKey: ["public-profile", username],
-    queryFn: () => getPublicProfileFn({ data: { username } }) as Promise<PublicProfile>,
+    queryFn: async () => {
+      const handle = normalizeProfileHandle(username);
+      try {
+        const fromServer = (await getPublicProfileFn({ data: { username: handle } })) as
+          | PublicProfile
+          | null;
+        if (fromServer) return fromServer;
+      } catch {
+        // fallback direto no client (ex.: falha transitória do server fn)
+      }
+
+      const { data: rows, error } = await supabase.rpc("get_public_profile_by_username", {
+        p_username: handle,
+      });
+      if (error) throw error;
+      const row = rows?.[0] as PublicProfile | undefined;
+      if (!row) throw new Error("Perfil não encontrado");
+      return row;
+    },
   });
 
   const { data: currentUser } = useQuery({
