@@ -582,7 +582,7 @@ export const scheduleChallenge = createServerFn({ method: "POST" })
 
 export const reportWalkover = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("challenges")
@@ -594,7 +594,7 @@ export const reportWalkover = createServerFn({ method: "POST" })
 
 export const listSundayAgenda = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) => z.object({ date: z.string() }).parse(d))
+  .inputValidator((d) => z.object({ date: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("challenges")
@@ -618,7 +618,7 @@ export const listSundayAgenda = createServerFn({ method: "GET" })
 // =====================================================================
 export const registerScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengeId: z.string().uuid(),
