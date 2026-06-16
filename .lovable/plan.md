@@ -19,6 +19,7 @@ Após atualizar `wins/losses/current_streak`, aplicar:
 ### Reordenação geral por pontos (posições 4+)
 
 Como `rank_position` é uma coluna persistida, criar função `public.recompute_ranks_below_podium(_category, _gender)` que:
+
 - Mantém as posições 1–3 como estão.
 - Recalcula 4..N por `points DESC, wins DESC, losses ASC, created_at ASC` dentro do mesmo `category/gender`.
 - Chamada ao final do trigger `completed`, e também nos triggers de penalidade (`declined`, `wo`) e em `apply_monthly_penalties`.

@@ -43,12 +43,14 @@ function ReportsPage() {
           <p className="p-6 text-sm text-white/50">Tudo limpo! Nenhuma denúncia.</p>
         ) : (
           <ul className="divide-y divide-white/5">
-            {data!.map((r: any) => (
+            {data!.map((r) => (
               <li key={r.id} className="p-4 flex flex-wrap items-center gap-3">
                 <Badge variant={r.status === "pending" ? "destructive" : "secondary"}>
                   {r.status}
                 </Badge>
-                <div className="text-xs text-white/50 font-mono">{r.target_type}:{r.target_id.slice(0, 10)}</div>
+                <div className="text-xs text-white/50 font-mono">
+                  {r.target_type}:{r.target_id.slice(0, 10)}
+                </div>
                 <div className="flex-1 min-w-[200px]">
                   <div className="font-semibold text-sm">{r.reason}</div>
                   {r.details && <div className="text-xs text-white/60">{r.details}</div>}

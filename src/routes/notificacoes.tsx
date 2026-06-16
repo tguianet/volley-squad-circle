@@ -2,12 +2,24 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bell, Trophy, Users, Heart, Calendar, MessageCircle, Check, X, Link as LinkIcon } from "lucide-react";
+import {
+  Bell,
+  Trophy,
+  Users,
+  Heart,
+  Calendar,
+  MessageCircle,
+  Check,
+  X,
+  Link as LinkIcon,
+} from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/utils";
 import { respondToProfileLinkRequest, listPendingLinkRequests } from "@/lib/ranking.functions";
+import type { LucideIcon } from "lucide-react";
 
 export const Route = createFileRoute("/notificacoes")({
   head: () => ({ meta: [{ title: "Notificações — PlayBeach" }] }),
@@ -35,16 +47,30 @@ type PendingProfileLink = {
   id: string;
   requester_id: string;
   created_at: string;
-  requester: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
+  requester: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
-const iconMap: Record<string, any> = {
-  trophy: Trophy, users: Users, heart: Heart, calendar: Calendar, message: MessageCircle,
-  challenge: Trophy, team: Users, like: Heart, comment: MessageCircle, team_invite: Users,
+const iconMap: Record<string, LucideIcon> = {
+  trophy: Trophy,
+  users: Users,
+  heart: Heart,
+  calendar: Calendar,
+  message: MessageCircle,
+  challenge: Trophy,
+  team: Users,
+  like: Heart,
+  comment: MessageCircle,
+  team_invite: Users,
 };
 
 async function fetchNotifs(): Promise<NotifRow[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
   const { data, error } = await supabase
     .from("notifications")
@@ -57,7 +83,9 @@ async function fetchNotifs(): Promise<NotifRow[]> {
 }
 
 async function fetchPendingInvites(): Promise<PendingInvite[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
   const { data, error } = await supabase
     .from("team_invitations")
@@ -66,17 +94,23 @@ async function fetchPendingInvites(): Promise<PendingInvite[]> {
     .eq("status", "pending")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  const rows = (data ?? []) as any[];
-  const inviterIds = Array.from(new Set(rows.map(r => r.inviter_id)));
+  const rows = (data ?? []) as {
+    id: string;
+    team_id: string;
+    inviter_id: string;
+    created_at: string;
+    team: { name: string } | null;
+  }[];
+  const inviterIds = Array.from(new Set(rows.map((r) => r.inviter_id)));
   let profilesMap: Record<string, { display_name: string | null; username: string | null }> = {};
   if (inviterIds.length) {
     const { data: profs } = await supabase
       .from("profiles")
       .select("id, display_name, username")
       .in("id", inviterIds);
-    profilesMap = Object.fromEntries((profs ?? []).map((p: any) => [p.id, p]));
+    profilesMap = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
   }
-  return rows.map(r => ({
+  return rows.map((r) => ({
     id: r.id,
     team_id: r.team_id,
     created_at: r.created_at,
@@ -123,7 +157,7 @@ function NotifPage() {
       qc.invalidateQueries({ queryKey: ["notifications"] });
       qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao responder"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao responder")),
   });
 
   const respondToLink = useMutation({
@@ -135,28 +169,28 @@ function NotifPage() {
       qc.invalidateQueries({ queryKey: ["pending-profile-links"] });
       qc.invalidateQueries({ queryKey: ["my-profile-links"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Erro ao responder"),
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao responder")),
   });
 
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center gap-2 mb-1">
-          <Bell className="size-6 text-primary"/>
+          <Bell className="size-6 text-primary" />
           <h1 className="text-3xl">Notificações</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-6">Tudo que rolou na sua areia.</p>
 
         {invites.length > 0 && (
           <div className="space-y-3 mb-4">
-            {invites.map(inv => {
+            {invites.map((inv) => {
               const who = inv.inviter?.display_name ?? inv.inviter?.username ?? "Alguém";
               const team = inv.team?.name ?? "um time";
               const loading = respond.isPending;
               return (
                 <Card key={inv.id} className="p-4 flex items-center gap-3 bg-primary/5">
                   <div className="size-10 rounded-full gradient-beach text-white flex items-center justify-center shrink-0">
-                    <Users className="size-4"/>
+                    <Users className="size-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium">Convite para time</div>
@@ -166,13 +200,20 @@ function NotifPage() {
                     <div className="text-xs text-muted-foreground">{timeAgo(inv.created_at)}</div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button size="sm" disabled={loading}
-                      onClick={() => respond.mutate({ id: inv.id, status: "accepted" })}>
-                      <Check className="size-4 mr-1"/> Aceitar
+                    <Button
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => respond.mutate({ id: inv.id, status: "accepted" })}
+                    >
+                      <Check className="size-4 mr-1" /> Aceitar
                     </Button>
-                    <Button size="sm" variant="outline" disabled={loading}
-                      onClick={() => respond.mutate({ id: inv.id, status: "declined" })}>
-                      <X className="size-4 mr-1"/> Recusar
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={loading}
+                      onClick={() => respond.mutate({ id: inv.id, status: "declined" })}
+                    >
+                      <X className="size-4 mr-1" /> Recusar
                     </Button>
                   </div>
                 </Card>
@@ -183,13 +224,13 @@ function NotifPage() {
 
         {profileLinks.length > 0 && (
           <div className="space-y-3 mb-4">
-            {profileLinks.map(link => {
+            {profileLinks.map((link) => {
               const who = link.requester?.display_name ?? link.requester?.username ?? "Alguém";
               const loading = respondToLink.isPending;
               return (
                 <Card key={link.id} className="p-4 flex items-center gap-3 bg-primary/5">
                   <div className="size-10 rounded-full gradient-beach text-white flex items-center justify-center shrink-0">
-                    <LinkIcon className="size-4"/>
+                    <LinkIcon className="size-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium">Solicitação de vínculo de perfil</div>
@@ -199,13 +240,20 @@ function NotifPage() {
                     <div className="text-xs text-muted-foreground">{timeAgo(link.created_at)}</div>
                   </div>
                   <div className="flex gap-2 shrink-0">
-                    <Button size="sm" disabled={loading}
-                      onClick={() => respondToLink.mutate({ id: link.id, status: "accepted" })}>
-                      <Check className="size-4 mr-1"/> Aceitar
+                    <Button
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => respondToLink.mutate({ id: link.id, status: "accepted" })}
+                    >
+                      <Check className="size-4 mr-1" /> Aceitar
                     </Button>
-                    <Button size="sm" variant="outline" disabled={loading}
-                      onClick={() => respondToLink.mutate({ id: link.id, status: "declined" })}>
-                      <X className="size-4 mr-1"/> Recusar
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={loading}
+                      onClick={() => respondToLink.mutate({ id: link.id, status: "declined" })}
+                    >
+                      <X className="size-4 mr-1" /> Recusar
                     </Button>
                   </div>
                 </Card>
@@ -214,18 +262,28 @@ function NotifPage() {
           </div>
         )}
 
-        {q.isLoading && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
-        {!q.isLoading && items.length === 0 && invites.length === 0 && profileLinks.length === 0 && (
-          <Card className="p-6 text-center text-sm text-muted-foreground">Nenhuma notificação por enquanto.</Card>
+        {q.isLoading && (
+          <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>
         )}
+        {!q.isLoading &&
+          items.length === 0 &&
+          invites.length === 0 &&
+          profileLinks.length === 0 && (
+            <Card className="p-6 text-center text-sm text-muted-foreground">
+              Nenhuma notificação por enquanto.
+            </Card>
+          )}
         {items.length > 0 && (
           <Card className="shadow-card divide-y">
-            {items.map(n => {
+            {items.map((n) => {
               const Icon = iconMap[n.kind ?? ""] ?? Bell;
               return (
-                <div key={n.id} className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"}`}>
+                <div
+                  key={n.id}
+                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"}`}
+                >
                   <div className="size-10 rounded-full gradient-beach text-white flex items-center justify-center shrink-0">
-                    <Icon className="size-4"/>
+                    <Icon className="size-4" />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-medium">{n.title}</div>

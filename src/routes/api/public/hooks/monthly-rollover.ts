@@ -13,10 +13,13 @@ export const Route = createFileRoute("/api/public/hooks/monthly-rollover")({
         );
         if (pErr) {
           console.error("[monthly-rollover] penalties error:", pErr.message);
-          return new Response(JSON.stringify({ ok: false, step: "penalties", error: pErr.message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
+          return new Response(
+            JSON.stringify({ ok: false, step: "penalties", error: pErr.message }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
         }
 
         const { data: generated, error: gErr } = await supabaseAdmin.rpc(
@@ -24,10 +27,13 @@ export const Route = createFileRoute("/api/public/hooks/monthly-rollover")({
         );
         if (gErr) {
           console.error("[monthly-rollover] generate error:", gErr.message);
-          return new Response(JSON.stringify({ ok: false, step: "generate", error: gErr.message }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
+          return new Response(
+            JSON.stringify({ ok: false, step: "generate", error: gErr.message }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
         }
 
         return new Response(

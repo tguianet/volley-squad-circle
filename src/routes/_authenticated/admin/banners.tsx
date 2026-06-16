@@ -32,11 +32,11 @@ function BannersPage() {
     queryFn: () => list(),
   });
 
-  const [draft, setDraft] = useState<any>({
+  const [draft, setDraft] = useState({
     title: "",
     body: "",
     link_url: "",
-    variant: "info",
+    variant: "info" as "info" | "success" | "warning" | "promo",
     is_active: true,
   });
 
@@ -136,7 +136,7 @@ function BannersPage() {
           <p className="p-6 text-sm text-white/50">Nenhum banner cadastrado.</p>
         ) : (
           <ul className="divide-y divide-white/5">
-            {banners!.map((b: any) => (
+            {banners!.map((b) => (
               <li key={b.id} className="p-4 flex items-center gap-4">
                 <div className={`flex-1 rounded-lg border p-3 ${variantStyles[b.variant]}`}>
                   <div className="font-semibold">{b.title}</div>

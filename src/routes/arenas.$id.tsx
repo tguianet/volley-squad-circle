@@ -26,34 +26,49 @@ function ArenaDetail() {
   const q = useQuery({ queryKey: ["arena", id], queryFn: () => fetchArena(id) });
 
   if (q.isLoading) {
-    return <AppLayout><div className="p-8 text-sm text-muted-foreground">Carregando…</div></AppLayout>;
+    return (
+      <AppLayout>
+        <div className="p-8 text-sm text-muted-foreground">Carregando…</div>
+      </AppLayout>
+    );
   }
   const a = q.data;
   if (!a) {
-    return <AppLayout><div className="p-8">Arena não encontrada.</div></AppLayout>;
+    return (
+      <AppLayout>
+        <div className="p-8">Arena não encontrada.</div>
+      </AppLayout>
+    );
   }
 
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto px-4 py-6">
-        <Link to="/arenas" className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground">
-          <ArrowLeft className="size-4"/> Arenas
+        <Link
+          to="/arenas"
+          className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" /> Arenas
         </Link>
 
         <div className="relative h-56 rounded-3xl overflow-hidden shadow-card mb-6 bg-secondary">
-          {a.cover_url && <img src={a.cover_url} className="w-full h-full object-cover" alt={a.name}/>}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"/>
+          {a.cover_url && (
+            <img src={a.cover_url} className="w-full h-full object-cover" alt={a.name} />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
           <div className="absolute bottom-0 p-6 text-white">
             <h1 className="font-display text-4xl">{a.name}</h1>
             <div className="flex flex-wrap gap-3 mt-1 text-sm">
               {(a.address || a.city) && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="size-4"/>{[a.address, a.city].filter(Boolean).join(" • ")}
+                  <MapPin className="size-4" />
+                  {[a.address, a.city].filter(Boolean).join(" • ")}
                 </span>
               )}
               {a.rating != null && (
                 <span className="flex items-center gap-1">
-                  <Star className="size-4 fill-accent text-accent"/>{Number(a.rating).toFixed(1)}
+                  <Star className="size-4 fill-accent text-accent" />
+                  {Number(a.rating).toFixed(1)}
                 </span>
               )}
               <Badge className="bg-white/15 backdrop-blur text-white border-0">Arena oficial</Badge>

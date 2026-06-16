@@ -78,21 +78,47 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "PLAYBEACH Ranking — Ranking e rede social de vôlei de areia" },
-      { name: "description", content: "Conecte-se com jogadores, duplas, arenas e torneios de vôlei de areia." },
-      { property: "og:title", content: "PLAYBEACH Ranking — Ranking e rede social de vôlei de areia" },
-      { property: "og:description", content: "Conecte-se com jogadores, duplas, arenas e torneios de vôlei de areia." },
+      {
+        name: "description",
+        content: "Conecte-se com jogadores, duplas, arenas e torneios de vôlei de areia.",
+      },
+      {
+        property: "og:title",
+        content: "PLAYBEACH Ranking — Ranking e rede social de vôlei de areia",
+      },
+      {
+        property: "og:description",
+        content: "Conecte-se com jogadores, duplas, arenas e torneios de vôlei de areia.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "PLAYBEACH Ranking — Ranking e rede social de vôlei de areia" },
-      { name: "twitter:description", content: "Conecte-se com jogadores, duplas, arenas e torneios de vôlei de areia." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/622c7845-9b28-4ed2-95ef-812b1dac2079/id-preview-ad969deb--4530c31a-2def-4af6-8dc7-9af4c2b90d46.lovable.app-1781102151168.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/622c7845-9b28-4ed2-95ef-812b1dac2079/id-preview-ad969deb--4530c31a-2def-4af6-8dc7-9af4c2b90d46.lovable.app-1781102151168.png" },
+      {
+        name: "twitter:title",
+        content: "PLAYBEACH Ranking — Ranking e rede social de vôlei de areia",
+      },
+      {
+        name: "twitter:description",
+        content: "Conecte-se com jogadores, duplas, arenas e torneios de vôlei de areia.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/622c7845-9b28-4ed2-95ef-812b1dac2079/id-preview-ad969deb--4530c31a-2def-4af6-8dc7-9af4c2b90d46.lovable.app-1781102151168.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/622c7845-9b28-4ed2-95ef-812b1dac2079/id-preview-ad969deb--4530c31a-2def-4af6-8dc7-9af4c2b90d46.lovable.app-1781102151168.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,

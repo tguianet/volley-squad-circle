@@ -100,7 +100,9 @@
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
+  * {
+    border-color: var(--color-border);
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -110,17 +112,30 @@
       radial-gradient(at 100% 100%, oklch(0.62 0.13 200 / 0.08) 0, transparent 50%);
     background-attachment: fixed;
   }
-  h1, h2, h3, .font-display {
+  h1,
+  h2,
+  h3,
+  .font-display {
     font-family: var(--font-display);
     letter-spacing: 0.02em;
   }
 }
 
-@utility gradient-beach { background-image: var(--gradient-beach); }
-@utility gradient-ocean { background-image: var(--gradient-ocean); }
-@utility gradient-sand { background-image: var(--gradient-sand); }
-@utility shadow-card { box-shadow: var(--shadow-card); }
-@utility shadow-glow { box-shadow: var(--shadow-glow); }
+@utility gradient-beach {
+  background-image: var(--gradient-beach);
+}
+@utility gradient-ocean {
+  background-image: var(--gradient-ocean);
+}
+@utility gradient-sand {
+  background-image: var(--gradient-sand);
+}
+@utility shadow-card {
+  box-shadow: var(--shadow-card);
+}
+@utility shadow-glow {
+  box-shadow: var(--shadow-glow);
+}
 @utility text-gradient {
   background-image: var(--gradient-beach);
   -webkit-background-clip: text;

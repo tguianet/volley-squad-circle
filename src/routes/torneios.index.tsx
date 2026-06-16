@@ -17,7 +17,7 @@ function TournamentsPage() {
 
         <Card className="p-10 text-center shadow-card">
           <div className="size-14 mx-auto rounded-2xl gradient-beach flex items-center justify-center mb-4">
-            <Trophy className="size-7 text-white"/>
+            <Trophy className="size-7 text-white" />
           </div>
           <div className="font-display text-xl mb-1">Nenhum torneio publicado ainda</div>
           <p className="text-sm text-muted-foreground">

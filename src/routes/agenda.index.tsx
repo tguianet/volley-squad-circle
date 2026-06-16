@@ -20,10 +20,12 @@ function AgendaPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("match_players")
-        .select("status, match:match_id(id, title, date, start_time, end_time, modality, match_type, status, arena:arena_id(name, city))")
+        .select(
+          "status, match:match_id(id, title, date, start_time, end_time, modality, match_type, status, arena:arena_id(name, city))",
+        )
         .eq("player_id", user!.id);
       if (error) throw error;
-      return (data ?? []).map((r: any) => r.match).filter(Boolean);
+      return (data ?? []).map((r) => r.match).filter(Boolean);
     },
   });
 
@@ -35,16 +37,23 @@ function AgendaPage() {
         supabase.from("teams").select("id").eq("captain_id", user!.id),
         supabase.from("team_members").select("team_id").eq("profile_id", user!.id),
       ]);
-      const teamIds = Array.from(new Set([
-        ...((cap ?? []) as any[]).map((t) => t.id),
-        ...((mem ?? []) as any[]).map((t) => t.team_id),
-      ]));
+      const teamIds = Array.from(
+        new Set([...(cap ?? []).map((t) => t.id), ...(mem ?? []).map((t) => t.team_id)]),
+      );
       if (teamIds.length === 0) return [];
       const list = teamIds.join(",");
       const { data, error } = await supabase
         .from("challenges")
-        .select("id, scheduled_date, scheduled_time, duration_minutes, status, challenger_team_id, challenged_team_id, court:court_id(name, number), challenger:challenger_team_id(name), challenged:challenged_team_id(name)")
-        .in("status", ["pending", "awaiting_schedule", "reschedule_requested", "scheduled", "completed"])
+        .select(
+          "id, scheduled_date, scheduled_time, duration_minutes, status, challenger_team_id, challenged_team_id, court:court_id(name, number), challenger:teams!challenges_challenger_team_id_fkey(name), challenged:teams!challenges_challenged_team_id_fkey(name)",
+        )
+        .in("status", [
+          "pending",
+          "awaiting_schedule",
+          "reschedule_requested",
+          "scheduled",
+          "completed",
+        ])
         .or(`challenger_team_id.in.(${list}),challenged_team_id.in.(${list})`)
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -60,14 +69,15 @@ function AgendaPage() {
         supabase.from("teams").select("id").eq("captain_id", user!.id),
         supabase.from("team_members").select("team_id").eq("profile_id", user!.id),
       ]);
-      const teamIds = Array.from(new Set([
-        ...((cap ?? []) as any[]).map((t) => t.id),
-        ...((mem ?? []) as any[]).map((t) => t.team_id),
-      ]));
+      const teamIds = Array.from(
+        new Set([...(cap ?? []).map((t) => t.id), ...(mem ?? []).map((t) => t.team_id)]),
+      );
       if (teamIds.length === 0) return [];
       const { data, error } = await supabase
         .from("team_monthly_availability")
-        .select("id, sunday_date, time_start, time_end, is_available, team:team_id(name), court:court_id(name, number)")
+        .select(
+          "id, sunday_date, time_start, time_end, is_available, team:team_id(name), court:court_id(name, number)",
+        )
         .in("team_id", teamIds)
         .eq("is_available", true)
         .order("sunday_date", { ascending: true });
@@ -78,15 +88,24 @@ function AgendaPage() {
 
   const matches = data ?? [];
   const today = new Date().toISOString().slice(0, 10);
-  const upcomingM = matches.filter((m: any) => m.date >= today && m.status !== "cancelled" && m.status !== "finished");
-  const pastM = matches.filter((m: any) => m.date < today || m.status === "finished");
+  const upcomingM = matches.filter(
+    (m) => m.date >= today && m.status !== "cancelled" && m.status !== "finished",
+  );
+  const pastM = matches.filter((m) => m.date < today || m.status === "finished");
 
   const chs = challenges ?? [];
-  const upcomingC = chs.filter((c: any) => c.status !== "completed" && c.status !== "declined" && c.status !== "wo" && c.status !== "awaiting_confirmation" && (!c.scheduled_date || c.scheduled_date >= today));
-  const pastC = chs.filter((c: any) => c.status === "completed" || c.status === "wo");
+  const upcomingC = chs.filter(
+    (c) =>
+      c.status !== "completed" &&
+      c.status !== "declined" &&
+      c.status !== "wo" &&
+      c.status !== "awaiting_confirmation" &&
+      (!c.scheduled_date || c.scheduled_date >= today),
+  );
+  const pastC = chs.filter((c) => c.status === "completed" || c.status === "wo");
   const avs = availability ?? [];
-  const upcomingA = avs.filter((a: any) => a.sunday_date >= today);
-  const pastA = avs.filter((a: any) => a.sunday_date < today);
+  const upcomingA = avs.filter((a) => a.sunday_date >= today);
+  const pastA = avs.filter((a) => a.sunday_date < today);
 
   const upcomingEmpty = upcomingM.length === 0 && upcomingC.length === 0 && upcomingA.length === 0;
   const pastEmpty = pastM.length === 0 && pastC.length === 0 && pastA.length === 0;
@@ -100,32 +119,54 @@ function AgendaPage() {
           </div>
           <h1 className="text-3xl">Agenda</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">Suas partidas, desafios e horários confirmados.</p>
+        <p className="text-sm text-muted-foreground mb-6">
+          Suas partidas, desafios e horários confirmados.
+        </p>
 
-        {(isLoading || loadingCh || loadingAv) && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
+        {(isLoading || loadingCh || loadingAv) && (
+          <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>
+        )}
 
         <section className="mb-6">
           <h2 className="text-sm uppercase tracking-wide text-muted-foreground mb-2">Próximas</h2>
           {upcomingEmpty ? (
-            <Card className="p-8 text-center text-sm text-muted-foreground">Nenhuma partida agendada.</Card>
+            <Card className="p-8 text-center text-sm text-muted-foreground">
+              Nenhuma partida agendada.
+            </Card>
           ) : (
             <div className="space-y-3">
-              {upcomingA.map((a: any) => <AvailabilityAgendaRow key={a.id} a={a} />)}
-              {upcomingC.map((c: any) => <ChallengeRow key={c.id} c={c} />)}
-              {upcomingM.map((m: any) => <MatchRow key={m.id} m={m} />)}
+              {upcomingA.map((a) => (
+                <AvailabilityAgendaRow key={a.id} a={a} />
+              ))}
+              {upcomingC.map((c) => (
+                <ChallengeRow key={c.id} c={c} />
+              ))}
+              {upcomingM.map((m) => (
+                <MatchRow key={m.id} m={m} />
+              ))}
             </div>
           )}
         </section>
 
         <section>
-          <h2 className="text-sm uppercase tracking-wide text-muted-foreground mb-2">Finalizadas</h2>
+          <h2 className="text-sm uppercase tracking-wide text-muted-foreground mb-2">
+            Finalizadas
+          </h2>
           {pastEmpty ? (
-            <Card className="p-8 text-center text-sm text-muted-foreground">Nenhuma partida no histórico.</Card>
+            <Card className="p-8 text-center text-sm text-muted-foreground">
+              Nenhuma partida no histórico.
+            </Card>
           ) : (
             <div className="space-y-3">
-              {pastA.map((a: any) => <AvailabilityAgendaRow key={a.id} a={a} />)}
-              {pastC.map((c: any) => <ChallengeRow key={c.id} c={c} />)}
-              {pastM.map((m: any) => <MatchRow key={m.id} m={m} />)}
+              {pastA.map((a) => (
+                <AvailabilityAgendaRow key={a.id} a={a} />
+              ))}
+              {pastC.map((c) => (
+                <ChallengeRow key={c.id} c={c} />
+              ))}
+              {pastM.map((m) => (
+                <MatchRow key={m.id} m={m} />
+              ))}
             </div>
           )}
         </section>
@@ -134,12 +175,22 @@ function AgendaPage() {
   );
 }
 
-function AvailabilityAgendaRow({ a }: { a: any }) {
+function AvailabilityAgendaRow({
+  a,
+}: {
+  a: {
+    id: string;
+    sunday_date: string;
+    time_start: string | null;
+    team: { name: string } | null;
+    court: { name: string | null; number: number | null } | null;
+  };
+}) {
   const courtLabel = a.court?.name
     ? ` — ${a.court.name}`
     : a.court?.number
-    ? ` — Quadra ${a.court.number}`
-    : "";
+      ? ` — Quadra ${a.court.number}`
+      : "";
 
   return (
     <Card className="p-4 shadow-card">
@@ -147,9 +198,20 @@ function AvailabilityAgendaRow({ a }: { a: any }) {
         <div>
           <div className="font-display text-lg">{a.team?.name ?? "Equipe"}</div>
           <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1"><MapPin className="size-3"/>PlayBeach Arena{courtLabel}</span>
-            <span className="flex items-center gap-1"><CalendarDays className="size-3"/>{a.sunday_date}</span>
-            {a.time_start && <span className="flex items-center gap-1"><Clock className="size-3"/>{String(a.time_start).slice(0, 5)}</span>}
+            <span className="flex items-center gap-1">
+              <MapPin className="size-3" />
+              PlayBeach Arena{courtLabel}
+            </span>
+            <span className="flex items-center gap-1">
+              <CalendarDays className="size-3" />
+              {a.sunday_date}
+            </span>
+            {a.time_start && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                {String(a.time_start).slice(0, 5)}
+              </span>
+            )}
           </div>
         </div>
         <Badge variant="default">Horário confirmado</Badge>
@@ -158,16 +220,36 @@ function AvailabilityAgendaRow({ a }: { a: any }) {
   );
 }
 
-function MatchRow({ m }: { m: any }) {
+function MatchRow({
+  m,
+}: {
+  m: {
+    id: string;
+    title: string;
+    date: string;
+    start_time: string | null;
+    match_type: string;
+    arena: { name: string } | null;
+  };
+}) {
   return (
     <Card className="p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="font-display text-lg">{m.title}</div>
           <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1"><MapPin className="size-3"/>{m.arena?.name ?? "Sem arena"}</span>
-            <span className="flex items-center gap-1"><CalendarDays className="size-3"/>{m.date}</span>
-            <span className="flex items-center gap-1"><Clock className="size-3"/>{m.start_time?.slice(0,5)}</span>
+            <span className="flex items-center gap-1">
+              <MapPin className="size-3" />
+              {m.arena?.name ?? "Sem arena"}
+            </span>
+            <span className="flex items-center gap-1">
+              <CalendarDays className="size-3" />
+              {m.date}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="size-3" />
+              {m.start_time?.slice(0, 5)}
+            </span>
           </div>
         </div>
         <Badge variant="outline">{m.match_type}</Badge>
@@ -176,27 +258,71 @@ function MatchRow({ m }: { m: any }) {
   );
 }
 
-function ChallengeRow({ c }: { c: any }) {
+function ChallengeRow({
+  c,
+}: {
+  c: {
+    id: string;
+    scheduled_date: string | null;
+    scheduled_time: string | null;
+    status: string;
+    court: { name: string | null; number: number | null } | null;
+    challenger: { name: string } | null;
+    challenged: { name: string } | null;
+  };
+}) {
   const courtLabel = c.court?.name
     ? ` — ${c.court.name}`
     : c.court?.number
-    ? ` — Quadra ${c.court.number}`
-    : "";
+      ? ` — Quadra ${c.court.number}`
+      : "";
   return (
     <Card className="p-4 shadow-card">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="font-display text-lg">
-            {c.challenger?.name ?? "Equipe"} <span className="text-muted-foreground">vs</span> {c.challenged?.name ?? "Equipe"}
+            {c.challenger?.name ?? "Equipe"} <span className="text-muted-foreground">vs</span>{" "}
+            {c.challenged?.name ?? "Equipe"}
           </div>
           <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
-            <span className="flex items-center gap-1"><MapPin className="size-3"/>PlayBeach Arena{courtLabel}</span>
-            {c.scheduled_date && <span className="flex items-center gap-1"><CalendarDays className="size-3"/>{c.scheduled_date}</span>}
-            {c.scheduled_time && <span className="flex items-center gap-1"><Clock className="size-3"/>{String(c.scheduled_time).slice(0,5)}</span>}
+            <span className="flex items-center gap-1">
+              <MapPin className="size-3" />
+              PlayBeach Arena{courtLabel}
+            </span>
+            {c.scheduled_date && (
+              <span className="flex items-center gap-1">
+                <CalendarDays className="size-3" />
+                {c.scheduled_date}
+              </span>
+            )}
+            {c.scheduled_time && (
+              <span className="flex items-center gap-1">
+                <Clock className="size-3" />
+                {String(c.scheduled_time).slice(0, 5)}
+              </span>
+            )}
           </div>
         </div>
-        <Badge variant={c.status === "completed" ? "secondary" : c.status === "scheduled" ? "default" : "outline"}>
-          {c.status === "completed" ? "Finalizado" : c.status === "scheduled" ? "Agendado" : c.status === "pending" ? "Pendente" : c.status === "awaiting_schedule" ? "A agendar" : c.status === "reschedule_requested" ? "Reagendar" : "Desafio"}
+        <Badge
+          variant={
+            c.status === "completed"
+              ? "secondary"
+              : c.status === "scheduled"
+                ? "default"
+                : "outline"
+          }
+        >
+          {c.status === "completed"
+            ? "Finalizado"
+            : c.status === "scheduled"
+              ? "Agendado"
+              : c.status === "pending"
+                ? "Pendente"
+                : c.status === "awaiting_schedule"
+                  ? "A agendar"
+                  : c.status === "reschedule_requested"
+                    ? "Reagendar"
+                    : "Desafio"}
         </Badge>
       </div>
     </Card>

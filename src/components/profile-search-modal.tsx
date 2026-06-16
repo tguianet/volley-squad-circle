@@ -141,11 +141,14 @@ export function ProfileSearchModal({
           </div>
         )}
 
-        {searchResults.length === 0 && searchTerm && !searchMutation.isPending && searchMutation.isSuccess && (
-          <p className="text-center text-sm text-muted-foreground py-4">
-            Nenhum perfil encontrado
-          </p>
-        )}
+        {searchResults.length === 0 &&
+          searchTerm &&
+          !searchMutation.isPending &&
+          searchMutation.isSuccess && (
+            <p className="text-center text-sm text-muted-foreground py-4">
+              Nenhum perfil encontrado
+            </p>
+          )}
       </DialogContent>
     </Dialog>
   );

@@ -60,7 +60,7 @@ function SettingsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {data!.map((s: any) => (
+          {data!.map((s) => (
             <Card key={s.key} className="bg-slate-900/60 border-white/10 text-white p-5">
               <div className="flex items-center justify-between mb-2">
                 <div>

@@ -70,7 +70,7 @@ function UsersPage() {
           <p className="p-6 text-sm text-white/50">Nenhum usuário ainda.</p>
         ) : (
           <ul className="divide-y divide-white/5">
-            {users!.map((u: any) => {
+            {users!.map((u) => {
               const isAdmin = u.roles.includes("admin");
               const isMod = u.roles.includes("moderator");
               return (
@@ -86,7 +86,9 @@ function UsersPage() {
                       <span className="font-semibold">{u.display_name || "(sem nome)"}</span>
                       {u.is_verified && <BadgeCheck className="size-4 text-blue-400" />}
                     </div>
-                    <div className="text-xs text-white/50">@{u.username} · {u.city ?? "—"} · {u.level}</div>
+                    <div className="text-xs text-white/50">
+                      @{u.username} · {u.city ?? "—"} · {u.level}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-1">
                     {isAdmin && <Badge className="bg-amber-500 text-black">admin</Badge>}
@@ -135,7 +137,11 @@ function UsersPage() {
                         })
                       }
                     >
-                      {u.is_suspended ? <UserCheck className="size-3.5 mr-1" /> : <UserX className="size-3.5 mr-1" />}
+                      {u.is_suspended ? (
+                        <UserCheck className="size-3.5 mr-1" />
+                      ) : (
+                        <UserX className="size-3.5 mr-1" />
+                      )}
                       {u.is_suspended ? "Reativar" : "Suspender"}
                     </Button>
                   </div>

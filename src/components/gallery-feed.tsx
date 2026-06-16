@@ -16,7 +16,11 @@ type PhotoRow = {
   created_at: string;
   gallery_likes: { user_id: string }[];
   gallery_comments: { id: string }[];
-  profiles: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
+  profiles: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
 type CommentRow = {
@@ -24,13 +28,19 @@ type CommentRow = {
   user_id: string;
   content: string;
   created_at: string;
-  profiles: { display_name: string | null; username: string | null; avatar_url: string | null } | null;
+  profiles: {
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
 };
 
 async function fetchFeed(): Promise<PhotoRow[]> {
   const { data, error } = await supabase
     .from("gallery_photos")
-    .select("id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id)")
+    .select(
+      "id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id)",
+    )
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw error;
@@ -44,7 +54,6 @@ async function fetchFeed(): Promise<PhotoRow[]> {
   const map = new Map((profs ?? []).map((p) => [p.id, p]));
   return photos.map((p) => ({ ...p, profiles: map.get(p.user_id) ?? null })) as PhotoRow[];
 }
-
 
 export function GalleryFeed() {
   const qc = useQueryClient();
@@ -68,10 +77,16 @@ export function GalleryFeed() {
     mutationFn: async ({ photoId, liked }: { photoId: string; liked: boolean }) => {
       if (!userId) throw new Error("Entre para curtir");
       if (liked) {
-        const { error } = await supabase.from("gallery_likes").delete().eq("photo_id", photoId).eq("user_id", userId);
+        const { error } = await supabase
+          .from("gallery_likes")
+          .delete()
+          .eq("photo_id", photoId)
+          .eq("user_id", userId);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("gallery_likes").insert({ photo_id: photoId, user_id: userId });
+        const { error } = await supabase
+          .from("gallery_likes")
+          .insert({ photo_id: photoId, user_id: userId });
         if (error) throw error;
       }
     },
@@ -81,7 +96,9 @@ export function GalleryFeed() {
 
   if (!authChecked || feedQ.isLoading) {
     return (
-      <div className="py-8 flex justify-center"><Loader2 className="size-5 animate-spin text-muted-foreground"/></div>
+      <div className="py-8 flex justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
+      </div>
     );
   }
 
@@ -102,7 +119,15 @@ export function GalleryFeed() {
   );
 }
 
-function FeedPhotoCard({ photo, userId, onLike }: { photo: PhotoRow; userId: string | null; onLike: (liked: boolean) => void }) {
+function FeedPhotoCard({
+  photo,
+  userId,
+  onLike,
+}: {
+  photo: PhotoRow;
+  userId: string | null;
+  onLike: (liked: boolean) => void;
+}) {
   const likes = photo.gallery_likes ?? [];
   const liked = !!userId && likes.some((l) => l.user_id === userId);
   const [showComments, setShowComments] = useState(false);
@@ -117,20 +142,27 @@ function FeedPhotoCard({ photo, userId, onLike }: { photo: PhotoRow; userId: str
         </Avatar>
         <div className="min-w-0">
           <div className="text-sm font-semibold truncate">{name}</div>
-          <div className="text-xs text-muted-foreground">{new Date(photo.created_at).toLocaleString("pt-BR")}</div>
+          <div className="text-xs text-muted-foreground">
+            {new Date(photo.created_at).toLocaleString("pt-BR")}
+          </div>
         </div>
       </div>
 
       {photo.description && <p className="text-sm whitespace-pre-wrap">{photo.description}</p>}
 
-      <SignedImg path={photo.image_url} className="w-full max-h-[70vh] object-cover rounded-lg bg-secondary" />
+      <SignedImg
+        path={photo.image_url}
+        className="w-full max-h-[70vh] object-cover rounded-lg bg-secondary"
+      />
 
       <div className="flex items-center gap-2 pt-1">
         <button
           onClick={() => onLike(liked)}
           className={cn(
             "inline-flex items-center gap-1.5 text-sm font-semibold rounded-full px-3 py-1.5 transition",
-            liked ? "bg-destructive/15 text-destructive" : "bg-secondary text-muted-foreground hover:text-foreground",
+            liked
+              ? "bg-destructive/15 text-destructive"
+              : "bg-secondary text-muted-foreground hover:text-foreground",
           )}
         >
           <Heart className={cn("size-4", liked && "fill-current")} /> {likes.length}
@@ -172,13 +204,14 @@ function CommentSection({ photoId, userId }: { photoId: string; userId: string |
     },
   });
 
-
   const addMut = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Entre para comentar");
       const content = text.trim();
       if (!content) return;
-      const { error } = await supabase.from("gallery_comments").insert({ photo_id: photoId, user_id: userId, content });
+      const { error } = await supabase
+        .from("gallery_comments")
+        .insert({ photo_id: photoId, user_id: userId, content });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -204,7 +237,9 @@ function CommentSection({ photoId, userId }: { photoId: string; userId: string |
   return (
     <div className="pt-2 border-t border-border/60 space-y-3">
       {commentsQ.isLoading ? (
-        <div className="py-3 flex justify-center"><Loader2 className="size-4 animate-spin text-muted-foreground"/></div>
+        <div className="py-3 flex justify-center">
+          <Loader2 className="size-4 animate-spin text-muted-foreground" />
+        </div>
       ) : (
         <div className="space-y-2.5">
           {(commentsQ.data ?? []).map((c) => {
@@ -213,7 +248,9 @@ function CommentSection({ photoId, userId }: { photoId: string; userId: string |
               <div key={c.id} className="flex gap-2.5 group">
                 <Avatar className="size-7 mt-0.5">
                   {c.profiles?.avatar_url && <AvatarImage src={c.profiles.avatar_url} />}
-                  <AvatarFallback className="text-[10px]">{cn2.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarFallback className="text-[10px]">
+                    {cn2.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0 rounded-2xl bg-secondary/60 px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
@@ -241,7 +278,10 @@ function CommentSection({ photoId, userId }: { photoId: string; userId: string |
 
       {userId ? (
         <form
-          onSubmit={(e) => { e.preventDefault(); addMut.mutate(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            addMut.mutate();
+          }}
           className="flex items-center gap-2"
         >
           <input
@@ -252,7 +292,11 @@ function CommentSection({ photoId, userId }: { photoId: string; userId: string |
             className="flex-1 rounded-full bg-secondary/60 px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40"
           />
           <Button type="submit" size="sm" disabled={!text.trim() || addMut.isPending}>
-            {addMut.isPending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            {addMut.isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
           </Button>
         </form>
       ) : (

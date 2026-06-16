@@ -17,7 +17,10 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Feed — PlayBeach" },
-      { name: "description", content: "Rede social do vôlei de areia: jogadores, arenas e torneios em um só lugar." },
+      {
+        name: "description",
+        content: "Rede social do vôlei de areia: jogadores, arenas e torneios em um só lugar.",
+      },
       { property: "og:title", content: "PlayBeach" },
       { property: "og:description", content: "Rede social do vôlei de areia." },
     ],
@@ -26,7 +29,9 @@ export const Route = createFileRoute("/")({
 });
 
 async function fetchMe() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
   const { data } = await supabase
     .from("profiles")
@@ -46,7 +51,9 @@ function Feed() {
         <div className="hidden md:flex items-center justify-between mb-2">
           <h1 className="text-3xl">Feed</h1>
           <Link to="/partidas/nova">
-            <Button className="gradient-beach text-white shadow-glow border-0">+ Criar partida</Button>
+            <Button className="gradient-beach text-white shadow-glow border-0">
+              + Criar partida
+            </Button>
           </Link>
         </div>
 
@@ -63,10 +70,16 @@ function Feed() {
               />
               <div className="flex items-center justify-between mt-3">
                 <div className="flex gap-1 text-muted-foreground">
-                  <button className="flex items-center gap-1.5 text-xs hover:text-primary px-2 py-1 rounded-md"><ImageIcon className="size-4"/> Foto</button>
-                  <button className="flex items-center gap-1.5 text-xs hover:text-primary px-2 py-1 rounded-md"><Video className="size-4"/> Vídeo</button>
+                  <button className="flex items-center gap-1.5 text-xs hover:text-primary px-2 py-1 rounded-md">
+                    <ImageIcon className="size-4" /> Foto
+                  </button>
+                  <button className="flex items-center gap-1.5 text-xs hover:text-primary px-2 py-1 rounded-md">
+                    <Video className="size-4" /> Vídeo
+                  </button>
                 </div>
-                <Button size="sm" className="gradient-beach text-white border-0"><Send className="size-3.5 mr-1"/> Postar</Button>
+                <Button size="sm" className="gradient-beach text-white border-0">
+                  <Send className="size-3.5 mr-1" /> Postar
+                </Button>
               </div>
             </div>
           </div>

@@ -7,16 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { listFollowedProfilesFeed } from "@/lib/ranking.functions";
 import type { ProfileUpdateFeedItem } from "@/lib/profile-follow.types";
 import { formatRelativeTimeBR } from "@/lib/date-format";
-import {
-  Activity,
-  Image,
-  Loader2,
-  MapPin,
-  PenLine,
-  Sparkles,
-  Target,
-  Trophy,
-} from "lucide-react";
+import { Activity, Image, Loader2, MapPin, PenLine, Sparkles, Target, Trophy } from "lucide-react";
 
 const updateTypeIcons: Record<string, typeof Activity> = {
   bio: PenLine,
@@ -28,7 +19,9 @@ const updateTypeIcons: Record<string, typeof Activity> = {
   general: Sparkles,
 };
 
-function profileRoute(item: ProfileUpdateFeedItem): { to: "/perfil/$username"; params: { username: string } } | { to: "/perfil" } {
+function profileRoute(
+  item: ProfileUpdateFeedItem,
+): { to: "/perfil/$username"; params: { username: string } } | { to: "/perfil" } {
   const handle = item.profile_username ?? item.profile_apelido;
   return handle
     ? { to: "/perfil/$username", params: { username: handle.replace(/^@/, "") } }
@@ -75,10 +68,7 @@ export function FollowedProfilesFeed() {
         const handle = item.profile_apelido ?? item.profile_username ?? "";
 
         return (
-          <Card
-            key={item.id}
-            className="p-4 shadow-card hover:shadow-md transition-shadow"
-          >
+          <Card key={item.id} className="p-4 shadow-card hover:shadow-md transition-shadow">
             <div className="flex gap-3">
               <Link {...profileRoute(item)} className="shrink-0">
                 <Avatar className="size-10 ring-2 ring-primary/15">

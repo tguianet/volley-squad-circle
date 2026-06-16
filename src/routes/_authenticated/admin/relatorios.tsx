@@ -47,13 +47,19 @@ function ReportsExportPage() {
         {TABLES.map((t) => (
           <Card key={t.key} className="bg-slate-900/60 border-white/10 text-white p-5">
             <div className="font-display text-lg">{t.label}</div>
-            <p className="text-xs text-white/50 mt-1">Tabela <code>{t.key}</code></p>
+            <p className="text-xs text-white/50 mt-1">
+              Tabela <code>{t.key}</code>
+            </p>
             <Button
               className="mt-4 w-full gradient-beach text-white border-0"
               onClick={() => mut.mutate({ data: { table: t.key } })}
               disabled={mut.isPending}
             >
-              {mut.isPending ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4 mr-1" />}
+              {mut.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4 mr-1" />
+              )}
               Baixar CSV
             </Button>
           </Card>

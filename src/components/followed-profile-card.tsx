@@ -17,14 +17,20 @@ function profileHandle(profile: FollowedProfile) {
   return profile.apelido ?? profile.username ?? profile.display_name;
 }
 
-function profileRoute(profile: FollowedProfile): { to: "/perfil/$username"; params: { username: string } } | { to: "/perfil" } {
+function profileRoute(
+  profile: FollowedProfile,
+): { to: "/perfil/$username"; params: { username: string } } | { to: "/perfil" } {
   const handle = profile.username ?? profile.apelido;
   return handle
     ? { to: "/perfil/$username", params: { username: handle.replace(/^@/, "") } }
     : { to: "/perfil" };
 }
 
-export function FollowedProfileCard({ profile, onUnfollow, isUnfollowing }: FollowedProfileCardProps) {
+export function FollowedProfileCard({
+  profile,
+  onUnfollow,
+  isUnfollowing,
+}: FollowedProfileCardProps) {
   const handle = profileHandle(profile);
 
   return (

@@ -58,12 +58,7 @@ export function FollowProfilesSection() {
               </span>
             )}
           </div>
-          <Button
-            size="sm"
-            variant="outline"
-            className="gap-1"
-            onClick={() => setSearchOpen(true)}
-          >
+          <Button size="sm" variant="outline" className="gap-1" onClick={() => setSearchOpen(true)}>
             <UserPlus className="size-3.5" />
             Encontrar
           </Button>
@@ -76,9 +71,7 @@ export function FollowProfilesSection() {
         ) : followedProfiles.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center bg-secondary/30 rounded-xl">
             <Users className="size-10 text-muted-foreground/40" />
-            <p className="text-sm text-muted-foreground">
-              Você ainda não segue nenhum perfil
-            </p>
+            <p className="text-sm text-muted-foreground">Você ainda não segue nenhum perfil</p>
             <Button
               size="sm"
               className="gradient-beach text-white border-0 gap-1"

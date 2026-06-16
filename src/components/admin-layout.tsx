@@ -60,8 +60,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           <ShieldAlert className="size-12 mx-auto text-amber-400" />
           <h1 className="text-2xl font-semibold">Acesso restrito</h1>
           <p className="text-sm text-white/70">
-            Esta área é apenas para administradores e moderadores do BeachPlay Arena.
-            Peça para um admin existente promover sua conta em <code>user_roles</code>.
+            Esta área é apenas para administradores e moderadores do BeachPlay Arena. Peça para um
+            admin existente promover sua conta em <code>user_roles</code>.
           </p>
           <Button onClick={() => navigate({ to: "/" })} variant="secondary">
             <ArrowLeft className="size-4 mr-1" /> Voltar ao app
@@ -112,7 +112,10 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               </span>
             ))}
           </div>
-          <Link to="/" className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/60 hover:bg-white/5">
+          <Link
+            to="/"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-white/60 hover:bg-white/5"
+          >
             <ArrowLeft className="size-3.5" /> Voltar ao app
           </Link>
           <button
@@ -132,7 +135,9 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-display text-base">Admin</span>
           </Link>
-          <button onClick={handleSignOut} className="text-xs text-white/60">Sair</button>
+          <button onClick={handleSignOut} className="text-xs text-white/60">
+            Sair
+          </button>
         </header>
         <main className="flex-1 p-4 md:p-8 pb-20">{children}</main>
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-white/10 bg-slate-900/95 backdrop-blur overflow-x-auto">

@@ -18,7 +18,15 @@ export type PreviewProfile = {
   rankingPoints?: number | null;
 };
 
-function Info({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
+function Info({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="flex items-center gap-1.5 text-xs">
       <Icon className="size-3 text-muted-foreground shrink-0" />
@@ -28,7 +36,13 @@ function Info({ icon: Icon, label, value }: { icon: React.ElementType; label: st
   );
 }
 
-export function PlayerPreview({ player, children }: { player: PreviewProfile; children: React.ReactNode }) {
+export function PlayerPreview({
+  player,
+  children,
+}: {
+  player: PreviewProfile;
+  children: React.ReactNode;
+}) {
   const wins = player.wins ?? 0;
   const losses = player.losses ?? 0;
   const matches = wins + losses;
@@ -49,14 +63,22 @@ export function PlayerPreview({ player, children }: { player: PreviewProfile; ch
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="font-semibold truncate">{player.name}</div>
-              {player.username && <div className="text-xs text-muted-foreground truncate">@{player.username}</div>}
+              {player.username && (
+                <div className="text-xs text-muted-foreground truncate">@{player.username}</div>
+              )}
             </div>
-            {player.level && <Badge variant="secondary" className="text-[10px] shrink-0">{player.level}</Badge>}
+            {player.level && (
+              <Badge variant="secondary" className="text-[10px] shrink-0">
+                {player.level}
+              </Badge>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-y-1 gap-x-2">
             {player.city && <Info icon={MapPin} label="Cidade" value={player.city} />}
-            {player.height != null && <Info icon={Ruler} label="Altura" value={`${player.height} m`} />}
+            {player.height != null && (
+              <Info icon={Ruler} label="Altura" value={`${player.height} m`} />
+            )}
             {player.dominantHand && <Info icon={Hand} label="Mão" value={player.dominantHand} />}
             {player.position && <Info icon={Target} label="Posição" value={player.position} />}
           </div>

@@ -5,7 +5,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { MapPin, Ruler, Hand, Instagram, Users, Loader2, ArrowLeft, UserPlus, UserMinus } from "lucide-react";
+import {
+  MapPin,
+  Ruler,
+  Hand,
+  Instagram,
+  Users,
+  Loader2,
+  ArrowLeft,
+  UserPlus,
+  UserMinus,
+} from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -54,7 +64,11 @@ function PublicProfilePage() {
   const followProfileFn = useServerFn(followProfile);
   const unfollowProfileFn = useServerFn(unfollowProfile);
 
-  const { data: profile, isLoading: isLoadingProfile, error: profileError } = useQuery({
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+    error: profileError,
+  } = useQuery({
     queryKey: ["public-profile", username],
     queryFn: () => getPublicProfileFn({ data: { username } }) as Promise<PublicProfile>,
   });
@@ -133,7 +147,11 @@ function PublicProfilePage() {
   const getFollowButton = () => {
     if (isOwnProfile) return null;
     if (isLoadingFollowStatus) {
-      return <Button size="sm" disabled><Loader2 className="size-4 animate-spin" /></Button>;
+      return (
+        <Button size="sm" disabled>
+          <Loader2 className="size-4 animate-spin" />
+        </Button>
+      );
     }
     if (followStatus?.following) {
       return (
@@ -202,7 +220,10 @@ function PublicProfilePage() {
             {profile.city && (
               <div className="flex items-center gap-2 text-sm">
                 <MapPin className="size-4 text-muted-foreground" />
-                <span>{profile.city}{profile.state ? `, ${profile.state}` : ""}</span>
+                <span>
+                  {profile.city}
+                  {profile.state ? `, ${profile.state}` : ""}
+                </span>
               </div>
             )}
             {profile.altura && (
@@ -220,7 +241,12 @@ function PublicProfilePage() {
             {profile.instagram && (
               <div className="flex items-center gap-2 text-sm">
                 <Instagram className="size-4 text-muted-foreground" />
-                <a href={`https://instagram.com/${profile.instagram.replace("@", "")}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                <a
+                  href={`https://instagram.com/${profile.instagram.replace("@", "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
                   @{profile.instagram.replace("@", "")}
                 </a>
               </div>

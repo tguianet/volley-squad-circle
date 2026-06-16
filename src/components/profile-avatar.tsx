@@ -19,15 +19,31 @@ async function fetchAvatar(userId: string) {
   return (data?.avatar_url as string | null) ?? null;
 }
 
-function SignedAvatar({ path, preview, fallback }: { path: string | null; preview?: string | null; fallback: string }) {
+function SignedAvatar({
+  path,
+  preview,
+  fallback,
+}: {
+  path: string | null;
+  preview?: string | null;
+  fallback: string;
+}) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
-    if (!path) { setUrl(null); return; }
-    supabase.storage.from("avatars").createSignedUrl(path, 3600).then(({ data }) => {
-      if (alive) setUrl(data?.signedUrl ?? null);
-    });
-    return () => { alive = false; };
+    if (!path) {
+      setUrl(null);
+      return;
+    }
+    supabase.storage
+      .from("avatars")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => {
+        if (alive) setUrl(data?.signedUrl ?? null);
+      });
+    return () => {
+      alive = false;
+    };
   }, [path]);
   const src = url ?? preview ?? undefined;
   return (
@@ -38,7 +54,15 @@ function SignedAvatar({ path, preview, fallback }: { path: string | null; previe
   );
 }
 
-export function ProfileAvatar({ fallback, className, editable = false }: { fallback: string; className?: string; editable?: boolean }) {
+export function ProfileAvatar({
+  fallback,
+  className,
+  editable = false,
+}: {
+  fallback: string;
+  className?: string;
+  editable?: boolean;
+}) {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -68,17 +92,32 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
       console.info("[avatar] step: auth");
       const { data: u, error: authErr } = await supabase.auth.getUser();
       if (authErr || !u.user) {
-        throw { step: "Autenticação", message: "Você precisa estar logado para enviar a foto.", details: authErr };
+        throw {
+          step: "Autenticação",
+          message: "Você precisa estar logado para enviar a foto.",
+          details: authErr,
+        };
       }
       const uid = u.user.id;
       console.info("[avatar] auth ok", uid);
 
-      console.info("[avatar] step: validar arquivo", { name: file.name, type: file.type, size: file.size });
+      console.info("[avatar] step: validar arquivo", {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
       if (!file.type.startsWith("image/")) {
-        throw { step: "Validação", message: "Selecione uma imagem (jpg, png, webp).", details: { type: file.type } };
+        throw {
+          step: "Validação",
+          message: "Selecione uma imagem (jpg, png, webp).",
+          details: { type: file.type },
+        };
       }
       if (file.size > 5 * 1024 * 1024) {
-        throw { step: "Validação", message: `Tamanho ${(file.size / 1024 / 1024).toFixed(2)}MB excede o limite de 5MB.` };
+        throw {
+          step: "Validação",
+          message: `Tamanho ${(file.size / 1024 / 1024).toFixed(2)}MB excede o limite de 5MB.`,
+        };
       }
 
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -97,8 +136,8 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
         const msg = /bucket/i.test(m)
           ? "Bucket 'avatars' inacessível."
           : /policy|permission|unauthorized|403/i.test(m)
-          ? "Permissão negada pelo Storage (RLS). Verifique as políticas do bucket 'avatars'."
-          : m;
+            ? "Permissão negada pelo Storage (RLS). Verifique as políticas do bucket 'avatars'."
+            : m;
         throw { step: "Upload no Storage", message: msg, details: upErr };
       }
       console.info("[avatar] upload ok");
@@ -109,7 +148,10 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
         .from("profiles")
         .upsert({ id: uid, avatar_url: path }, { onConflict: "id" });
       if (dbErr) {
-        await supabase.storage.from("avatars").remove([path]).catch(() => {});
+        await supabase.storage
+          .from("avatars")
+          .remove([path])
+          .catch(() => {});
         const m = dbErr.message || "";
         const msg = /policy|permission|row-level/i.test(m)
           ? "Permissão negada na tabela 'profiles' (RLS)."
@@ -119,9 +161,12 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
       console.info("[avatar] profile updated");
 
       if (old && old !== path) {
-        await supabase.storage.from("avatars").remove([old]).catch((e) => {
-          console.warn("[avatar] não foi possível remover a antiga", e);
-        });
+        await supabase.storage
+          .from("avatars")
+          .remove([old])
+          .catch((e) => {
+            console.warn("[avatar] não foi possível remover a antiga", e);
+          });
       }
 
       qc.setQueryData(["profile-avatar", uid], path);
@@ -132,14 +177,15 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
       toast.success("Foto atualizada");
       qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
     },
-    onError: (e: any) => {
+    onError: (e: unknown) => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
       qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
-      if (e && typeof e === "object" && "step" in e) {
-        reportError(e.step, e.message, e.details);
+      if (e && typeof e === "object" && "step" in e && "message" in e) {
+        const err = e as { step: string; message: string; details?: unknown };
+        reportError(err.step, err.message, err.details);
       } else {
-        reportError("Erro inesperado", e?.message || String(e), e);
+        reportError("Erro inesperado", e instanceof Error ? e.message : String(e), e);
       }
     },
   });
@@ -149,7 +195,10 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
       if (!userId) throw new Error("Faça login");
       const old = avatarQ.data;
       if (old) await supabase.storage.from("avatars").remove([old]);
-      const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", userId);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ avatar_url: null })
+        .eq("id", userId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -158,7 +207,8 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
       toast.success("Foto removida");
       qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
     },
-    onError: (e: any) => reportError("Remover foto", e?.message || "Falha ao remover", e),
+    onError: (e: unknown) =>
+      reportError("Remover foto", e instanceof Error ? e.message : "Falha ao remover", e),
   });
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +240,11 @@ export function ProfileAvatar({ fallback, className, editable = false }: { fallb
             onClick={() => fileRef.current?.click()}
             disabled={uploadMut.isPending}
           >
-            {uploadMut.isPending ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Camera className="size-4 mr-1" />}
+            {uploadMut.isPending ? (
+              <Loader2 className="size-4 mr-1 animate-spin" />
+            ) : (
+              <Camera className="size-4 mr-1" />
+            )}
             {avatarQ.data ? "Trocar foto" : "Enviar foto"}
           </Button>
           {avatarQ.data && (

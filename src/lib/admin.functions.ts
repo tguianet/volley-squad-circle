@@ -1,14 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database, Json } from "@/integrations/supabase/types";
 import { z } from "zod";
 
-async function assertAdmin(context: { supabase: any; userId: string }, requireFullAdmin = false) {
+type AdminContext = { supabase: SupabaseClient<Database>; userId: string };
+
+async function assertAdmin(context: AdminContext, requireFullAdmin = false) {
   const { data, error } = await context.supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", context.userId);
   if (error) throw new Error("Falha ao verificar permissão");
-  const roles = (data ?? []).map((r: any) => r.role);
+  const roles = (data ?? []).map((r) => r.role);
   const ok = requireFullAdmin
     ? roles.includes("admin")
     : roles.includes("admin") || roles.includes("moderator");
@@ -17,11 +21,11 @@ async function assertAdmin(context: { supabase: any; userId: string }, requireFu
 }
 
 async function audit(
-  context: { supabase: any; userId: string },
+  context: AdminContext,
   action: string,
   target_type: string | null,
   target_id: string | null,
-  payload: any = null,
+  payload: Json | null = null,
 ) {
   await context.supabase.from("audit_log").insert({
     actor_id: context.userId,
@@ -43,7 +47,11 @@ export const getAdminStats = createServerFn({ method: "GET" })
       sb.from("banners").select("id, is_active"),
       sb.from("reports").select("id, status"),
       sb.from("notifications").select("id"),
-      sb.from("audit_log").select("id, created_at").order("created_at", { ascending: false }).limit(10),
+      sb
+        .from("audit_log")
+        .select("id, created_at")
+        .order("created_at", { ascending: false })
+        .limit(10),
     ]);
 
     const profs = profiles.data ?? [];
@@ -84,12 +92,14 @@ export const getAdminStats = createServerFn({ method: "GET" })
 // ===== Users =====
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { search?: string } | undefined) => d ?? {})
+  .validator((d: { search?: string } | undefined) => d ?? {})
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     let q = context.supabase
       .from("profiles")
-      .select("id, display_name, username, city, level, avatar_url, is_verified, is_suspended, created_at")
+      .select(
+        "id, display_name, username, city, level, avatar_url, is_verified, is_suspended, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(200);
     if (data.search) {
@@ -100,7 +110,7 @@ export const listUsers = createServerFn({ method: "GET" })
     const { data: profs, error } = await q;
     if (error) throw error;
     const ids = (profs ?? []).map((p) => p.id);
-    let rolesByUser: Record<string, string[]> = {};
+    const rolesByUser: Record<string, string[]> = {};
     if (ids.length) {
       const { data: roles } = await context.supabase
         .from("user_roles")
@@ -115,7 +125,7 @@ export const listUsers = createServerFn({ method: "GET" })
 
 export const setUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; role: "admin" | "moderator" | "player"; grant: boolean }) =>
+  .validator((d: { userId: string; role: "admin" | "moderator" | "player"; grant: boolean }) =>
     z
       .object({
         userId: z.string().uuid(),
@@ -147,7 +157,7 @@ export const setUserRole = createServerFn({ method: "POST" })
 
 export const setUserFlag = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { userId: string; field: "is_verified" | "is_suspended"; value: boolean }) =>
+  .validator((d: { userId: string; field: "is_verified" | "is_suspended"; value: boolean }) =>
     z
       .object({
         userId: z.string().uuid(),
@@ -159,9 +169,7 @@ export const setUserFlag = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const patch =
-      data.field === "is_verified"
-        ? { is_verified: data.value }
-        : { is_suspended: data.value };
+      data.field === "is_verified" ? { is_verified: data.value } : { is_suspended: data.value };
     const { error } = await context.supabase.from("profiles").update(patch).eq("id", data.userId);
     if (error) throw error;
     await audit(context, `user.${data.field}`, "user", data.userId, { value: data.value });
@@ -196,7 +204,7 @@ const bannerSchema = z.object({
 
 export const saveBanner = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: any) => bannerSchema.parse(d))
+  .validator((d: unknown) => bannerSchema.parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
     if (data.id) {
@@ -217,7 +225,7 @@ export const saveBanner = createServerFn({ method: "POST" })
 
 export const deleteBanner = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
+  .validator((d: { id: string }) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
     const { error } = await context.supabase.from("banners").delete().eq("id", data.id);
@@ -229,7 +237,7 @@ export const deleteBanner = createServerFn({ method: "POST" })
 // ===== Notifications =====
 export const broadcastNotification = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { title: string; body?: string; link_url?: string; city?: string }) =>
+  .validator((d: { title: string; body?: string; link_url?: string; city?: string }) =>
     z
       .object({
         title: z.string().min(1).max(120),
@@ -268,17 +276,14 @@ export const getSettings = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("app_settings")
-      .select("*")
-      .order("key");
+    const { data, error } = await context.supabase.from("app_settings").select("*").order("key");
     if (error) throw error;
     return data ?? [];
   });
 
 export const updateSetting = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { key: string; value: any }) =>
+  .validator((d: { key: string; value: Json }) =>
     z.object({ key: z.string().min(1).max(80), value: z.any() }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -308,14 +313,18 @@ export const listReports = createServerFn({ method: "GET" })
 
 export const resolveReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string; status: "resolved" | "dismissed" }) =>
+  .validator((d: { id: string; status: "resolved" | "dismissed" }) =>
     z.object({ id: z.string().uuid(), status: z.enum(["resolved", "dismissed"]) }).parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
     const { error } = await context.supabase
       .from("reports")
-      .update({ status: data.status, resolved_by: context.userId, resolved_at: new Date().toISOString() })
+      .update({
+        status: data.status,
+        resolved_by: context.userId,
+        resolved_at: new Date().toISOString(),
+      })
       .eq("id", data.id);
     if (error) throw error;
     await audit(context, "report.resolve", "report", data.id, { status: data.status });
@@ -337,10 +346,10 @@ export const listAudit = createServerFn({ method: "GET" })
   });
 
 // ===== CSV export =====
-function toCsv(rows: any[]): string {
+function toCsv(rows: Record<string, unknown>[]): string {
   if (!rows.length) return "";
   const keys = Object.keys(rows[0]);
-  const esc = (v: any) => {
+  const esc = (v: unknown) => {
     if (v == null) return "";
     const s = typeof v === "object" ? JSON.stringify(v) : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -350,12 +359,22 @@ function toCsv(rows: any[]): string {
 
 export const exportCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { table: "profiles" | "user_roles" | "banners" | "notifications" | "reports" | "audit_log" }) =>
-    z
-      .object({
-        table: z.enum(["profiles", "user_roles", "banners", "notifications", "reports", "audit_log"]),
-      })
-      .parse(d),
+  .validator(
+    (d: {
+      table: "profiles" | "user_roles" | "banners" | "notifications" | "reports" | "audit_log";
+    }) =>
+      z
+        .object({
+          table: z.enum([
+            "profiles",
+            "user_roles",
+            "banners",
+            "notifications",
+            "reports",
+            "audit_log",
+          ]),
+        })
+        .parse(d),
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);

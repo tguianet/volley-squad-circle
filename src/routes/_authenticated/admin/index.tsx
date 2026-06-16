@@ -15,13 +15,32 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
-import { Users, BadgeCheck, ShieldAlert, Megaphone, Bell, UserX, Loader2 } from "lucide-react";
+import {
+  Users,
+  BadgeCheck,
+  ShieldAlert,
+  Megaphone,
+  Bell,
+  UserX,
+  Loader2,
+  type LucideIcon,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
   component: AdminDashboard,
 });
 
-function Kpi({ label, value, icon: Icon, accent }: any) {
+function Kpi({
+  label,
+  value,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: number | string;
+  icon: LucideIcon;
+  accent?: string;
+}) {
   return (
     <Card className="bg-slate-900/60 border-white/10 text-white p-5">
       <div className="flex items-center justify-between">
@@ -54,11 +73,31 @@ function AdminDashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <Kpi label="Jogadores" value={data.totals.players} icon={Users} accent="text-primary" />
-        <Kpi label="Verificados" value={data.totals.verified} icon={BadgeCheck} accent="text-blue-400" />
+        <Kpi
+          label="Verificados"
+          value={data.totals.verified}
+          icon={BadgeCheck}
+          accent="text-blue-400"
+        />
         <Kpi label="Suspensos" value={data.totals.suspended} icon={UserX} accent="text-red-400" />
-        <Kpi label="Banners ativos" value={data.totals.activeBanners} icon={Megaphone} accent="text-amber-400" />
-        <Kpi label="Denúncias" value={data.totals.pendingReports} icon={ShieldAlert} accent="text-orange-400" />
-        <Kpi label="Notificações" value={data.totals.notifications} icon={Bell} accent="text-emerald-400" />
+        <Kpi
+          label="Banners ativos"
+          value={data.totals.activeBanners}
+          icon={Megaphone}
+          accent="text-amber-400"
+        />
+        <Kpi
+          label="Denúncias"
+          value={data.totals.pendingReports}
+          icon={ShieldAlert}
+          accent="text-orange-400"
+        />
+        <Kpi
+          label="Notificações"
+          value={data.totals.notifications}
+          icon={Bell}
+          accent="text-emerald-400"
+        />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
@@ -68,10 +107,20 @@ function AdminDashboard() {
             <ResponsiveContainer>
               <LineChart data={data.signupsLast30}>
                 <CartesianGrid stroke="#ffffff14" strokeDasharray="3 3" />
-                <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#ffffff80" }} tickFormatter={(d) => d.slice(5)} />
+                <XAxis
+                  dataKey="day"
+                  tick={{ fontSize: 10, fill: "#ffffff80" }}
+                  tickFormatter={(d) => d.slice(5)}
+                />
                 <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: "#ffffff80" }} />
                 <Tooltip contentStyle={{ background: "#0f172a", border: "1px solid #ffffff20" }} />
-                <Line type="monotone" dataKey="count" stroke="#fbbf24" strokeWidth={2} dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="count"
+                  stroke="#fbbf24"
+                  strokeWidth={2}
+                  dot={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -98,7 +147,7 @@ function AdminDashboard() {
           <p className="text-sm text-white/50">Nenhuma ação registrada ainda.</p>
         ) : (
           <ul className="space-y-2 text-sm">
-            {data.recentAudit.map((a: any) => (
+            {data.recentAudit.map((a) => (
               <li key={a.id} className="flex justify-between border-b border-white/5 pb-2">
                 <span className="font-mono text-xs text-white/70">{a.id.slice(0, 8)}</span>
                 <span className="text-xs text-white/50">{formatDateTimeBR(a.created_at)}</span>

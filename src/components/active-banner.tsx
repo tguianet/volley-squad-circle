@@ -27,9 +27,11 @@ export function ActiveBanner() {
   if (!data?.length) return null;
   return (
     <div className="space-y-2">
-      {data.map((b: any) => {
+      {data.map((b) => {
         const inner = (
-          <div className={`flex items-start gap-3 rounded-xl border p-3 ${variantStyles[b.variant] ?? variantStyles.info}`}>
+          <div
+            className={`flex items-start gap-3 rounded-xl border p-3 ${variantStyles[b.variant] ?? variantStyles.info}`}
+          >
             <Megaphone className="size-4 mt-0.5 shrink-0" />
             <div className="text-sm">
               <div className="font-semibold">{b.title}</div>

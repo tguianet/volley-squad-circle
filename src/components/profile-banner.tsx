@@ -2,7 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,14 +32,21 @@ function SignedBanner({ path, preview }: { path: string; preview?: string | null
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let alive = true;
-    supabase.storage.from("banners").createSignedUrl(path, 3600).then(({ data }) => {
-      if (alive) setUrl(data?.signedUrl ?? null);
-    });
-    return () => { alive = false; };
+    supabase.storage
+      .from("banners")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => {
+        if (alive) setUrl(data?.signedUrl ?? null);
+      });
+    return () => {
+      alive = false;
+    };
   }, [path]);
   const src = url ?? preview ?? null;
   if (!src) return null;
-  return <img src={src} alt="Capa do perfil" className="absolute inset-0 w-full h-full object-cover" />;
+  return (
+    <img src={src} alt="Capa do perfil" className="absolute inset-0 w-full h-full object-cover" />
+  );
 }
 
 async function cropToBlob(src: string, area: Area): Promise<Blob> {
@@ -73,7 +87,9 @@ export function ProfileBanner() {
       setUserId(data.user?.id ?? null);
       setAuthChecked(true);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUserId(s?.user?.id ?? null));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) =>
+      setUserId(s?.user?.id ?? null),
+    );
     return () => sub.subscription.unsubscribe();
   }, []);
 
@@ -115,21 +131,28 @@ export function ProfileBanner() {
         .select("banner_url")
         .single();
       if (dbErr) {
-        await supabase.storage.from("banners").remove([path]).catch(() => {});
+        await supabase.storage
+          .from("banners")
+          .remove([path])
+          .catch(() => {});
         throw dbErr;
       }
 
-      if (old && old !== path) await supabase.storage.from("banners").remove([old]).catch(() => {});
+      if (old && old !== path)
+        await supabase.storage
+          .from("banners")
+          .remove([old])
+          .catch(() => {});
       return path;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
     },
-    onError: (e: any) => {
+    onError: (e: unknown) => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
       qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
-      toast.error(e?.message ?? "Falha ao enviar");
+      toast.error(e instanceof Error ? e.message : "Falha ao enviar");
     },
   });
 
@@ -137,15 +160,22 @@ export function ProfileBanner() {
     mutationFn: async () => {
       if (!userId) throw new Error("Sem sessão");
       const current = bannerQ.data;
-      if (current) await supabase.storage.from("banners").remove([current]).catch(() => {});
-      const { error } = await supabase.from("profiles").update({ banner_url: null }).eq("id", userId);
+      if (current)
+        await supabase.storage
+          .from("banners")
+          .remove([current])
+          .catch(() => {});
+      const { error } = await supabase
+        .from("profiles")
+        .update({ banner_url: null })
+        .eq("id", userId);
       if (error) throw error;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
       toast.success("Capa removida");
     },
-    onError: (e: any) => toast.error(e.message ?? "Falha ao remover"),
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao remover"),
   });
 
   const closeCropper = () => {
@@ -199,11 +229,20 @@ export function ProfileBanner() {
           }}
           disabled={isLoading}
         >
-          {isLoading ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ImagePlus className="size-4 mr-1" />}
+          {isLoading ? (
+            <Loader2 className="size-4 mr-1 animate-spin" />
+          ) : (
+            <ImagePlus className="size-4 mr-1" />
+          )}
           {bannerQ.data ? "Trocar capa" : "Adicionar capa"}
         </Button>
         {bannerQ.data && userId && (
-          <Button size="sm" variant="destructive" onClick={() => removeMut.mutate()} disabled={isLoading}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => removeMut.mutate()}
+            disabled={isLoading}
+          >
             <Trash2 className="size-4" />
           </Button>
         )}
@@ -215,7 +254,10 @@ export function ProfileBanner() {
             <DialogTitle>Ajustar capa</DialogTitle>
             <DialogDescription>Reposicione a imagem para encaixar no banner.</DialogDescription>
           </DialogHeader>
-          <div className="relative w-full bg-muted rounded-md overflow-hidden" style={{ height: 320 }}>
+          <div
+            className="relative w-full bg-muted rounded-md overflow-hidden"
+            style={{ height: 320 }}
+          >
             {srcUrl && (
               <Cropper
                 image={srcUrl}
@@ -231,10 +273,18 @@ export function ProfileBanner() {
           </div>
           <div className="space-y-2">
             <div className="text-xs text-muted-foreground">Zoom</div>
-            <Slider value={[zoom]} min={1} max={4} step={0.05} onValueChange={(v) => setZoom(v[0])} />
+            <Slider
+              value={[zoom]}
+              min={1}
+              max={4}
+              step={0.05}
+              onValueChange={(v) => setZoom(v[0])}
+            />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={closeCropper} disabled={uploadMut.isPending}>Cancelar</Button>
+            <Button variant="outline" onClick={closeCropper} disabled={uploadMut.isPending}>
+              Cancelar
+            </Button>
             <Button onClick={() => uploadMut.mutate()} disabled={uploadMut.isPending}>
               {uploadMut.isPending ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
               Salvar capa

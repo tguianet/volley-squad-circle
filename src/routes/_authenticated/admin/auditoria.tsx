@@ -37,7 +37,7 @@ function AuditPage() {
               </tr>
             </thead>
             <tbody>
-              {data!.map((a: any) => (
+              {data!.map((a) => (
                 <tr key={a.id} className="border-t border-white/5">
                   <td className="p-3 text-xs text-white/60">{formatDateTimeBR(a.created_at)}</td>
                   <td className="p-3 font-mono text-xs">{a.action}</td>

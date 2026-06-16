@@ -1,5 +1,17 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Calendar, Trophy, Medal, User, Bell, Swords, MapPin, Shield, CalendarDays, LogOut } from "lucide-react";
+import {
+  Home,
+  Calendar,
+  Trophy,
+  Medal,
+  User,
+  Bell,
+  Swords,
+  MapPin,
+  Shield,
+  CalendarDays,
+  LogOut,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,7 +53,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <div>
             <div className="font-display text-xl leading-none">PlayBeach</div>
-            <div className="text-[10px] text-muted-foreground tracking-widest leading-tight uppercase whitespace-pre-line">RANKING{"\u00a0"}\nRIO PRETO</div>
+            <div className="text-[10px] text-muted-foreground tracking-widest leading-tight uppercase whitespace-pre-line">
+              RANKING{"\u00a0"}\nRIO PRETO
+            </div>
           </div>
         </Link>
         <nav className="flex flex-col gap-1">
@@ -53,7 +67,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 to={it.to}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  active ? "gradient-beach text-white shadow-glow" : "text-foreground/70 hover:bg-secondary hover:text-foreground"
+                  active
+                    ? "gradient-beach text-white shadow-glow"
+                    : "text-foreground/70 hover:bg-secondary hover:text-foreground",
                 )}
               >
                 <it.icon className="size-4" />
@@ -76,8 +92,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </div>
         <div className="mt-auto p-4 rounded-2xl gradient-sand text-sm">
           <div className="font-display text-lg leading-none">Pronto pra jogar?</div>
-          <p className="text-xs text-muted-foreground mt-1">Crie ou entre numa partida aberta agora.</p>
-          <Link to="/partidas/nova" className="mt-3 inline-flex items-center justify-center w-full rounded-lg bg-accent text-accent-foreground px-3 py-2 text-xs font-semibold shadow-glow">
+          <p className="text-xs text-muted-foreground mt-1">
+            Crie ou entre numa partida aberta agora.
+          </p>
+          <Link
+            to="/partidas/nova"
+            className="mt-3 inline-flex items-center justify-center w-full rounded-lg bg-accent text-accent-foreground px-3 py-2 text-xs font-semibold shadow-glow"
+          >
             Criar partida amistosa
           </Link>
         </div>
@@ -92,7 +113,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-display text-lg">PlayBeach</span>
           </Link>
-          <Link to="/notificacoes" className="size-9 rounded-full bg-secondary flex items-center justify-center">
+          <Link
+            to="/notificacoes"
+            className="size-9 rounded-full bg-secondary flex items-center justify-center"
+          >
             <Bell className="size-4" />
           </Link>
         </header>
@@ -105,12 +129,24 @@ export function AppLayout({ children }: { children: ReactNode }) {
             {navItems.map((it) => {
               const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
               return (
-                <Link key={it.to} to={it.to} className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium">
-                  <div className={cn("size-9 rounded-xl flex items-center justify-center transition-all",
-                    active ? "gradient-beach text-white shadow-glow scale-110" : "text-muted-foreground")}>
+                <Link
+                  key={it.to}
+                  to={it.to}
+                  className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium"
+                >
+                  <div
+                    className={cn(
+                      "size-9 rounded-xl flex items-center justify-center transition-all",
+                      active
+                        ? "gradient-beach text-white shadow-glow scale-110"
+                        : "text-muted-foreground",
+                    )}
+                  >
                     <it.icon className="size-5" />
                   </div>
-                  <span className={active ? "text-foreground" : "text-muted-foreground"}>{it.label}</span>
+                  <span className={active ? "text-foreground" : "text-muted-foreground"}>
+                    {it.label}
+                  </span>
                 </Link>
               );
             })}

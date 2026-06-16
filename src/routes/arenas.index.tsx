@@ -38,7 +38,9 @@ function ArenasPage() {
         <h1 className="text-3xl">Arenas</h1>
         <p className="text-sm text-muted-foreground mb-6">As melhores areias para jogar.</p>
 
-        {q.isLoading && <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>}
+        {q.isLoading && (
+          <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>
+        )}
         {!q.isLoading && arenas.length === 0 && (
           <Card className="p-6 text-center text-sm text-muted-foreground">
             Nenhuma arena cadastrada ainda.
@@ -46,20 +48,30 @@ function ArenasPage() {
         )}
 
         <div className="grid sm:grid-cols-2 gap-4">
-          {arenas.map(a => (
+          {arenas.map((a) => (
             <Link key={a.id} to="/arenas/$id" params={{ id: a.id }}>
               <Card className="overflow-hidden shadow-card hover:shadow-glow transition-shadow group">
                 <div className="relative h-44 bg-secondary">
                   {a.cover_url && (
-                    <img src={a.cover_url} className="w-full h-full object-cover group-hover:scale-105 transition-transform" alt={a.name}/>
+                    <img
+                      src={a.cover_url}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                      alt={a.name}
+                    />
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"/>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                   <div className="absolute bottom-3 left-3 right-3 text-white">
                     <div className="font-display text-xl">{a.name}</div>
                     <div className="flex items-center justify-between text-xs opacity-90">
-                      <span className="flex items-center gap-1"><MapPin className="size-3"/>{a.city ?? "—"}</span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="size-3" />
+                        {a.city ?? "—"}
+                      </span>
                       {a.rating != null && (
-                        <span className="flex items-center gap-1"><Star className="size-3 fill-accent text-accent"/>{Number(a.rating).toFixed(1)}</span>
+                        <span className="flex items-center gap-1">
+                          <Star className="size-3 fill-accent text-accent" />
+                          {Number(a.rating).toFixed(1)}
+                        </span>
                       )}
                     </div>
                   </div>
