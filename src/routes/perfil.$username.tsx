@@ -1,23 +1,21 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
-  MapPin,
-  Ruler,
-  Hand,
-  Instagram,
-  Trophy,
   Loader2,
   ArrowLeft,
   UserPlus,
   UserMinus,
-  Target,
+  LayoutGrid,
   Info,
+  ImageIcon,
+  Users,
+  Trophy,
 } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -30,9 +28,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/components/avatar-thumb";
 import { PublicProfileCover } from "@/components/public-profile-cover";
-import { PublicProfileConnections } from "@/components/public-profile-connections";
 import { PublicProfileGallery } from "@/components/public-profile-gallery";
-import { PublicProfileUpdates } from "@/components/public-profile-updates";
+import { PublicProfileAbout } from "@/components/profile/public-profile-about";
+import { PublicProfileStats } from "@/components/profile/public-profile-stats";
+import { PublicProfileConnectionsPanel } from "@/components/profile/public-profile-connections-panel";
+import { FeedComposer } from "@/components/feed/feed-composer";
+import { FeedPostList } from "@/components/feed/feed-post-list";
 import { getErrorMessage } from "@/lib/utils";
 import { normalizeProfileHandle } from "@/lib/media-url";
 
@@ -69,7 +70,7 @@ function ProfileAvatarHero({ avatarUrl, name }: { avatarUrl: string | null; name
   const initial = (name[0] ?? "?").toUpperCase();
 
   return (
-    <Avatar className="size-28 sm:size-32 ring-4 ring-background shadow-lg shrink-0">
+    <Avatar className="size-24 sm:size-28 ring-4 ring-background shadow-lg shrink-0">
       {url ? <AvatarImage src={url} alt={name} /> : null}
       <AvatarFallback className="text-3xl font-display font-semibold bg-primary/10 text-primary">
         {initial}
@@ -78,41 +79,32 @@ function ProfileAvatarHero({ avatarUrl, name }: { avatarUrl: string | null; name
   );
 }
 
-function AboutRow({
-  icon: Icon,
-  label,
-  children,
+function ProfilePostsSection({
+  profile,
+  isOwnProfile,
+  currentUserId,
 }: {
-  icon: typeof MapPin;
-  label: string;
-  children: ReactNode;
+  profile: PublicProfile;
+  isOwnProfile: boolean;
+  currentUserId: string | null;
 }) {
-  return (
-    <div className="flex items-start gap-3 py-2.5 border-b border-border/50 last:border-0">
-      <Icon className="size-4 text-primary mt-0.5 shrink-0" />
-      <div className="min-w-0 flex-1">
-        <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
-        <div className="text-sm font-medium mt-0.5">{children}</div>
-      </div>
-    </div>
-  );
-}
+  const feedQueryKey = ["profile-feed", profile.id] as const;
 
-function StatBlock({
-  label,
-  value,
-  accentClass,
-}: {
-  label: string;
-  value: number;
-  accentClass?: string;
-}) {
   return (
-    <div className="text-center p-3 rounded-xl bg-secondary/50">
-      <div className={`font-display text-2xl sm:text-3xl leading-none ${accentClass ?? ""}`}>
-        {value}
-      </div>
-      <div className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wide">{label}</div>
+    <div className="space-y-4">
+      {isOwnProfile ? (
+        <FeedComposer
+          userId={currentUserId}
+          profile={{
+            display_name: profile.display_name,
+            apelido: profile.apelido,
+            avatar_url: profile.avatar_url,
+          }}
+          feedQueryKey={feedQueryKey}
+          placeholder="No que você está pensando sobre o vôlei hoje?"
+        />
+      ) : null}
+      <FeedPostList mode="profile" profileId={profile.id} queryKey={feedQueryKey} />
     </div>
   );
 }
@@ -141,9 +133,8 @@ function PublicProfilePage() {
           | null;
         if (fromServer) return fromServer;
       } catch {
-        // fallback direto no client (ex.: falha transitória do server fn)
+        // fallback client
       }
-
       const { data: rows, error } = await supabase.rpc("get_public_profile_by_username", {
         p_username: handle,
       });
@@ -207,7 +198,7 @@ function PublicProfilePage() {
   if (profileError || !profile) {
     return (
       <AppLayout>
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="max-w-5xl mx-auto px-4 py-6">
           <Button variant="ghost" onClick={() => navigate({ to: "/perfil" })} className="mb-4">
             <ArrowLeft className="size-4 mr-2" />
             Voltar
@@ -220,11 +211,20 @@ function PublicProfilePage() {
     );
   }
 
-  const isOwnProfile = currentUser && currentUser.id === profile.id;
+  const isOwnProfile = !!currentUser && currentUser.id === profile.id;
   const displayName = profile.display_name || "Jogador";
   const usernameDisplay = profile.apelido || profile.username || username;
-  const matches = (profile.vitorias ?? 0) + (profile.derrotas ?? 0);
-  const winRate = matches > 0 ? Math.round(((profile.vitorias ?? 0) / matches) * 100) : 0;
+  const aboutData = {
+    bio: profile.bio,
+    city: profile.city,
+    state: profile.state,
+    altura: profile.altura,
+    mao_dominante: profile.mao_dominante,
+    posicao_principal: profile.posicao_principal,
+    level: profile.level,
+    instagram: profile.instagram,
+    whatsapp: profile.whatsapp,
+  };
 
   const followButton = (() => {
     if (isOwnProfile) {
@@ -276,39 +276,28 @@ function PublicProfilePage() {
     );
   })();
 
-  const hasAbout =
-    profile.city ||
-    profile.altura ||
-    profile.mao_dominante ||
-    profile.posicao_principal ||
-    profile.level ||
-    profile.instagram ||
-    profile.bio;
-
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 py-4 sm:py-6 space-y-4">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate({ to: "/perfil" })}
-          className="-ml-2 text-muted-foreground hover:text-foreground"
+          className="-ml-1 text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4 mr-1.5" />
           Voltar
         </Button>
 
-        {/* Header social */}
+        {/* Header */}
         <Card className="overflow-hidden shadow-card border-border/80 p-0 gap-0">
           <PublicProfileCover bannerUrl={profile.banner_url} />
-
-          <div className="px-4 sm:px-6 pb-5">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-14 sm:-mt-16 relative z-10">
+          <div className="px-4 sm:px-6 pb-4 sm:pb-5">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4 -mt-12 sm:-mt-14 relative z-10">
               <ProfileAvatarHero avatarUrl={profile.avatar_url} name={displayName} />
-
-              <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 pb-0.5">
-                <div className="min-w-0 space-y-1">
-                  <h1 className="font-display text-2xl sm:text-3xl font-bold leading-tight truncate">
+              <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-3">
+                <div className="min-w-0 space-y-0.5">
+                  <h1 className="font-display text-xl sm:text-2xl font-bold leading-tight truncate">
                     {displayName}
                   </h1>
                   <p className="text-sm text-muted-foreground">
@@ -332,99 +321,82 @@ function PublicProfilePage() {
                 <div className="flex sm:justify-end">{followButton}</div>
               </div>
             </div>
-
-            {profile.bio ? (
-              <p className="text-sm text-muted-foreground mt-4 leading-relaxed border-t border-border/60 pt-4">
-                {profile.bio}
-              </p>
-            ) : null}
           </div>
         </Card>
 
-        {/* Conteúdo em colunas */}
-        <div className="grid lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 space-y-4">
-            {hasAbout ? (
-              <Card className="p-5 shadow-card">
-                <div className="flex items-center gap-2 mb-3">
-                  <Info className="size-5 text-primary" />
-                  <h2 className="font-semibold text-base">Sobre</h2>
-                </div>
-                <div className="divide-y divide-border/50">
-                  {profile.city ? (
-                    <AboutRow icon={MapPin} label="Localização">
-                      {profile.city}
-                      {profile.state ? `, ${profile.state}` : ""}
-                    </AboutRow>
-                  ) : null}
-                  {profile.altura ? (
-                    <AboutRow icon={Ruler} label="Altura">
-                      {profile.altura} m
-                    </AboutRow>
-                  ) : null}
-                  {profile.mao_dominante ? (
-                    <AboutRow icon={Hand} label="Mão dominante">
-                      {profile.mao_dominante}
-                    </AboutRow>
-                  ) : null}
-                  {profile.posicao_principal ? (
-                    <AboutRow icon={Target} label="Posição">
-                      {profile.posicao_principal}
-                    </AboutRow>
-                  ) : null}
-                  {profile.level ? (
-                    <AboutRow icon={Trophy} label="Nível">
-                      {profile.level}
-                    </AboutRow>
-                  ) : null}
-                  {profile.instagram ? (
-                    <AboutRow icon={Instagram} label="Instagram">
-                      <a
-                        href={`https://instagram.com/${profile.instagram.replace("@", "")}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        @{profile.instagram.replace("@", "")}
-                      </a>
-                    </AboutRow>
-                  ) : null}
-                </div>
-              </Card>
-            ) : null}
+        {/* Mobile: abas */}
+        <div className="lg:hidden">
+          <Tabs defaultValue="publicacoes" className="w-full">
+            <TabsList className="w-full h-auto flex overflow-x-auto justify-start gap-0.5 bg-muted/80 p-1 rounded-xl no-scrollbar">
+              <TabsTrigger value="publicacoes" className="text-xs sm:text-sm gap-1 shrink-0">
+                <LayoutGrid className="size-3.5" /> Publicações
+              </TabsTrigger>
+              <TabsTrigger value="sobre" className="text-xs sm:text-sm gap-1 shrink-0">
+                <Info className="size-3.5" /> Sobre
+              </TabsTrigger>
+              <TabsTrigger value="fotos" className="text-xs sm:text-sm gap-1 shrink-0">
+                <ImageIcon className="size-3.5" /> Fotos
+              </TabsTrigger>
+              <TabsTrigger value="conexoes" className="text-xs sm:text-sm gap-1 shrink-0">
+                <Users className="size-3.5" /> Conexões
+              </TabsTrigger>
+              <TabsTrigger value="estatisticas" className="text-xs sm:text-sm gap-1 shrink-0">
+                <Trophy className="size-3.5" /> Stats
+              </TabsTrigger>
+            </TabsList>
 
-            <PublicProfileUpdates profileId={profile.id} />
+            <TabsContent value="publicacoes" className="mt-3">
+              <ProfilePostsSection
+                profile={profile}
+                isOwnProfile={isOwnProfile}
+                currentUserId={currentUser?.id ?? null}
+              />
+            </TabsContent>
+            <TabsContent value="sobre" className="mt-3">
+              <PublicProfileAbout profile={aboutData} />
+            </TabsContent>
+            <TabsContent value="fotos" className="mt-3">
+              <PublicProfileGallery profileId={profile.id} />
+            </TabsContent>
+            <TabsContent value="conexoes" className="mt-3">
+              <PublicProfileConnectionsPanel profileId={profile.id} />
+            </TabsContent>
+            <TabsContent value="estatisticas" className="mt-3">
+              <PublicProfileStats
+                profileId={profile.id}
+                pontos={profile.pontos ?? 0}
+                vitorias={profile.vitorias ?? 0}
+                derrotas={profile.derrotas ?? 0}
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Desktop: duas colunas */}
+        <div className="hidden lg:grid lg:grid-cols-[minmax(260px,1fr)_minmax(0,1.65fr)] gap-4 items-start">
+          <aside className="space-y-4 sticky top-4">
+            <PublicProfileAbout profile={aboutData} compact />
             <PublicProfileGallery profileId={profile.id} />
-          </div>
-
-          <div className="space-y-4">
-            <Card className="p-5 shadow-card">
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy className="size-5 text-primary" />
-                <h2 className="font-semibold text-base">Estatísticas</h2>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <StatBlock label="Pontos" value={profile.pontos ?? 0} />
-                <StatBlock
-                  label="Vitórias"
-                  value={profile.vitorias ?? 0}
-                  accentClass="text-green-600"
-                />
-                <StatBlock
-                  label="Derrotas"
-                  value={profile.derrotas ?? 0}
-                  accentClass="text-red-600"
-                />
-              </div>
-              {matches > 0 ? (
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  {matches} jogos · {winRate}% de aproveitamento
-                </p>
-              ) : null}
-            </Card>
-
-            <PublicProfileConnections profileId={profile.id} />
-          </div>
+            <PublicProfileConnectionsPanel profileId={profile.id} compact />
+            <PublicProfileStats
+              profileId={profile.id}
+              pontos={profile.pontos ?? 0}
+              vitorias={profile.vitorias ?? 0}
+              derrotas={profile.derrotas ?? 0}
+              compact
+            />
+          </aside>
+          <main>
+            <div className="flex items-center gap-2 mb-3 px-0.5">
+              <LayoutGrid className="size-5 text-primary" />
+              <h2 className="font-semibold text-base">Publicações</h2>
+            </div>
+            <ProfilePostsSection
+              profile={profile}
+              isOwnProfile={isOwnProfile}
+              currentUserId={currentUser?.id ?? null}
+            />
+          </main>
         </div>
       </div>
     </AppLayout>

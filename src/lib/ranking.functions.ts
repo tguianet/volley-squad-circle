@@ -900,9 +900,30 @@ export const listPublicProfileFollows = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_follows", {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_follows", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
+    });
+    if (error) {
+      if (isMissingRpcError(error.message)) return [];
+      throw new Error(error.message);
+    }
+    return rows ?? [];
+  });
+
+export const listPublicProfileFollowers = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z
+      .object({
+        profileId: z.string().uuid(),
+        limit: z.number().int().min(1).max(24).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_followers", {
+      p_profile_id: data.profileId,
+      p_limit: data.limit ?? 12,
     });
     if (error) {
       if (isMissingRpcError(error.message)) return [];
@@ -921,7 +942,7 @@ export const listPublicProfileUpdates = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_updates", {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_updates", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 10,
     });
@@ -942,7 +963,7 @@ export const listPublicProfileGallery = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_gallery", {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_gallery", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
     });

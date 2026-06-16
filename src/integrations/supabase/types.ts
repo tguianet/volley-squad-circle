@@ -387,7 +387,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          image_url: string
+          image_url: string | null
           updated_at: string
           user_id: string
         }
@@ -395,7 +395,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          image_url: string
+          image_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -1094,6 +1094,7 @@ export type Database = {
           status: string
           username: string
           vitorias: number
+          whatsapp: string
         }[]
       }
       get_sundays_of_month: {
@@ -1172,6 +1173,17 @@ export type Database = {
         }[]
       }
       list_public_profile_follows: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          apelido: string
+          avatar_url: string
+          category: string
+          display_name: string
+          profile_id: string
+          username: string
+        }[]
+      }
+      list_public_profile_followers: {
         Args: { p_limit?: number; p_profile_id: string }
         Returns: {
           apelido: string

@@ -1,10 +1,8 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { GalleryFeed } from "@/components/gallery-feed";
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { FeedComposer } from "@/components/feed/feed-composer";
 import { Button } from "@/components/ui/button";
-import { Image as ImageIcon, Video, Send } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,6 +26,8 @@ export const Route = createFileRoute("/")({
   component: Feed,
 });
 
+const FEED_QUERY_KEY = ["gallery_feed"] as const;
+
 async function fetchMe() {
   const {
     data: { user },
@@ -38,7 +38,7 @@ async function fetchMe() {
     .select("display_name, apelido, avatar_url")
     .eq("id", user.id)
     .maybeSingle();
-  return data;
+  return data ? { ...data, id: user.id } : null;
 }
 
 function Feed() {
@@ -47,9 +47,9 @@ function Feed() {
 
   return (
     <AppLayout>
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5">
-        <div className="hidden md:flex items-center justify-between mb-2">
-          <h1 className="text-3xl">Feed</h1>
+      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4">
+        <div className="hidden md:flex items-center justify-between mb-1">
+          <h1 className="text-2xl sm:text-3xl font-display font-bold">Feed</h1>
           <Link to="/partidas/nova">
             <Button className="gradient-beach text-white shadow-glow border-0">
               + Criar partida
@@ -57,33 +57,12 @@ function Feed() {
           </Link>
         </div>
 
-        <Card className="p-4 shadow-card">
-          <div className="flex gap-3">
-            <Avatar className="size-11 ring-2 ring-primary/30">
-              <AvatarImage src={me?.avatar_url ?? undefined} />
-              <AvatarFallback>{firstName[0]?.toUpperCase() ?? "?"}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <input
-                placeholder={`E aí, ${firstName}? Conta como foi o treino...`}
-                className="w-full bg-secondary/60 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-primary"
-              />
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex gap-1 text-muted-foreground">
-                  <button className="flex items-center gap-1.5 text-xs hover:text-primary px-2 py-1 rounded-md">
-                    <ImageIcon className="size-4" /> Foto
-                  </button>
-                  <button className="flex items-center gap-1.5 text-xs hover:text-primary px-2 py-1 rounded-md">
-                    <Video className="size-4" /> Vídeo
-                  </button>
-                </div>
-                <Button size="sm" className="gradient-beach text-white border-0">
-                  <Send className="size-3.5 mr-1" /> Postar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Card>
+        <FeedComposer
+          userId={me?.id ?? null}
+          profile={me}
+          feedQueryKey={FEED_QUERY_KEY}
+          placeholder={`E aí, ${firstName}? Conta como foi o treino...`}
+        />
 
         <GalleryFeed />
       </div>
