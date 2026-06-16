@@ -766,35 +766,10 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: profile, error } = await supabase
-      .from("profiles")
-      .select(
-        `
-        id,
-        display_name,
-        username,
-        apelido,
-        bio,
-        city,
-        state,
-        whatsapp,
-        instagram,
-        posicao_principal,
-        level,
-        altura,
-        mao_dominante,
-        banner_url,
-        avatar_url,
-        genero,
-        status,
-        pontos,
-        vitorias,
-        derrotas
-      `,
-      )
-      .or(`username.eq.${data.username},apelido.eq.${data.username}`)
-      .single();
-
+    const { data: profile, error } = await (supabase.rpc as any)(
+      "get_public_profile_by_username",
+      { p_username: data.username },
+    );
     if (error) throw new Error(error.message);
     return profile;
   });
