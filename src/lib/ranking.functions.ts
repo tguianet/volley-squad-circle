@@ -888,3 +888,57 @@ export const getProfileFollowStatus = createServerFn({ method: "GET" })
     const result = row as { following?: boolean };
     return { following: result?.following ?? false };
   });
+
+export const listPublicProfileFollows = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z
+      .object({
+        profileId: z.string().uuid(),
+        limit: z.number().int().min(1).max(24).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_follows", {
+      p_profile_id: data.profileId,
+      p_limit: data.limit ?? 9,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const listPublicProfileUpdates = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z
+      .object({
+        profileId: z.string().uuid(),
+        limit: z.number().int().min(1).max(30).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_updates", {
+      p_profile_id: data.profileId,
+      p_limit: data.limit ?? 10,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+export const listPublicProfileGallery = createServerFn({ method: "GET" })
+  .inputValidator((d) =>
+    z
+      .object({
+        profileId: z.string().uuid(),
+        limit: z.number().int().min(1).max(24).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_gallery", {
+      p_profile_id: data.profileId,
+      p_limit: data.limit ?? 9,
+    });
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });

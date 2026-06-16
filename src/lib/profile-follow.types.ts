@@ -40,3 +40,27 @@ export type SearchProfileResult = {
 export type ProfileFollowStatus = {
   following: boolean;
 };
+
+export type PublicProfileUpdate = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  created_at: string;
+};
+
+export type PublicProfileGalleryPhoto = {
+  id: string;
+  image_url: string;
+  description: string | null;
+  created_at: string;
+};
+
+export type PublicProfileConnection = {
+  profile_id: string;
+  display_name: string;
+  username: string | null;
+  apelido: string | null;
+  avatar_url: string | null;
+  category: string | null;
+};
