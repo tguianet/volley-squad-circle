@@ -283,7 +283,7 @@ export const getSettings = createServerFn({ method: "GET" })
 
 export const updateSetting = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { key: string; value: Json }) =>
+  .inputValidator((d: { key: string; value: Json }) =>
     z.object({ key: z.string().min(1).max(80), value: z.any() }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -313,7 +313,7 @@ export const listReports = createServerFn({ method: "GET" })
 
 export const resolveReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d: { id: string; status: "resolved" | "dismissed" }) =>
+  .inputValidator((d: { id: string; status: "resolved" | "dismissed" }) =>
     z.object({ id: z.string().uuid(), status: z.enum(["resolved", "dismissed"]) }).parse(d),
   )
   .handler(async ({ context, data }) => {
@@ -359,7 +359,7 @@ function toCsv(rows: Record<string, unknown>[]): string {
 
 export const exportCsv = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator(
+  .inputValidator(
     (d: {
       table: "profiles" | "user_roles" | "banners" | "notifications" | "reports" | "audit_log";
     }) =>
