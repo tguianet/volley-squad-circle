@@ -831,7 +831,7 @@ export const followProfile = createServerFn({ method: "POST" })
 
 export const unfollowProfile = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         profileId: z.string().uuid(),
@@ -868,7 +868,7 @@ export const listFollowedProfilesFeed = createServerFn({ method: "GET" })
 
 export const getProfileFollowStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         profileId: z.string().uuid(),
