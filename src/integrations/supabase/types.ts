@@ -584,6 +584,35 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_follows_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_links: {
         Row: {
           created_at: string
@@ -1036,8 +1065,13 @@ export type Database = {
           slot_time: string
         }[]
       }
+      follow_profile: { Args: { p_profile_id: string }; Returns: Json }
       generate_current_month_availability: { Args: never; Returns: number }
       generate_month_availability: { Args: { _month: string }; Returns: number }
+      get_profile_follow_status: {
+        Args: { p_profile_id: string }
+        Returns: Json
+      }
       get_sundays_of_month: {
         Args: { _month: string }
         Returns: {
@@ -1055,6 +1089,35 @@ export type Database = {
       is_team_captain: {
         Args: { _team_id: string; _user_id: string }
         Returns: boolean
+      }
+      list_followed_profiles_feed: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          description: string
+          id: string
+          profile_apelido: string
+          profile_avatar_url: string
+          profile_id: string
+          profile_name: string
+          profile_username: string
+          title: string
+          type: string
+        }[]
+      }
+      list_my_followed_profiles: {
+        Args: never
+        Returns: {
+          apelido: string
+          avatar_url: string
+          category: string
+          display_name: string
+          follow_id: string
+          followed_at: string
+          last_updated_at: string
+          profile_id: string
+          username: string
+        }[]
       }
       list_my_profile_links: {
         Args: never
@@ -1223,6 +1286,7 @@ export type Database = {
         Args: { p_target_id: string }
         Returns: Json
       }
+      unfollow_profile: { Args: { p_profile_id: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "moderator" | "player"
