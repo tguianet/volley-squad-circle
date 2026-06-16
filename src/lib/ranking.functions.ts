@@ -20,7 +20,7 @@ export const listArenas = createServerFn({ method: "GET" })
 
 export const createArena = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         name: z.string().min(1).max(120),
@@ -107,7 +107,7 @@ export const getMyTeams = createServerFn({ method: "GET" })
 
 export const createTeam = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         name: z.string().min(2).max(80),
@@ -174,7 +174,7 @@ function firstOfMonthISO(d = new Date()): string {
 
 export const getTeamAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         teamId: z.string().uuid(),
