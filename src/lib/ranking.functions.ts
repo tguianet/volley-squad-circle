@@ -769,7 +769,7 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
     const { data: profile, error } = await (supabase.rpc as any)(
       "get_public_profile_by_username",
       { p_username: data.username },
-    );
+    ).maybeSingle();
     if (error) throw new Error(error.message);
     return profile;
   });
