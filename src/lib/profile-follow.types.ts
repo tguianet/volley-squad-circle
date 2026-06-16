@@ -8,6 +8,7 @@ export type FollowedProfile = {
   category: string | null;
   last_updated_at: string;
   followed_at: string;
+  mutual_connections_count?: number | null;
 };
 
 export type ProfileUpdateFeedItem = {

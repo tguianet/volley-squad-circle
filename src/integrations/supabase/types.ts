@@ -1139,6 +1139,7 @@ export type Database = {
           follow_id: string
           followed_at: string
           last_updated_at: string
+          mutual_connections_count: number
           profile_id: string
           username: string
         }[]
