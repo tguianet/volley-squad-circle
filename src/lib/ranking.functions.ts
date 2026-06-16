@@ -220,7 +220,7 @@ export const getTeamAvailability = createServerFn({ method: "GET" })
 
 export const upsertSundayAvailability = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         teamId: z.string().uuid(),
@@ -290,7 +290,7 @@ function overlapTimes(
 
 export const findCommonSundays = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengerTeamId: z.string().uuid(),
@@ -338,7 +338,7 @@ export const findCommonSundays = createServerFn({ method: "GET" })
 
 export const createChallenge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((d) =>
+  .inputValidator((d) =>
     z
       .object({
         challengerTeamId: z.string().uuid(),
