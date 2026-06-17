@@ -156,7 +156,7 @@ async function fetchPosts(
 export async function fetchGlobalFeed(currentUserId: string | null): Promise<FeedItem[]> {
   const [posts, shares] = await Promise.all([
     fetchPosts(currentUserId),
-    fetchShares(currentUserId),
+    fetchShares(currentUserId).catch(() => [] as FeedShare[]),
   ]);
   return mergeFeedItems(posts, shares);
 }
@@ -167,10 +167,11 @@ export async function fetchProfileFeed(
 ): Promise<FeedItem[]> {
   const [posts, shares] = await Promise.all([
     fetchPosts(currentUserId, { userId: profileId }),
-    fetchShares(currentUserId, { sharedByUserId: profileId }),
+    fetchShares(currentUserId, { sharedByUserId: profileId }).catch(() => [] as FeedShare[]),
   ]);
   return mergeFeedItems(posts, shares);
 }
+
 
 export async function createPostShare(
   originalPostId: string,
