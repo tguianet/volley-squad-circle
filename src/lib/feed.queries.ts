@@ -91,7 +91,7 @@ async function fetchShares(
   currentUserId: string | null,
   filter?: { sharedByUserId?: string },
 ): Promise<FeedShare[]> {
-  let query = supabase
+  let query = (supabase as any)
     .from("post_shares")
     .select(
       `
@@ -122,6 +122,7 @@ async function fetchShares(
   if (error) throw error;
 
   const rows = (data ?? []) as RawShareRow[];
+
   const authorIds = rows.flatMap((r) => [r.shared_by_user_id, r.gallery_photos.user_id]);
   const authorMap = await attachAuthors(authorIds);
   return rows.map((r) => mapShareRow(r, authorMap, currentUserId));
@@ -177,7 +178,7 @@ export async function createPostShare(
   comment: string | null,
 ): Promise<void> {
   const trimmed = comment?.trim() ?? "";
-  const { error } = await supabase.from("post_shares").insert({
+  const { error } = await (supabase as any).from("post_shares").insert({
     original_post_id: originalPostId,
     shared_by_user_id: userId,
     comment: trimmed.length > 0 ? trimmed : null,
@@ -186,12 +187,13 @@ export async function createPostShare(
 }
 
 export async function deletePostShare(shareId: string, userId: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from("post_shares")
     .delete()
     .eq("id", shareId)
     .eq("shared_by_user_id", userId);
   if (error) throw error;
+
 }
 
 export async function fetchPostComments(postId: string): Promise<FeedComment[]> {

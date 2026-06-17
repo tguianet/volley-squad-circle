@@ -103,7 +103,7 @@ export function PublicProfileConnectionsPanel({
     queryKey: ["public-profile-following", profileId],
     queryFn: async () => {
       const rows = await fetchFollowing({ data: { profileId, limit: 12 } });
-      return rows as PublicProfileConnection[];
+      return rows as unknown as PublicProfileConnection[];
     },
   });
 
@@ -111,7 +111,8 @@ export function PublicProfileConnectionsPanel({
     queryKey: ["public-profile-followers", profileId],
     queryFn: async () => {
       const rows = await fetchFollowers({ data: { profileId, limit: 12 } });
-      return rows as PublicProfileConnection[];
+      return rows as unknown as PublicProfileConnection[];
+
     },
   });
 
