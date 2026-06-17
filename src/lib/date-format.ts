@@ -32,6 +32,29 @@ export function formatRelativeTimeBR(value: string) {
   return formatDateBR(value);
 }
 
+export function formatSundayLong(iso: string) {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return "—";
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "long" });
+  const date = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
+  return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)}, ${date}`;
+}
+
+export function formatWeekdayBR(iso: string) {
+  const d = new Date(`${iso}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return "—";
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "long" });
+  return weekday.charAt(0).toUpperCase() + weekday.slice(1);
+}
+
+export function formatTimeHM(value: string) {
+  return value.slice(0, 5);
+}
+
+export function formatTimeSlotLabel(start: string, end: string) {
+  return `${formatTimeHM(start)} - ${formatTimeHM(end)}`;
+}
+
 export function formatDateTimeBR(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
