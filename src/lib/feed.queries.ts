@@ -91,7 +91,7 @@ async function fetchShares(
   currentUserId: string | null,
   filter?: { sharedByUserId?: string },
 ): Promise<FeedShare[]> {
-  let query = supabase
+  let query = (supabase as any)
     .from("post_shares")
     .select(
       `
@@ -122,6 +122,7 @@ async function fetchShares(
   if (error) throw error;
 
   const rows = (data ?? []) as RawShareRow[];
+
   const authorIds = rows.flatMap((r) => [r.shared_by_user_id, r.gallery_photos.user_id]);
   const authorMap = await attachAuthors(authorIds);
   return rows.map((r) => mapShareRow(r, authorMap, currentUserId));
