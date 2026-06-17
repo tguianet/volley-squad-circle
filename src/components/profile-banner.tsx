@@ -69,7 +69,12 @@ async function cropToBlob(src: string, area: Area): Promise<Blob> {
   });
 }
 
-export function ProfileBanner() {
+type ProfileBannerProps = {
+  /** Altura compacta estilo rede social (capa do perfil) */
+  compact?: boolean;
+};
+
+export function ProfileBanner({ compact = false }: ProfileBannerProps) {
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -203,7 +208,13 @@ export function ProfileBanner() {
   const isLoading = uploadMut.isPending || removeMut.isPending;
 
   return (
-    <div className="h-64 md:h-72 gradient-ocean relative overflow-hidden">
+    <div
+      className={
+        compact
+          ? "h-44 sm:h-52 md:h-56 gradient-ocean relative overflow-hidden"
+          : "h-64 md:h-72 gradient-ocean relative overflow-hidden"
+      }
+    >
       {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
       <div className="absolute top-3 left-3 flex gap-2 z-10">
         <input
