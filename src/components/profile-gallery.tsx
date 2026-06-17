@@ -59,10 +59,11 @@ export function ProfileGallery() {
   }, []);
 
   const photosQ = useQuery({
-    queryKey: ["gallery_photos"],
-    queryFn: fetchPhotos,
-    enabled: authChecked,
+    queryKey: ["gallery_photos", userId],
+    queryFn: () => fetchPhotos(userId!),
+    enabled: authChecked && !!userId,
   });
+
 
   useEffect(() => {
     if (!file) {
