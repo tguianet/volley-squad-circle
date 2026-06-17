@@ -387,7 +387,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
-          image_url: string | null
+          image_url: string
           updated_at: string
           user_id: string
         }
@@ -395,7 +395,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
-          image_url?: string | null
+          image_url: string
           updated_at?: string
           user_id: string
         }
@@ -408,38 +408,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      post_shares: {
-        Row: {
-          comment: string | null
-          created_at: string
-          id: string
-          original_post_id: string
-          shared_by_user_id: string
-        }
-        Insert: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          original_post_id: string
-          shared_by_user_id: string
-        }
-        Update: {
-          comment?: string | null
-          created_at?: string
-          id?: string
-          original_post_id?: string
-          shared_by_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "post_shares_original_post_id_fkey"
-            columns: ["original_post_id"]
-            isOneToOne: false
-            referencedRelation: "gallery_photos"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       match_players: {
         Row: {
@@ -1126,7 +1094,6 @@ export type Database = {
           status: string
           username: string
           vitorias: number
-          whatsapp: string
         }[]
       }
       get_sundays_of_month: {
@@ -1205,17 +1172,6 @@ export type Database = {
         }[]
       }
       list_public_profile_follows: {
-        Args: { p_limit?: number; p_profile_id: string }
-        Returns: {
-          apelido: string
-          avatar_url: string
-          category: string
-          display_name: string
-          profile_id: string
-          username: string
-        }[]
-      }
-      list_public_profile_followers: {
         Args: { p_limit?: number; p_profile_id: string }
         Returns: {
           apelido: string
