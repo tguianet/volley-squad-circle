@@ -178,7 +178,7 @@ export async function createPostShare(
   comment: string | null,
 ): Promise<void> {
   const trimmed = comment?.trim() ?? "";
-  const { error } = await supabase.from("post_shares").insert({
+  const { error } = await (supabase as any).from("post_shares").insert({
     original_post_id: originalPostId,
     shared_by_user_id: userId,
     comment: trimmed.length > 0 ? trimmed : null,
@@ -187,12 +187,13 @@ export async function createPostShare(
 }
 
 export async function deletePostShare(shareId: string, userId: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await (supabase as any)
     .from("post_shares")
     .delete()
     .eq("id", shareId)
     .eq("shared_by_user_id", userId);
   if (error) throw error;
+
 }
 
 export async function fetchPostComments(postId: string): Promise<FeedComment[]> {
