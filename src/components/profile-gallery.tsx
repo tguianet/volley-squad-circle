@@ -26,14 +26,16 @@ type PhotoRow = {
   gallery_likes: { user_id: string }[];
 };
 
-async function fetchPhotos(): Promise<PhotoRow[]> {
+async function fetchPhotos(userId: string): Promise<PhotoRow[]> {
   const { data, error } = await supabase
     .from("gallery_photos")
     .select("id, user_id, image_url, description, created_at, gallery_likes(user_id)")
+    .eq("user_id", userId)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return (data as PhotoRow[]) ?? [];
 }
+
 
 export function ProfileGallery() {
   const qc = useQueryClient();
