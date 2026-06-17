@@ -65,9 +65,10 @@ export function FeedComposer({
 
       const { error: insErr } = await supabase.from("gallery_photos").insert({
         user_id: userId,
-        image_url: imagePath,
+        image_url: imagePath ?? "",
         description: content || "",
       });
+
 
       if (insErr) {
         if (imagePath) {
