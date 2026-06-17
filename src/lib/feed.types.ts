@@ -18,6 +18,20 @@ export type FeedPost = {
   author: FeedAuthor | null;
 };
 
+export type FeedShare = {
+  id: string;
+  shared_by_user_id: string;
+  original_post_id: string;
+  comment: string | null;
+  created_at: string;
+  sharer: FeedAuthor | null;
+  original_post: FeedPost;
+};
+
+export type FeedItem =
+  | { kind: "post"; post: FeedPost; sort_at: string }
+  | { kind: "share"; share: FeedShare; sort_at: string };
+
 export type FeedComment = {
   id: string;
   user_id: string;

@@ -4,6 +4,7 @@ import { Loader2, Waves } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchGlobalFeed, fetchProfileFeed } from "@/lib/feed.queries";
 import { FeedPostCard } from "@/components/feed/feed-post-card";
+import { FeedShareCard } from "@/components/feed/feed-share-card";
 import { FeedEmptyState } from "@/components/feed/feed-empty-state";
 
 type FeedPostListProps = {
@@ -54,9 +55,9 @@ export function FeedPostList({ mode, profileId, queryKey }: FeedPostListProps) {
     );
   }
 
-  const posts = feedQ.data ?? [];
+  const items = feedQ.data ?? [];
 
-  if (posts.length === 0) {
+  if (items.length === 0) {
     return (
       <FeedEmptyState
         title="Nenhuma publicação ainda"
@@ -72,9 +73,23 @@ export function FeedPostList({ mode, profileId, queryKey }: FeedPostListProps) {
 
   return (
     <div className="space-y-4">
-      {posts.map((post) => (
-        <FeedPostCard key={post.id} post={post} userId={userId} feedQueryKey={queryKey} />
-      ))}
+      {items.map((item) =>
+        item.kind === "post" ? (
+          <FeedPostCard
+            key={`post-${item.post.id}`}
+            post={item.post}
+            userId={userId}
+            feedQueryKey={queryKey}
+          />
+        ) : (
+          <FeedShareCard
+            key={`share-${item.share.id}`}
+            share={item.share}
+            userId={userId}
+            feedQueryKey={queryKey}
+          />
+        ),
+      )}
     </div>
   );
 }

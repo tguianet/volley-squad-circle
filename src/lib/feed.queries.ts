@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { FeedAuthor, FeedComment, FeedPost } from "@/lib/feed.types";
+import type { FeedAuthor, FeedComment, FeedItem, FeedPost, FeedShare } from "@/lib/feed.types";
 
 type RawPhotoRow = {
   id: string;
@@ -11,12 +11,22 @@ type RawPhotoRow = {
   gallery_comments: { id: string }[] | null;
 };
 
+type RawShareRow = {
+  id: string;
+  original_post_id: string;
+  shared_by_user_id: string;
+  comment: string | null;
+  created_at: string;
+  gallery_photos: RawPhotoRow;
+};
+
 async function attachAuthors(userIds: string[]): Promise<Map<string, FeedAuthor>> {
-  if (userIds.length === 0) return new Map();
+  const unique = Array.from(new Set(userIds.filter(Boolean)));
+  if (unique.length === 0) return new Map();
   const { data: profs } = await supabase
     .from("profiles")
     .select("id, display_name, username, apelido, avatar_url")
-    .in("id", userIds);
+    .in("id", unique);
   return new Map(
     (profs ?? []).map((p) => [
       p.id,
@@ -50,14 +60,90 @@ function mapPhotoToPost(
   };
 }
 
-export async function fetchGlobalFeed(currentUserId: string | null): Promise<FeedPost[]> {
-  const { data, error } = await supabase
+function mapShareRow(
+  row: RawShareRow,
+  authorMap: Map<string, FeedAuthor>,
+  currentUserId: string | null,
+): FeedShare {
+  const originalPost = mapPhotoToPost(row.gallery_photos, authorMap, currentUserId);
+  return {
+    id: row.id,
+    shared_by_user_id: row.shared_by_user_id,
+    original_post_id: row.original_post_id,
+    comment: row.comment,
+    created_at: row.created_at,
+    sharer: authorMap.get(row.shared_by_user_id) ?? null,
+    original_post: originalPost,
+  };
+}
+
+function mergeFeedItems(posts: FeedPost[], shares: FeedShare[]): FeedItem[] {
+  const items: FeedItem[] = [
+    ...posts.map((post) => ({ kind: "post" as const, post, sort_at: post.created_at })),
+    ...shares.map((share) => ({ kind: "share" as const, share, sort_at: share.created_at })),
+  ];
+  return items
+    .sort((a, b) => new Date(b.sort_at).getTime() - new Date(a.sort_at).getTime())
+    .slice(0, 50);
+}
+
+async function fetchShares(
+  currentUserId: string | null,
+  filter?: { sharedByUserId?: string },
+): Promise<FeedShare[]> {
+  let query = supabase
+    .from("post_shares")
+    .select(
+      `
+      id,
+      original_post_id,
+      shared_by_user_id,
+      comment,
+      created_at,
+      gallery_photos (
+        id,
+        user_id,
+        image_url,
+        description,
+        created_at,
+        gallery_likes ( user_id ),
+        gallery_comments ( id )
+      )
+    `,
+    )
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (filter?.sharedByUserId) {
+    query = query.eq("shared_by_user_id", filter.sharedByUserId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const rows = (data ?? []) as RawShareRow[];
+  const authorIds = rows.flatMap((r) => [r.shared_by_user_id, r.gallery_photos.user_id]);
+  const authorMap = await attachAuthors(authorIds);
+  return rows.map((r) => mapShareRow(r, authorMap, currentUserId));
+}
+
+async function fetchPosts(
+  currentUserId: string | null,
+  filter?: { userId?: string },
+): Promise<FeedPost[]> {
+  let query = supabase
     .from("gallery_photos")
     .select(
       "id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id)",
     )
     .order("created_at", { ascending: false })
     .limit(50);
+
+  if (filter?.userId) {
+    query = query.eq("user_id", filter.userId);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
 
   const photos = (data ?? []) as RawPhotoRow[];
@@ -66,23 +152,46 @@ export async function fetchGlobalFeed(currentUserId: string | null): Promise<Fee
   return photos.map((p) => mapPhotoToPost(p, authorMap, currentUserId));
 }
 
+export async function fetchGlobalFeed(currentUserId: string | null): Promise<FeedItem[]> {
+  const [posts, shares] = await Promise.all([
+    fetchPosts(currentUserId),
+    fetchShares(currentUserId),
+  ]);
+  return mergeFeedItems(posts, shares);
+}
+
 export async function fetchProfileFeed(
   profileId: string,
   currentUserId: string | null,
-): Promise<FeedPost[]> {
-  const { data, error } = await supabase
-    .from("gallery_photos")
-    .select(
-      "id, user_id, image_url, description, created_at, gallery_likes(user_id), gallery_comments(id)",
-    )
-    .eq("user_id", profileId)
-    .order("created_at", { ascending: false })
-    .limit(30);
-  if (error) throw error;
+): Promise<FeedItem[]> {
+  const [posts, shares] = await Promise.all([
+    fetchPosts(currentUserId, { userId: profileId }),
+    fetchShares(currentUserId, { sharedByUserId: profileId }),
+  ]);
+  return mergeFeedItems(posts, shares);
+}
 
-  const photos = (data ?? []) as RawPhotoRow[];
-  const authorMap = await attachAuthors([profileId]);
-  return photos.map((p) => mapPhotoToPost(p, authorMap, currentUserId));
+export async function createPostShare(
+  originalPostId: string,
+  userId: string,
+  comment: string | null,
+): Promise<void> {
+  const trimmed = comment?.trim() ?? "";
+  const { error } = await supabase.from("post_shares").insert({
+    original_post_id: originalPostId,
+    shared_by_user_id: userId,
+    comment: trimmed.length > 0 ? trimmed : null,
+  });
+  if (error) throw error;
+}
+
+export async function deletePostShare(shareId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("post_shares")
+    .delete()
+    .eq("id", shareId)
+    .eq("shared_by_user_id", userId);
+  if (error) throw error;
 }
 
 export async function fetchPostComments(postId: string): Promise<FeedComment[]> {

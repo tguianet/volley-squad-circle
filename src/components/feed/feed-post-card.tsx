@@ -28,6 +28,7 @@ import { formatRelativeTimeBR } from "@/lib/date-format";
 import type { FeedPost } from "@/lib/feed.types";
 import { SignedGalleryImage } from "@/components/feed/signed-gallery-image";
 import { FeedPostComments } from "@/components/feed/feed-post-comments";
+import { FeedShareModal } from "@/components/feed/feed-share-modal";
 
 type FeedPostCardProps = {
   post: FeedPost;
@@ -39,6 +40,7 @@ type FeedPostCardProps = {
 export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCardProps) {
   const qc = useQueryClient();
   const [showComments, setShowComments] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const name = authorDisplayName(post.author);
   const handle = authorHandle(post.author);
   const { data: avatarUrl } = useAvatarUrl(post.author?.avatar_url);
@@ -86,21 +88,16 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
     onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao remover")),
   });
 
-  const handleShare = async () => {
-    const text = post.description ?? "Confira no PlayBeach!";
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: "PlayBeach", text });
-      } else {
-        await navigator.clipboard.writeText(text);
-        toast.success("Texto copiado!");
-      }
-    } catch {
-      toast.message("Compartilhamento cancelado");
+  const handleShare = () => {
+    if (!userId) {
+      toast.error("Faça login para compartilhar");
+      return;
     }
+    setShareModalOpen(true);
   };
 
   return (
+    <>
     <Card className={cn("shadow-card border-border/80 overflow-hidden", compact ? "p-3" : "p-0")}>
       <div className={cn(compact ? "space-y-2.5" : "p-4 space-y-3")}>
         <div className="flex items-start gap-3">
@@ -225,5 +222,14 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
         ) : null}
       </div>
     </Card>
+
+    <FeedShareModal
+      post={post}
+      open={shareModalOpen}
+      onOpenChange={setShareModalOpen}
+      userId={userId}
+      feedQueryKey={feedQueryKey}
+    />
+    </>
   );
 }
