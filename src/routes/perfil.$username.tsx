@@ -4,19 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import {
-  Loader2,
-  ArrowLeft,
-  UserPlus,
-  UserMinus,
-  LayoutGrid,
-  Info,
-  ImageIcon,
-  Users,
-  Trophy,
-} from "lucide-react";
+import { Loader2, ArrowLeft, UserPlus, UserMinus } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -28,12 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/components/avatar-thumb";
 import { PublicProfileCover } from "@/components/public-profile-cover";
-import { PublicProfileGallery } from "@/components/public-profile-gallery";
-import { PublicProfileAbout } from "@/components/profile/public-profile-about";
-import { PublicProfileStats } from "@/components/profile/public-profile-stats";
-import { PublicProfileConnectionsPanel } from "@/components/profile/public-profile-connections-panel";
-import { FeedComposer } from "@/components/feed/feed-composer";
-import { FeedPostList } from "@/components/feed/feed-post-list";
+import { PublicProfileTabs } from "@/components/profile/public-profile-tabs";
 import { getErrorMessage } from "@/lib/utils";
 import { normalizeProfileHandle } from "@/lib/media-url";
 
@@ -76,36 +60,6 @@ function ProfileAvatarHero({ avatarUrl, name }: { avatarUrl: string | null; name
         {initial}
       </AvatarFallback>
     </Avatar>
-  );
-}
-
-function ProfilePostsSection({
-  profile,
-  isOwnProfile,
-  currentUserId,
-}: {
-  profile: PublicProfile;
-  isOwnProfile: boolean;
-  currentUserId: string | null;
-}) {
-  const feedQueryKey = ["profile-feed", profile.id] as const;
-
-  return (
-    <div className="space-y-4">
-      {isOwnProfile ? (
-        <FeedComposer
-          userId={currentUserId}
-          profile={{
-            display_name: profile.display_name,
-            apelido: profile.apelido,
-            avatar_url: profile.avatar_url,
-          }}
-          feedQueryKey={feedQueryKey}
-          placeholder="No que você está pensando sobre o vôlei hoje?"
-        />
-      ) : null}
-      <FeedPostList mode="profile" profileId={profile.id} queryKey={feedQueryKey} />
-    </div>
   );
 }
 
@@ -289,7 +243,7 @@ function PublicProfilePage() {
           Voltar
         </Button>
 
-        {/* Header */}
+        {/* Header — inalterado */}
         <Card className="overflow-hidden shadow-card border-border/80 p-0 gap-0">
           <PublicProfileCover bannerUrl={profile.banner_url} />
           <div className="px-4 sm:px-6 pb-4 sm:pb-5">
@@ -324,80 +278,13 @@ function PublicProfilePage() {
           </div>
         </Card>
 
-        {/* Mobile: abas */}
-        <div className="lg:hidden">
-          <Tabs defaultValue="publicacoes" className="w-full">
-            <TabsList className="w-full h-auto flex overflow-x-auto justify-start gap-0.5 bg-muted/80 p-1 rounded-xl no-scrollbar">
-              <TabsTrigger value="publicacoes" className="text-xs sm:text-sm gap-1 shrink-0">
-                <LayoutGrid className="size-3.5" /> Publicações
-              </TabsTrigger>
-              <TabsTrigger value="sobre" className="text-xs sm:text-sm gap-1 shrink-0">
-                <Info className="size-3.5" /> Sobre
-              </TabsTrigger>
-              <TabsTrigger value="fotos" className="text-xs sm:text-sm gap-1 shrink-0">
-                <ImageIcon className="size-3.5" /> Fotos
-              </TabsTrigger>
-              <TabsTrigger value="conexoes" className="text-xs sm:text-sm gap-1 shrink-0">
-                <Users className="size-3.5" /> Conexões
-              </TabsTrigger>
-              <TabsTrigger value="estatisticas" className="text-xs sm:text-sm gap-1 shrink-0">
-                <Trophy className="size-3.5" /> Stats
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="publicacoes" className="mt-3">
-              <ProfilePostsSection
-                profile={profile}
-                isOwnProfile={isOwnProfile}
-                currentUserId={currentUser?.id ?? null}
-              />
-            </TabsContent>
-            <TabsContent value="sobre" className="mt-3">
-              <PublicProfileAbout profile={aboutData} />
-            </TabsContent>
-            <TabsContent value="fotos" className="mt-3">
-              <PublicProfileGallery profileId={profile.id} />
-            </TabsContent>
-            <TabsContent value="conexoes" className="mt-3">
-              <PublicProfileConnectionsPanel profileId={profile.id} />
-            </TabsContent>
-            <TabsContent value="estatisticas" className="mt-3">
-              <PublicProfileStats
-                profileId={profile.id}
-                pontos={profile.pontos ?? 0}
-                vitorias={profile.vitorias ?? 0}
-                derrotas={profile.derrotas ?? 0}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        {/* Desktop: duas colunas */}
-        <div className="hidden lg:grid lg:grid-cols-[minmax(260px,1fr)_minmax(0,1.65fr)] gap-4 items-start">
-          <aside className="space-y-4 sticky top-4">
-            <PublicProfileAbout profile={aboutData} compact />
-            <PublicProfileGallery profileId={profile.id} />
-            <PublicProfileConnectionsPanel profileId={profile.id} compact />
-            <PublicProfileStats
-              profileId={profile.id}
-              pontos={profile.pontos ?? 0}
-              vitorias={profile.vitorias ?? 0}
-              derrotas={profile.derrotas ?? 0}
-              compact
-            />
-          </aside>
-          <main>
-            <div className="flex items-center gap-2 mb-3 px-0.5">
-              <LayoutGrid className="size-5 text-primary" />
-              <h2 className="font-semibold text-base">Publicações</h2>
-            </div>
-            <ProfilePostsSection
-              profile={profile}
-              isOwnProfile={isOwnProfile}
-              currentUserId={currentUser?.id ?? null}
-            />
-          </main>
-        </div>
+        {/* Navegação estilo rede social */}
+        <PublicProfileTabs
+          profile={profile}
+          aboutData={aboutData}
+          isOwnProfile={isOwnProfile}
+          currentUserId={currentUser?.id ?? null}
+        />
       </div>
     </AppLayout>
   );
