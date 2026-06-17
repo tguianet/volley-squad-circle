@@ -447,7 +447,6 @@ export type Database = {
       matches: {
         Row: {
           arena_id: string | null
-          court_number: number
           created_at: string
           creator_id: string
           date: string
@@ -464,7 +463,6 @@ export type Database = {
         }
         Insert: {
           arena_id?: string | null
-          court_number?: number
           created_at?: string
           creator_id: string
           date: string
@@ -481,7 +479,6 @@ export type Database = {
         }
         Update: {
           arena_id?: string | null
-          court_number?: number
           created_at?: string
           creator_id?: string
           date?: string
@@ -1066,43 +1063,6 @@ export type Database = {
           court_number: number
           is_free: boolean
           slot_time: string
-        }[]
-      }
-      check_court_availability: {
-        Args: {
-          p_arena_id: string
-          p_court_number: number
-          p_end_time: string
-          p_match_date: string
-          p_start_time: string
-        }
-        Returns: boolean
-      }
-      get_available_courts: {
-        Args: {
-          p_arena_id: string
-          p_end_time: string
-          p_match_date: string
-          p_start_time: string
-        }
-        Returns: {
-          court_name: string
-          court_number: number
-        }[]
-      }
-      get_available_sundays: {
-        Args: { p_arena_id: string }
-        Returns: {
-          free_slots_count: number
-          match_date: string
-        }[]
-      }
-      get_available_time_slots: {
-        Args: { p_arena_id: string; p_match_date: string }
-        Returns: {
-          available_courts_count: number
-          end_time: string
-          start_time: string
         }[]
       }
       follow_profile: { Args: { p_profile_id: string }; Returns: Json }

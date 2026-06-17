@@ -171,8 +171,8 @@ function NewMatchPage() {
         return;
       }
 
-      const { error } = await supabase
-        .from("matches")
+      const { error } = await (supabase
+        .from("matches") as any)
         .insert({
           creator_id: u.user.id,
           arena_id: arenaId,
