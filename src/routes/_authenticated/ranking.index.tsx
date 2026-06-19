@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listScheduledChallenges } from "@/lib/ranking.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { AvatarThumb } from "@/components/avatar-thumb";
+import { isTeamRankingComplete } from "@/lib/team-format";
 
 type GenderFilter = "M" | "F" | "X";
 
@@ -306,17 +307,39 @@ function TeamRanking({
 
   const teams = teamsQ.data ?? [];
   const teamIds = teams.map((t) => t.id);
-  const captainIds = Array.from(new Set(teams.map((t) => t.captain_id)));
+
+  const memberCountsQ = useQuery({
+    queryKey: ["ranking-team-member-counts", teamIds.join(",")],
+    enabled: teamIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("team_id")
+        .in("team_id", teamIds);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of data ?? []) {
+        counts[row.team_id] = (counts[row.team_id] ?? 0) + 1;
+      }
+      return counts;
+    },
+  });
+
+  const completeTeams = teams.filter((t) =>
+    isTeamRankingComplete(category, memberCountsQ.data?.[t.id] ?? 0),
+  );
+  const completeTeamIds = completeTeams.map((t) => t.id);
+  const captainIds = Array.from(new Set(completeTeams.map((t) => t.captain_id)));
 
   const rosterQ = useQuery({
-    queryKey: ["ranking-team-roster", teamIds.join(","), captainIds.join(",")],
-    enabled: teamIds.length > 0,
+    queryKey: ["ranking-team-roster", completeTeamIds.join(","), captainIds.join(",")],
+    enabled: completeTeamIds.length > 0,
     queryFn: async () => {
       const [membersRes, capsRes] = await Promise.all([
         supabase
           .from("team_members")
           .select("team_id, profile:profile_id(id, display_name, apelido, avatar_url)")
-          .in("team_id", teamIds),
+          .in("team_id", completeTeamIds),
         supabase
           .from("profiles")
           .select("id, display_name, apelido, avatar_url")
@@ -338,14 +361,16 @@ function TeamRanking({
     },
   });
 
-  if (teamsQ.isLoading) {
+  const isLoadingCounts = teamIds.length > 0 && memberCountsQ.isLoading;
+  const isLoadingRoster = completeTeamIds.length > 0 && rosterQ.isLoading;
+
+  if (teamsQ.isLoading || isLoadingCounts || isLoadingRoster) {
     return <p className="text-sm text-muted-foreground text-center py-8">Carregando…</p>;
   }
-  if (teams.length === 0) {
-    const label = gender === "F" ? "femininos" : gender === "X" ? "mistos" : "masculinos";
+  if (completeTeams.length === 0) {
     return (
       <Card className="p-6 text-center text-sm text-muted-foreground">
-        Nenhum time {category === "dupla" ? "de duplas" : "de quartetos"} {label} cadastrado ainda.
+        Nenhum time completo no ranking ainda.
       </Card>
     );
   }
@@ -355,7 +380,7 @@ function TeamRanking({
 
   return (
     <>
-      {teams.map((t, i) => {
+      {completeTeams.map((t, i) => {
         const members = byTeam[t.id] ?? [];
         const cap = capById[t.captain_id];
         const roster: TeamMemberLite[] = [];

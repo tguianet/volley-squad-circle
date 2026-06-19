@@ -30,3 +30,15 @@ export function categoryGenderFromFormat(format: string): {
   }
   return { category, gender: "M" };
 }
+
+/** Membros confirmados necessários para o time aparecer no ranking. */
+export function requiredTeamMemberCount(category: "dupla" | "quarteto"): number {
+  return category === "dupla" ? 2 : 4;
+}
+
+export function isTeamRankingComplete(
+  category: "dupla" | "quarteto",
+  confirmedMemberCount: number,
+): boolean {
+  return confirmedMemberCount === requiredTeamMemberCount(category);
+}
