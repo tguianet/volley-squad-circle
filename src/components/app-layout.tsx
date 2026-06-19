@@ -11,13 +11,13 @@ import {
   Shield,
   CalendarDays,
   LogOut,
+  Waves,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useIsStaff } from "@/hooks/use-auth";
-import logoAsset from "@/assets/logo.png.asset.json";
 
 const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
@@ -49,7 +49,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       <aside className="hidden md:flex flex-col w-64 border-r bg-card/60 backdrop-blur sticky top-0 h-screen p-6 gap-2">
         <Link to="/" className="flex items-center gap-2 mb-8">
           <div className="size-10 rounded-xl overflow-hidden flex items-center justify-center shadow-glow bg-card">
-            <img src={logoAsset.url} alt="PlayBeach Arena" className="size-full object-contain" />
+            <Waves className="size-6 text-primary" aria-hidden="true" />
           </div>
           <div>
             <div className="font-display text-xl leading-none">PlayBeach</div>
@@ -109,7 +109,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b bg-card/80 backdrop-blur">
           <Link to="/" className="flex items-center gap-2">
             <div className="size-8 rounded-lg overflow-hidden flex items-center justify-center bg-card">
-              <img src={logoAsset.url} alt="PlayBeach Arena" className="size-full object-contain" />
+              <Waves className="size-5 text-primary" aria-hidden="true" />
             </div>
             <span className="font-display text-lg">PlayBeach</span>
           </Link>
