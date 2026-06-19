@@ -1102,6 +1102,14 @@ export type Database = {
           sunday_date: string
         }[]
       }
+      get_player_ranking_details: {
+        Args: { p_profile_id: string }
+        Returns: Json
+      }
+      get_team_ranking_details: {
+        Args: { p_team_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
