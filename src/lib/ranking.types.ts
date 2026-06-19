@@ -4,12 +4,15 @@ export type RankingPlayerChip = {
   avatar_url: string | null;
 };
 
+export const RANKING_ARENA_UNDEFINED = "Arena não definida";
+
 export type RankingTableRow = {
   id: string;
   position: number;
   name: string;
   categoryLabel: string;
   players: RankingPlayerChip[];
+  arenaLabel: string;
   games: number;
   points: number;
   kind: "individual" | "team";

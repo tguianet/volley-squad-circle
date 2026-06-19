@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/table";
 import { RankingDetailsRow } from "@/components/ranking/ranking-details-row";
 import {
+  ArenaLabel,
   RankingMobileCard,
   PlayerChips,
   PointsCell,
@@ -86,6 +87,9 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
               <TableHead className="min-w-[200px] text-xs font-semibold uppercase tracking-wide hidden lg:table-cell">
                 Jogadores
               </TableHead>
+              <TableHead className="min-w-[140px] text-xs font-semibold uppercase tracking-wide hidden md:table-cell">
+                Arena
+              </TableHead>
               <TableHead className="w-24 text-xs font-semibold uppercase tracking-wide text-center">
                 Jogos
               </TableHead>
@@ -117,6 +121,9 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
                     <TableCell className="hidden lg:table-cell">
                       <PlayerChips players={row.players} />
                     </TableCell>
+                    <TableCell className="hidden md:table-cell max-w-[180px]">
+                      <ArenaLabel label={row.arenaLabel} />
+                    </TableCell>
                     <TableCell className="text-center font-medium">{row.games}</TableCell>
                     <TableCell>
                       <PointsCell points={row.points} />
@@ -142,7 +149,7 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
                     <RankingDetailsRow
                       details={detailsQ.data}
                       isLoading={detailsQ.isLoading}
-                      colSpan={6}
+                      colSpan={7}
                     />
                   ) : null}
                 </Fragment>

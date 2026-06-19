@@ -1,4 +1,5 @@
-import { ChevronDown, ChevronUp, Crown, Medal } from "lucide-react";
+import { ChevronDown, ChevronUp, Crown, MapPin, Medal } from "lucide-react";
+import { RANKING_ARENA_UNDEFINED } from "@/lib/ranking.types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AvatarThumb } from "@/components/avatar-thumb";
@@ -34,6 +35,7 @@ export function RankingMobileCard({
             <div className="text-xs text-muted-foreground">{row.categoryLabel}</div>
           </div>
           <PlayerChips players={row.players} compact />
+          <ArenaLabel label={row.arenaLabel} />
           <div className="flex items-center gap-4 text-xs">
             <span>
               <span className="text-muted-foreground">Jogos:</span>{" "}
@@ -108,6 +110,23 @@ export function PlayerChips({
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+export function ArenaLabel({ label }: { label: string }) {
+  const isUndefined = label === RANKING_ARENA_UNDEFINED;
+  return (
+    <div className="flex items-center gap-1 min-w-0">
+      <MapPin className="size-3 shrink-0 text-primary/60" />
+      <span
+        className={cn(
+          "text-xs truncate",
+          isUndefined ? "text-muted-foreground italic" : "text-muted-foreground",
+        )}
+      >
+        {label}
+      </span>
     </div>
   );
 }
