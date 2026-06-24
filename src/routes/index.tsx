@@ -3,12 +3,12 @@ import { AppLayout } from "@/components/app-layout";
 import { GalleryFeed } from "@/components/gallery-feed";
 import { FeedComposer } from "@/components/feed/feed-composer";
 import { FeedStoriesStrip } from "@/components/feed/feed-stories-strip";
-import { FeedSidebarLeft, FeedSidebarRight } from "@/components/feed/feed-sidebar";
+import { FeedSidebarRight } from "@/components/feed/feed-sidebar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Trophy, Waves } from "lucide-react";
+import { Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,42 +46,20 @@ function Feed() {
 
   return (
     <AppLayout>
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-5 sm:py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)_280px] gap-5 xl:gap-6">
-          <aside className="hidden lg:block">
-            <FeedSidebarLeft />
-          </aside>
-
-          <main className="min-w-0 space-y-4">
-            <Card className="p-4 sm:p-5 border-border/60 shadow-card overflow-hidden relative lg:hidden">
-              <div className="absolute inset-0 gradient-beach opacity-[0.08] pointer-events-none" />
-              <div className="relative flex items-center justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-2 text-xs font-bold text-primary uppercase tracking-wider mb-1">
-                    <Waves className="size-3.5" />
-                    Rede social
-                  </div>
-                  <h1 className="page-title text-2xl">Feed da areia</h1>
-                </div>
-                <Link to="/partidas/nova">
-                  <Button variant="beach" size="sm">
-                    <Trophy className="size-4" />
-                    Partida
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            <div className="md:hidden flex items-center justify-between px-1">
+      <div className="mx-auto w-full max-w-[1180px] px-3 sm:px-5 py-5 sm:py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_248px] gap-5 lg:gap-8 items-start">
+          <main className="min-w-0 w-full max-w-2xl mx-auto lg:max-w-none lg:mx-0 space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between gap-3 px-0.5 lg:hidden">
               <h1 className="page-title text-2xl">Feed</h1>
               <Link to="/partidas/nova">
                 <Button variant="beach" size="sm">
-                  + Partida
+                  <Trophy className="size-4" />
+                  Partida
                 </Button>
               </Link>
             </div>
 
-            <Card className="p-4 border-border/60 shadow-card">
+            <Card className="p-3 sm:p-4 border-border/60 shadow-card">
               <FeedStoriesStrip
                 userId={me?.id ?? null}
                 displayName={me?.display_name}
@@ -97,9 +75,13 @@ function Feed() {
             />
 
             <GalleryFeed />
+
+            <div className="lg:hidden pt-1">
+              <FeedSidebarRight />
+            </div>
           </main>
 
-          <aside className="hidden lg:block">
+          <aside className="hidden lg:block min-w-0">
             <FeedSidebarRight />
           </aside>
         </div>
