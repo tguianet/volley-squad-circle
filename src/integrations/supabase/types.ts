@@ -447,7 +447,6 @@ export type Database = {
       matches: {
         Row: {
           arena_id: string | null
-          court_number: number
           created_at: string
           creator_id: string
           date: string
@@ -464,7 +463,6 @@ export type Database = {
         }
         Insert: {
           arena_id?: string | null
-          court_number?: number
           created_at?: string
           creator_id: string
           date: string
@@ -481,7 +479,6 @@ export type Database = {
         }
         Update: {
           arena_id?: string | null
-          court_number?: number
           created_at?: string
           creator_id?: string
           date?: string
