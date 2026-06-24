@@ -23,13 +23,6 @@ type ProfileRankRow = {
   pontos: number;
   vitorias: number;
   derrotas: number;
-  arena_id: string | null;
-  primary_arena: { name: string; city: string | null } | null;
-};
-
-type ProfileArenaRow = {
-  id: string;
-  arena_id: string | null;
 };
 
 type TeamRankRow = {
@@ -112,22 +105,6 @@ async function buildProfileArenaMap(profileIds: string[]): Promise<Map<string, s
   if (profileIds.length === 0) return result;
 
   const profileToArenaId = new Map<string, string>();
-
-  const { data: profileArenas, error: profileArenasError } = await supabase
-    .from("profiles")
-    .select("id, arena_id, primary_arena:arena_id(name, city)")
-    .in("id", profileIds);
-  if (profileArenasError) throw profileArenasError;
-
-  for (const row of (profileArenas ?? []) as Array<
-    ProfileArenaRow & { primary_arena: { name: string; city: string | null } | null }
-  >) {
-    if (row.arena_id) {
-      profileToArenaId.set(row.id, row.arena_id);
-      const label = formatArenaName(row.primary_arena);
-      if (label) result.set(row.id, label);
-    }
-  }
 
   const missingAfterProfile = profileIds.filter((id) => !profileToArenaId.has(id));
   if (missingAfterProfile.length > 0) {
@@ -239,14 +216,14 @@ export async function fetchIndividualRankingRows(
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, display_name, apelido, username, avatar_url, city, state, level, genero, pontos, vitorias, derrotas, arena_id, primary_arena:arena_id(name, city)",
+      "id, display_name, apelido, username, avatar_url, city, state, level, genero, pontos, vitorias, derrotas",
     )
     .eq("genero", gender)
     .order("pontos", { ascending: false })
     .limit(200);
   if (error) throw error;
 
-  const players = (data ?? []) as ProfileRankRow[];
+  const players = (data ?? []) as unknown as ProfileRankRow[];
   const profileArenaMap = await buildProfileArenaMap(players.map((p) => p.id));
 
   return players.map((p, index) => ({
@@ -261,10 +238,7 @@ export async function fetchIndividualRankingRows(
         avatar_url: p.avatar_url,
       },
     ],
-    arenaLabel:
-      formatArenaName(p.primary_arena) ??
-      profileArenaMap.get(p.id) ??
-      RANKING_ARENA_UNDEFINED,
+    arenaLabel: profileArenaMap.get(p.id) ?? RANKING_ARENA_UNDEFINED,
     games: p.vitorias + p.derrotas,
     points: p.pontos,
     kind: "individual",
@@ -341,7 +315,7 @@ export async function fetchTeamRankingRows(
 }
 
 export async function fetchTeamRankingDetails(teamId: string): Promise<RankingDetailsPayload> {
-  const { data, error } = await supabase.rpc("get_team_ranking_details", {
+  const { data, error } = await (supabase.rpc as any)("get_team_ranking_details", {
     p_team_id: teamId,
   });
   if (error) throw error;
@@ -351,7 +325,7 @@ export async function fetchTeamRankingDetails(teamId: string): Promise<RankingDe
 export async function fetchPlayerRankingDetails(
   profileId: string,
 ): Promise<RankingDetailsPayload> {
-  const { data, error } = await supabase.rpc("get_player_ranking_details", {
+  const { data, error } = await (supabase.rpc as any)("get_player_ranking_details", {
     p_profile_id: profileId,
   });
   if (error) throw error;
