@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ChevronDown, ChevronUp, Crown, MapPin, Medal } from "lucide-react";
 import { RANKING_ARENA_UNDEFINED } from "@/lib/ranking.types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AvatarThumb } from "@/components/avatar-thumb";
 import { cn } from "@/lib/utils";
 import type { RankingTableRow } from "@/lib/ranking.types";
