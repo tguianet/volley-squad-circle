@@ -23,8 +23,8 @@ function StatBlock({
   accentClass?: string;
 }) {
   return (
-    <div className="text-center p-3 rounded-xl bg-secondary/50">
-      <div className={`font-display text-2xl sm:text-3xl leading-none ${accentClass ?? ""}`}>
+    <div className="text-center p-3 rounded-xl bg-secondary/40 border border-border/40">
+      <div className={`coastal-stat ${accentClass ?? "text-foreground"}`}>
         {value}
       </div>
       <div className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wide">{label}</div>

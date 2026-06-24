@@ -201,19 +201,24 @@ function NewMatchPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-xl mx-auto px-4 py-6">
+      <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
         <button
           onClick={() => navigate({ to: "/partidas" })}
-          className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="size-4" /> Voltar
         </button>
-        <h1 className="text-3xl mb-1">Criar partida amistosa</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          Escolha domingo, horário e quadra com disponibilidade em tempo real.
-        </p>
+        <Card className="p-5 border-border/60 shadow-card overflow-hidden relative">
+          <div className="absolute inset-0 gradient-sand opacity-50 pointer-events-none" />
+          <div className="relative">
+            <h1 className="page-title text-2xl sm:text-3xl">Criar partida</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Escolha domingo, horário e quadra com disponibilidade em tempo real.
+            </p>
+          </div>
+        </Card>
 
-        <Card className="p-5 shadow-card space-y-4">
+        <Card className="p-5 sm:p-6 shadow-card border-border/60 space-y-4">
           <div>
             <Label>Título</Label>
             <Input
@@ -333,7 +338,8 @@ function NewMatchPage() {
             />
           </div>
           <Button
-            className="w-full gradient-beach text-white border-0 shadow-glow"
+            variant="beach"
+            className="w-full"
             onClick={handleCreate}
             disabled={saving}
           >

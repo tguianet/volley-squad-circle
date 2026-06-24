@@ -98,11 +98,11 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
 
   return (
     <>
-    <Card className={cn("shadow-card border-border/80 overflow-hidden", compact ? "p-3" : "p-0")}>
-      <div className={cn(compact ? "space-y-2.5" : "p-4 space-y-3")}>
+    <Card className={cn("shadow-card border-border/60 overflow-hidden hover:shadow-card-hover transition-shadow", compact ? "p-3" : "p-0")}>
+      <div className={cn(compact ? "space-y-2.5" : "p-4 sm:p-5 space-y-3")}>
         <div className="flex items-start gap-3">
           <Link {...profileLink} className="shrink-0">
-            <Avatar className="size-10 ring-2 ring-primary/20">
+            <Avatar className="size-11 ring-2 ring-primary/15 shadow-sm">
               {avatarUrl ? <AvatarImage src={avatarUrl} alt={name} /> : null}
               <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
@@ -110,7 +110,7 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <Link {...profileLink} className="text-sm font-semibold hover:underline truncate block">
+                <Link {...profileLink} className="text-sm font-bold hover:underline truncate block">
                   {name}
                 </Link>
                 {handle ? (
@@ -161,7 +161,7 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
         {post.image_url ? (
           <SignedGalleryImage
             path={post.image_url}
-            className="w-full max-h-[70vh] object-cover rounded-xl bg-secondary"
+            className="w-full max-h-[70vh] object-cover rounded-2xl bg-secondary border border-border/40"
           />
         ) : null}
 
@@ -184,16 +184,16 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           </div>
         )}
 
-        <div className="flex items-center gap-1 pt-1 border-t border-border/50">
+        <div className="flex items-center gap-0.5 pt-2 border-t border-border/50 -mx-1">
           <button
             type="button"
             onClick={() => likeMut.mutate(post.liked_by_me)}
             disabled={likeMut.isPending}
             className={cn(
-              "flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg py-2 transition",
+              "flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl py-2.5 transition",
               post.liked_by_me
-                ? "text-destructive bg-destructive/10"
-                : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground",
+                ? "text-accent bg-accent/10"
+                : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
             )}
           >
             <Heart className={cn("size-4", post.liked_by_me && "fill-current")} />
@@ -202,7 +202,7 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           <button
             type="button"
             onClick={() => setShowComments((v) => !v)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg py-2 text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl py-2.5 text-muted-foreground hover:bg-secondary/70 hover:text-foreground transition"
           >
             <MessageCircle className="size-4" />
             Comentar
@@ -210,7 +210,7 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           <button
             type="button"
             onClick={handleShare}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-medium rounded-lg py-2 text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl py-2.5 text-muted-foreground hover:bg-secondary/70 hover:text-foreground transition"
           >
             <Share2 className="size-4" />
             Compartilhar

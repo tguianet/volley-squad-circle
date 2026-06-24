@@ -23,6 +23,13 @@ type ProfileRankRow = {
   pontos: number;
   vitorias: number;
   derrotas: number;
+  arena_id: string | null;
+  primary_arena: { name: string; city: string | null } | null;
+};
+
+type ProfileArenaRow = {
+  id: string;
+  arena_id: string | null;
 };
 
 type TeamRankRow = {
@@ -106,16 +113,35 @@ async function buildProfileArenaMap(profileIds: string[]): Promise<Map<string, s
 
   const profileToArenaId = new Map<string, string>();
 
-  const { data: captainedTeams, error: captainedError } = await supabase
-    .from("teams")
-    .select("captain_id, preferred_arena_id")
-    .in("captain_id", profileIds)
-    .not("preferred_arena_id", "is", null);
-  if (captainedError) throw captainedError;
+  const { data: profileArenas, error: profileArenasError } = await supabase
+    .from("profiles")
+    .select("id, arena_id, primary_arena:arena_id(name, city)")
+    .in("id", profileIds);
+  if (profileArenasError) throw profileArenasError;
 
-  for (const row of (captainedTeams ?? []) as CaptainedTeamArenaRow[]) {
-    if (row.preferred_arena_id && !profileToArenaId.has(row.captain_id)) {
-      profileToArenaId.set(row.captain_id, row.preferred_arena_id);
+  for (const row of (profileArenas ?? []) as Array<
+    ProfileArenaRow & { primary_arena: { name: string; city: string | null } | null }
+  >) {
+    if (row.arena_id) {
+      profileToArenaId.set(row.id, row.arena_id);
+      const label = formatArenaName(row.primary_arena);
+      if (label) result.set(row.id, label);
+    }
+  }
+
+  const missingAfterProfile = profileIds.filter((id) => !profileToArenaId.has(id));
+  if (missingAfterProfile.length > 0) {
+    const { data: captainedTeams, error: captainedError } = await supabase
+      .from("teams")
+      .select("captain_id, preferred_arena_id")
+      .in("captain_id", missingAfterProfile)
+      .not("preferred_arena_id", "is", null);
+    if (captainedError) throw captainedError;
+
+    for (const row of (captainedTeams ?? []) as CaptainedTeamArenaRow[]) {
+      if (row.preferred_arena_id && !profileToArenaId.has(row.captain_id)) {
+        profileToArenaId.set(row.captain_id, row.preferred_arena_id);
+      }
     }
   }
 
@@ -169,6 +195,7 @@ async function buildProfileArenaMap(profileIds: string[]): Promise<Map<string, s
 
   const arenaLabels = await fetchArenaLabelsById([...profileToArenaId.values()]);
   for (const [profileId, arenaId] of profileToArenaId) {
+    if (result.has(profileId)) continue;
     const label = arenaLabels.get(arenaId);
     if (label) result.set(profileId, label);
   }
@@ -212,7 +239,7 @@ export async function fetchIndividualRankingRows(
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, display_name, apelido, username, avatar_url, city, state, level, genero, pontos, vitorias, derrotas",
+      "id, display_name, apelido, username, avatar_url, city, state, level, genero, pontos, vitorias, derrotas, arena_id, primary_arena:arena_id(name, city)",
     )
     .eq("genero", gender)
     .order("pontos", { ascending: false })
@@ -234,7 +261,10 @@ export async function fetchIndividualRankingRows(
         avatar_url: p.avatar_url,
       },
     ],
-    arenaLabel: profileArenaMap.get(p.id) ?? RANKING_ARENA_UNDEFINED,
+    arenaLabel:
+      formatArenaName(p.primary_arena) ??
+      profileArenaMap.get(p.id) ??
+      RANKING_ARENA_UNDEFINED,
     games: p.vitorias + p.derrotas,
     points: p.pontos,
     kind: "individual",

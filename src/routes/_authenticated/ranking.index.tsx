@@ -3,7 +3,7 @@ import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { CalendarDays, MapPin, Mars, Users, Venus } from "lucide-react";
+import { CalendarDays, MapPin, Mars, Trophy, Users, Venus } from "lucide-react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -98,9 +98,18 @@ function RankingPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto px-4 py-6">
-        <h1 className="text-3xl">Ranking</h1>
-        <p className="text-sm text-muted-foreground mb-4">Os melhores na areia.</p>
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        <Card className="p-5 border-border/60 shadow-card overflow-hidden relative">
+          <div className="absolute inset-0 gradient-ocean opacity-[0.06] pointer-events-none" />
+          <div className="relative">
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+              <Trophy className="size-3.5" />
+              Ranking oficial
+            </div>
+            <h1 className="page-title">Ranking</h1>
+            <p className="text-sm text-muted-foreground mt-1">Os melhores na areia de Rio Preto.</p>
+          </div>
+        </Card>
 
         <ToggleGroup
           type="single"

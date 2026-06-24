@@ -46,19 +46,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex w-full">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r bg-card/60 backdrop-blur sticky top-0 h-screen p-6 gap-2">
-        <Link to="/" className="flex items-center gap-2 mb-8">
-          <div className="size-10 rounded-xl overflow-hidden flex items-center justify-center shadow-glow bg-card">
-            <Waves className="size-6 text-primary" aria-hidden="true" />
+      <aside className="hidden md:flex flex-col w-64 border-r border-border/60 bg-card/80 backdrop-blur-md sticky top-0 h-screen p-5 gap-2 shadow-sm">
+        <Link to="/" className="flex items-center gap-3 mb-6 px-1">
+          <div className="size-11 rounded-2xl overflow-hidden flex items-center justify-center shadow-glow gradient-beach">
+            <Waves className="size-6 text-white" aria-hidden="true" />
           </div>
           <div>
-            <div className="font-display text-xl leading-none">PlayBeach</div>
-            <div className="text-[10px] text-muted-foreground tracking-widest leading-tight uppercase whitespace-pre-line">
-              RANKING{"\u00a0"}\nRIO PRETO
+            <div className="font-display text-2xl leading-none tracking-wide">PlayBeach</div>
+            <div className="text-[10px] text-muted-foreground tracking-[0.2em] leading-tight uppercase mt-0.5">
+              Ranking Rio Preto
             </div>
           </div>
         </Link>
-        <nav className="flex flex-col gap-1">
+        <nav className="flex flex-col gap-0.5">
           {[...navItems, ...extra].map((it) => {
             const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
             return (
@@ -66,10 +66,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 key={it.to}
                 to={it.to}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                   active
                     ? "gradient-beach text-white shadow-glow"
-                    : "text-foreground/70 hover:bg-secondary hover:text-foreground",
+                    : "text-foreground/75 hover:bg-secondary/80 hover:text-foreground",
                 )}
               >
                 <it.icon className="size-4" />
@@ -90,14 +90,16 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Sair
           </button>
         </div>
-        <div className="mt-auto p-4 rounded-2xl gradient-sand text-sm">
-          <div className="font-display text-lg leading-none">Pronto pra jogar?</div>
-          <p className="text-xs text-muted-foreground mt-1">
+        <div className="mt-auto p-4 rounded-2xl gradient-sand border border-border/50 text-sm shadow-card">
+          <div className="font-display text-xl leading-none tracking-wide text-sunset">
+            Pronto pra jogar?
+          </div>
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
             Crie ou entre numa partida aberta agora.
           </p>
           <Link
             to="/partidas/nova"
-            className="mt-3 inline-flex items-center justify-center w-full rounded-lg bg-accent text-accent-foreground px-3 py-2 text-xs font-semibold shadow-glow"
+            className="mt-3 inline-flex items-center justify-center w-full rounded-xl bg-accent text-accent-foreground px-3 py-2.5 text-xs font-bold shadow-glow hover:brightness-105 transition"
           >
             Criar partida amistosa
           </Link>
@@ -106,7 +108,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
-        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b bg-card/80 backdrop-blur">
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-border/60 bg-card/90 backdrop-blur-md">
           <Link to="/" className="flex items-center gap-2">
             <div className="size-8 rounded-lg overflow-hidden flex items-center justify-center bg-card">
               <Waves className="size-5 text-primary" aria-hidden="true" />
@@ -124,7 +126,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <main className="flex-1 pb-24 md:pb-8">{children}</main>
 
         {/* Mobile bottom nav */}
-        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-card/95 backdrop-blur">
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur-md pb-safe">
           <div className="grid grid-cols-7">
             {navItems.map((it) => {
               const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);

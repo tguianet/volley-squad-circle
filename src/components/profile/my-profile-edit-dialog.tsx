@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -40,6 +40,8 @@ export type MyProfileFormData = {
   mao_dominante: string | null;
   altura: number | null;
   genero: string | null;
+  arena_id: string | null;
+  arena_name: string | null;
 };
 
 function normalizeAltura(value: string): number | null {
@@ -79,6 +81,21 @@ export function MyProfileEditDialog({
     mao_dominante: "",
     altura: "",
     genero: "",
+    arena_id: "",
+  });
+
+  const arenasQ = useQuery({
+    queryKey: ["arenas-active-edit"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("arenas")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: open,
   });
 
   useEffect(() => {
@@ -95,6 +112,7 @@ export function MyProfileEditDialog({
       mao_dominante: profile.mao_dominante ?? "",
       altura: profile.altura ? String(profile.altura) : "",
       genero: profile.genero ?? "",
+      arena_id: profile.arena_id ?? "",
     });
   }, [open, profile]);
 
@@ -111,6 +129,8 @@ export function MyProfileEditDialog({
         form.mao_dominante &&
         form.genero;
 
+      const selectedArena = (arenasQ.data ?? []).find((a) => a.id === form.arena_id);
+
       const payload = {
         apelido: form.apelido.trim() || null,
         bio: form.bio.trim() || null,
@@ -123,6 +143,7 @@ export function MyProfileEditDialog({
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
         genero: form.genero || null,
+        arena_id: form.arena_id || null,
         status: isProfileComplete ? "completo" : undefined,
       };
 
@@ -136,11 +157,19 @@ export function MyProfileEditDialog({
       if (!data) throw new Error("Nenhuma linha foi atualizada. Verifique permissões.");
 
       qc.setQueryData(["my-profile"], (prev: MyProfileFormData | undefined) =>
-        prev ? { ...prev, ...payload } : prev,
+        prev
+          ? {
+              ...prev,
+              ...payload,
+              arena_name: selectedArena?.name ?? null,
+            }
+          : prev,
       );
       toast.success("Perfil atualizado");
       setOpen(false);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
+      await qc.invalidateQueries({ queryKey: ["ranking-individual-rows"] });
+      await qc.invalidateQueries({ queryKey: ["ranking-team-rows"] });
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, "Erro ao salvar"));
     } finally {
@@ -274,6 +303,27 @@ export function MyProfileEditDialog({
                 <SelectContent>
                   <SelectItem value="M">Masculino</SelectItem>
                   <SelectItem value="F">Feminino</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label>Arena principal</Label>
+              <Select
+                value={form.arena_id || "__none__"}
+                onValueChange={(v) =>
+                  setForm({ ...form, arena_id: v === "__none__" ? "" : v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma arena" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhuma</SelectItem>
+                  {(arenasQ.data ?? []).map((arena) => (
+                    <SelectItem key={arena.id} value={arena.id}>
+                      {arena.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

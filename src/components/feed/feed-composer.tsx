@@ -91,9 +91,9 @@ export function FeedComposer({
   if (!userId) return null;
 
   return (
-    <Card className="p-4 shadow-card border-border/80">
-      <div className="flex gap-3">
-        <Avatar className="size-11 ring-2 ring-primary/25 shrink-0">
+    <Card className="p-4 sm:p-5 shadow-card border-border/60 hover:shadow-card-hover transition-shadow">
+      <div className="flex gap-3 sm:gap-4">
+        <Avatar className="size-12 ring-2 ring-primary/20 shrink-0 shadow-sm">
           {avatarUrl ? <AvatarImage src={avatarUrl} alt={firstName} /> : null}
           <AvatarFallback>{firstName[0]?.toUpperCase() ?? "?"}</AvatarFallback>
         </Avatar>
@@ -103,7 +103,7 @@ export function FeedComposer({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="w-full text-left bg-secondary/60 rounded-xl px-4 py-3 text-sm text-muted-foreground hover:bg-secondary/80 transition"
+              className="w-full text-left bg-secondary/50 rounded-xl px-4 py-3.5 text-sm text-muted-foreground hover:bg-secondary/70 border border-border/40 transition"
             >
               {placeholder ?? `E aí, ${firstName}? Conta como foi o treino...`}
             </button>
@@ -115,7 +115,7 @@ export function FeedComposer({
                 placeholder={placeholder ?? `No que você está pensando sobre o vôlei hoje?`}
                 rows={3}
                 maxLength={2000}
-                className="resize-none bg-secondary/40 border-border/60"
+                className="resize-none bg-card border-border/60"
                 autoFocus
               />
               {preview ? (
@@ -193,7 +193,8 @@ export function FeedComposer({
               ) : null}
               <Button
                 size="sm"
-                className="gradient-beach text-white border-0 shadow-glow gap-1"
+                variant="beach"
+                className="gap-1"
                 disabled={postMut.isPending || (expanded && !text.trim() && !file)}
                 onClick={() => {
                   if (!expanded) {

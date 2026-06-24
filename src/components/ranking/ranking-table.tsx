@@ -74,10 +74,10 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
         ))}
       </div>
 
-      <Card className="hidden md:block shadow-card border-border/80 overflow-hidden p-0">
+      <Card className="hidden md:block shadow-card border-border/60 overflow-hidden p-0">
         <Table>
           <TableHeader>
-            <TableRow className="bg-secondary/50 hover:bg-secondary/50 border-b border-border/80">
+            <TableRow className="bg-secondary/40 hover:bg-secondary/40 border-b border-border/60">
               <TableHead className="w-16 text-xs font-semibold uppercase tracking-wide">
                 #
               </TableHead>

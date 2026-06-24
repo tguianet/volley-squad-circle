@@ -162,7 +162,7 @@ export function MyProfileTabs(props: MyProfileTabsProps) {
 
   return (
     <div className="space-y-0">
-      <Card className="shadow-card border-border/80 p-0 gap-0 overflow-hidden sticky top-0 z-20 bg-background/95 backdrop-blur-sm">
+      <Card className="shadow-card border-border/60 p-0 gap-0 overflow-hidden sticky top-0 z-20 bg-card/95 backdrop-blur-md">
         <div className="flex items-stretch border-b border-border/60">
           <div className="flex flex-1 min-w-0 overflow-x-auto scrollbar-none">
             {PRIMARY_TABS.map((tab) => (

@@ -84,6 +84,8 @@ type MyProfile = {
   pontos: number | null;
   vitorias: number | null;
   derrotas: number | null;
+  arena_id: string | null;
+  arena_name: string | null;
 };
 
 async function fetchMyProfile(): Promise<MyProfile | null> {
@@ -92,12 +94,16 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
     .select(
-      "id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, status, pontos, vitorias, derrotas",
+      "id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, status, pontos, vitorias, derrotas, arena_id, primary_arena:arena_id(name)",
     )
     .eq("id", u.user.id)
     .maybeSingle();
   if (error) throw error;
   const meta = (u.user.user_metadata ?? {}) as Record<string, unknown>;
+  const row = data as {
+    arena_id?: string | null;
+    primary_arena?: { name: string } | null;
+  } | null;
   return {
     email: u.user.email ?? null,
     google_name: (meta.full_name ?? meta.name ?? null) as string | null,
@@ -122,7 +128,10 @@ async function fetchMyProfile(): Promise<MyProfile | null> {
       pontos: 0,
       vitorias: 0,
       derrotas: 0,
+      arena_id: null,
     }),
+    arena_id: row?.arena_id ?? null,
+    arena_name: row?.primary_arena?.name ?? null,
     id: u.user.id,
   } as MyProfile;
 }

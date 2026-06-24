@@ -3,8 +3,10 @@ import { AppLayout } from "@/components/app-layout";
 import { GalleryFeed } from "@/components/gallery-feed";
 import { FeedComposer } from "@/components/feed/feed-composer";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Trophy, Users, Waves } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -43,11 +45,35 @@ function Feed() {
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-3 sm:px-4 py-5 sm:py-6 space-y-4">
-        <div className="hidden md:flex items-center justify-between mb-1">
-          <h1 className="text-2xl sm:text-3xl font-display font-bold">Feed</h1>
+        <div className="hidden md:block">
+          <Card className="p-5 border-border/60 shadow-card overflow-hidden relative">
+            <div className="absolute inset-0 gradient-beach opacity-[0.07] pointer-events-none" />
+            <div className="relative flex items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+                  <Waves className="size-3.5" />
+                  Rede social
+                </div>
+                <h1 className="page-title">Feed da areia</h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Treinos, partidas e novidades da comunidade PlayBeach.
+                </p>
+              </div>
+              <Link to="/partidas/nova">
+                <Button variant="beach" className="shrink-0">
+                  <Trophy className="size-4" />
+                  Criar partida
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
+
+        <div className="md:hidden flex items-center justify-between">
+          <h1 className="page-title text-2xl">Feed</h1>
           <Link to="/partidas/nova">
-            <Button className="gradient-beach text-white shadow-glow border-0">
-              + Criar partida
+            <Button variant="beach" size="sm">
+              + Partida
             </Button>
           </Link>
         </div>
@@ -58,6 +84,11 @@ function Feed() {
           feedQueryKey={FEED_QUERY_KEY}
           placeholder={`E aí, ${firstName}? Conta como foi o treino...`}
         />
+
+        <div className="flex items-center gap-2 text-xs text-muted-foreground px-1">
+          <Users className="size-3.5" />
+          Publicações recentes da comunidade
+        </div>
 
         <GalleryFeed />
       </div>
