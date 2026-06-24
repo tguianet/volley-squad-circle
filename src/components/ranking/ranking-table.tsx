@@ -24,12 +24,17 @@ import {
   fetchTeamRankingDetails,
 } from "@/lib/ranking.queries";
 import type { RankingTableRow } from "@/lib/ranking.types";
+import { cn } from "@/lib/utils";
 
 type RankingTableProps = {
   rows: RankingTableRow[];
   isLoading: boolean;
   emptyMessage: string;
 };
+
+function rankLabel(position: number): string {
+  return String(position).padStart(2, "0");
+}
 
 export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -49,12 +54,18 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
   }
 
   if (isLoading) {
-    return <p className="text-sm text-muted-foreground text-center py-10">Carregando…</p>;
+    return (
+      <Card className="ranking-table-shell p-10 text-center text-sm text-muted-foreground">
+        Carregando…
+      </Card>
+    );
   }
 
   if (rows.length === 0) {
     return (
-      <Card className="p-8 text-center text-sm text-muted-foreground shadow-card">{emptyMessage}</Card>
+      <Card className="ranking-table-shell p-10 text-center text-sm text-muted-foreground">
+        {emptyMessage}
+      </Card>
     );
   }
 
@@ -74,29 +85,29 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
         ))}
       </div>
 
-      <Card className="hidden md:block shadow-card border-border/60 overflow-hidden p-0">
+      <Card className="hidden md:block ranking-table-shell overflow-hidden p-0 border-0 shadow-card">
         <Table>
           <TableHeader>
-            <TableRow className="bg-secondary/40 hover:bg-secondary/40 border-b border-border/60">
-              <TableHead className="w-16 text-xs font-semibold uppercase tracking-wide">
-                #
+            <TableRow className="ranking-table-head hover:ranking-table-head border-0">
+              <TableHead className="w-[72px] text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Rank
               </TableHead>
-              <TableHead className="min-w-[180px] text-xs font-semibold uppercase tracking-wide">
+              <TableHead className="min-w-[180px] text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
                 Time / Jogador
               </TableHead>
-              <TableHead className="min-w-[200px] text-xs font-semibold uppercase tracking-wide hidden lg:table-cell">
+              <TableHead className="min-w-[200px] text-[11px] font-bold uppercase tracking-widest text-muted-foreground hidden lg:table-cell">
                 Jogadores
               </TableHead>
-              <TableHead className="min-w-[140px] text-xs font-semibold uppercase tracking-wide hidden md:table-cell">
+              <TableHead className="min-w-[140px] text-[11px] font-bold uppercase tracking-widest text-muted-foreground hidden md:table-cell">
                 Arena
               </TableHead>
-              <TableHead className="w-24 text-xs font-semibold uppercase tracking-wide text-center">
+              <TableHead className="w-20 text-[11px] font-bold uppercase tracking-widest text-muted-foreground text-center">
                 Jogos
               </TableHead>
-              <TableHead className="w-24 text-xs font-semibold uppercase tracking-wide text-right">
+              <TableHead className="w-24 text-[11px] font-bold uppercase tracking-widest text-muted-foreground text-right">
                 Pontos
               </TableHead>
-              <TableHead className="w-36 text-xs font-semibold uppercase tracking-wide text-right">
+              <TableHead className="w-36 text-[11px] font-bold uppercase tracking-widest text-muted-foreground text-right">
                 Detalhes
               </TableHead>
             </TableRow>
@@ -105,35 +116,58 @@ export function RankingTable({ rows, isLoading, emptyMessage }: RankingTableProp
             {rows.map((row, index) => {
               const displayPosition = index + 1;
               const isExpanded = expandedId === row.id;
+              const isLeader = displayPosition === 1;
+
               return (
                 <Fragment key={row.id}>
-                  <TableRow className="hover:bg-secondary/20 border-border/60">
-                    <TableCell>
-                      <PositionBadge position={displayPosition} />
+                  <TableRow
+                    className={cn(
+                      "ranking-table-row group border-0 transition-all",
+                      isLeader && "ranking-table-row-leader",
+                      index % 2 === 1 && "ranking-table-row-alt",
+                    )}
+                  >
+                    <TableCell className="py-5">
+                      {isLeader ? (
+                        <PositionBadge position={displayPosition} />
+                      ) : (
+                        <span className="font-display text-2xl text-foreground/90 group-hover:scale-105 transition-transform inline-block">
+                          {rankLabel(displayPosition)}
+                        </span>
+                      )}
                     </TableCell>
-                    <TableCell>
-                      <div className="font-semibold">{row.name}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{row.categoryLabel}</div>
+                    <TableCell className="py-5">
+                      <div
+                        className={cn(
+                          "font-display tracking-wide uppercase truncate",
+                          isLeader ? "text-xl text-gradient" : "text-base text-foreground",
+                        )}
+                      >
+                        {row.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5 uppercase tracking-wide">
+                        {row.categoryLabel}
+                      </div>
                       <div className="lg:hidden mt-2">
                         <PlayerChips players={row.players} compact />
                       </div>
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
+                    <TableCell className="hidden lg:table-cell py-5">
                       <PlayerChips players={row.players} />
                     </TableCell>
-                    <TableCell className="hidden md:table-cell max-w-[180px]">
-                      <ArenaLabel label={row.arenaLabel} />
+                    <TableCell className="hidden md:table-cell max-w-[180px] py-5">
+                      <ArenaLabel label={row.arenaLabel} dark />
                     </TableCell>
-                    <TableCell className="text-center font-medium">{row.games}</TableCell>
-                    <TableCell>
-                      <PointsCell points={row.points} />
+                    <TableCell className="text-center font-semibold py-5">{row.games}</TableCell>
+                    <TableCell className="py-5">
+                      <PointsCell points={row.points} leader={isLeader} />
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right py-5">
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="text-primary hover:text-primary"
+                        className="text-primary hover:text-primary hover:bg-primary/10 text-xs font-semibold uppercase tracking-wide"
                         onClick={() => toggleRow(row.id)}
                       >
                         Mais detalhes

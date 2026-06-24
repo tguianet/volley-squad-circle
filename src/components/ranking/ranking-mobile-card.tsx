@@ -25,13 +25,27 @@ export function RankingMobileCard({
   details,
   detailsLoading,
 }: RankingMobileCardProps) {
+  const isLeader = displayPosition === 1;
+
   return (
-    <Card className="p-4 shadow-card border-border/80 space-y-3">
+    <Card
+      className={cn(
+        "p-4 shadow-card space-y-3 ranking-table-shell border-0",
+        isLeader && "ring-1 ring-accent/40",
+      )}
+    >
       <div className="flex items-start gap-3">
         <PositionBadge position={displayPosition} />
         <div className="flex-1 min-w-0 space-y-2">
           <div>
-            <div className="font-semibold truncate">{row.name}</div>
+            <div
+              className={cn(
+                "font-display tracking-wide truncate uppercase",
+                isLeader ? "text-lg text-gradient" : "font-semibold",
+              )}
+            >
+              {row.name}
+            </div>
             <div className="text-xs text-muted-foreground">{row.categoryLabel}</div>
           </div>
           <PlayerChips players={row.players} compact />
@@ -43,7 +57,9 @@ export function RankingMobileCard({
             </span>
             <span>
               <span className="text-muted-foreground">Pts:</span>{" "}
-              <strong className="text-primary">{row.points}</strong>
+              <strong className={isLeader ? "text-gradient font-display text-lg" : "text-primary"}>
+                {row.points}
+              </strong>
             </span>
           </div>
         </div>
@@ -57,7 +73,7 @@ export function RankingMobileCard({
         )}
       </Button>
       {expanded ? (
-        <div className="rounded-xl bg-secondary/25 border border-border/60 overflow-hidden">
+        <div className="rounded-xl ranking-details-panel overflow-hidden">
           <RankingDetailsPanel details={details} isLoading={detailsLoading} />
         </div>
       ) : null}
@@ -114,15 +130,16 @@ export function PlayerChips({
   );
 }
 
-export function ArenaLabel({ label }: { label: string }) {
+export function ArenaLabel({ label, dark }: { label: string; dark?: boolean }) {
   const isUndefined = label === RANKING_ARENA_UNDEFINED;
   return (
     <div className="flex items-center gap-1 min-w-0">
-      <MapPin className="size-3 shrink-0 text-primary/60" />
+      <MapPin className={cn("size-3 shrink-0", dark ? "text-primary/80" : "text-primary/60")} />
       <span
         className={cn(
           "text-xs truncate",
-          isUndefined ? "text-muted-foreground italic" : "text-muted-foreground",
+          isUndefined ? "italic" : "",
+          dark ? "text-muted-foreground" : "text-muted-foreground",
         )}
       >
         {label}
@@ -131,11 +148,18 @@ export function ArenaLabel({ label }: { label: string }) {
   );
 }
 
-export function PointsCell({ points }: { points: number }) {
+export function PointsCell({ points, leader }: { points: number; leader?: boolean }) {
   return (
     <div className="text-right">
-      <div className="font-display text-lg text-gradient leading-none">{points}</div>
-      <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 justify-end mt-0.5">
+      <div
+        className={cn(
+          "font-display leading-none",
+          leader ? "text-2xl text-gradient" : "text-xl text-gradient",
+        )}
+      >
+        {points}
+      </div>
+      <div className="text-[10px] text-muted-foreground flex items-center gap-0.5 justify-end mt-0.5 uppercase tracking-wide">
         <Medal className="size-3" />
         pts
       </div>

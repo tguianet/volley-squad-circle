@@ -128,7 +128,7 @@ export function RankingDetailsRow({
   colSpan,
 }: RankingDetailsPanelProps & { colSpan: number }) {
   return (
-    <TableRow className="bg-secondary/25 hover:bg-secondary/25 border-b">
+    <TableRow className="ranking-details-panel hover:ranking-details-panel border-0">
       <TableCell colSpan={colSpan} className="p-0">
         <RankingDetailsPanel details={details} isLoading={isLoading} />
       </TableCell>
@@ -146,7 +146,7 @@ function Stat({
   accent?: string;
 }) {
   return (
-    <div className="rounded-lg bg-background border border-border/60 px-3 py-2">
+    <div className="rounded-lg bg-secondary/30 border border-border/50 px-3 py-2">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>
       <div className={`text-sm font-semibold mt-0.5 ${accent ?? ""}`}>{value}</div>
     </div>
