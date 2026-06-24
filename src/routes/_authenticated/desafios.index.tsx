@@ -29,10 +29,14 @@ import {
   MapPin,
   ClipboardList,
   Trophy,
+  AlertTriangle,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useMyProfile } from "@/hooks/use-auth";
+import { requiredTeamMemberCount } from "@/lib/team-format";
+
 
 type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
 const CATEGORIES: Array<{ key: CatKey; label: string; category: "dupla" | "quarteto"; gender?: "X" }> = [
