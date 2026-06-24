@@ -223,8 +223,17 @@ function AgendaPage() {
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground text-center mt-6">
-          Disponibilidade dos domingos de 08:00 às 17:00.
+        <p className="text-xs text-muted-foreground text-center mt-6 space-y-2">
+          <span className="block">
+            Disponibilidade dos domingos de 08:00 às 17:00 — mesma grade usada nos desafios de
+            ranking.
+          </span>
+          <span className="block">
+            Horários livres podem ser reservados para{" "}
+            <span className="font-semibold text-primary">partidas amistosas</span> ou{" "}
+            <span className="font-semibold text-accent">desafios oficiais</span> (estes têm
+            prioridade).
+          </span>
         </p>
       </div>
     </AppLayout>

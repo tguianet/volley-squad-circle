@@ -240,6 +240,18 @@
   border-radius: 10px;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.match-card {
+  box-shadow: 0 4px 24px oklch(0.52 0.12 225 / 0.06);
+}
+
 .ranking-table-shell {
   background: oklch(0.2 0.035 240);
   color: oklch(0.95 0.02 85);

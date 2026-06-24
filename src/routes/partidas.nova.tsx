@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,26 +19,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
 import type { Database } from "@/integrations/supabase/types";
-import {
-  CourtPickerModal,
-  SchedulePickerButton,
-  SundayPickerModal,
-  TimeSlotPickerModal,
-} from "@/components/match-availability-pickers";
+import { FriendlySchedulePicker } from "@/components/matches/friendly-schedule-picker";
 import { checkCourtAvailability } from "@/lib/match-availability.queries";
-import {
-  formatDateBR,
-  formatSundayLong,
-  formatTimeSlotLabel,
-  formatWeekdayBR,
-} from "@/lib/date-format";
 
 type MatchModality = Database["public"]["Enums"]["match_modality"];
 type MatchType = Database["public"]["Enums"]["match_type"];
 type MatchStatus = Database["public"]["Enums"]["match_status"];
 
 export const Route = createFileRoute("/partidas/nova")({
-  head: () => ({ meta: [{ title: "Criar partida — PlayBeach" }] }),
+  head: () => ({ meta: [{ title: "Criar partida amistosa | PLAYBEACH" }] }),
   component: NewMatchPage,
 });
 
@@ -63,14 +52,10 @@ function NewMatchPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [courtNumber, setCourtNumber] = useState<number | null>(null);
-  const [courtLabel, setCourtLabel] = useState("");
+  const [courtName, setCourtName] = useState("");
   const [maxPlayers, setMaxPlayers] = useState<number>(4);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const [sundayModalOpen, setSundayModalOpen] = useState(false);
-  const [timeModalOpen, setTimeModalOpen] = useState(false);
-  const [courtModalOpen, setCourtModalOpen] = useState(false);
 
   const { data: arenas = [] } = useQuery({
     queryKey: ["arenas-active"],
@@ -91,46 +76,63 @@ function NewMatchPage() {
     }
   }, [arenas, arenaId]);
 
-  function resetSchedule() {
-    setDate("");
-    setStartTime("");
-    setEndTime("");
-    setCourtNumber(null);
-    setCourtLabel("");
+  useEffect(() => {
+    async function loadDefaultArena() {
+      if (arenaId || arenas.length > 0) return;
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "default_arena_id")
+        .maybeSingle();
+      if (data?.value) {
+        const id =
+          typeof data.value === "string"
+            ? data.value.replace(/"/g, "")
+            : String(data.value).replace(/"/g, "");
+        setArenaId(id);
+      }
+    }
+    loadDefaultArena();
+  }, [arenaId, arenas.length]);
+
+  function handleScheduleChange(value: {
+    date?: string;
+    startTime?: string;
+    endTime?: string;
+    courtNumber?: number;
+    courtName?: string;
+  }) {
+    if (value.date !== undefined) {
+      setDate(value.date);
+      if (!value.startTime) {
+        setStartTime("");
+        setEndTime("");
+        setCourtNumber(null);
+        setCourtName("");
+      }
+    }
+    if (value.startTime !== undefined) {
+      setStartTime(value.startTime);
+      if (!value.courtNumber) {
+        setCourtNumber(null);
+        setCourtName("");
+      }
+    }
+    if (value.endTime !== undefined) setEndTime(value.endTime);
+    if (value.courtNumber !== undefined) {
+      setCourtNumber(value.courtNumber && value.courtNumber > 0 ? value.courtNumber : null);
+    }
+    if (value.courtName !== undefined) setCourtName(value.courtName);
   }
 
   function handleArenaChange(value: string) {
     setArenaId(value);
-    resetSchedule();
+    setDate("");
+    setStartTime("");
+    setEndTime("");
+    setCourtNumber(null);
+    setCourtName("");
   }
-
-  function openSundayPicker() {
-    if (!arenaId) {
-      toast.error("Selecione uma arena antes de escolher a data.");
-      return;
-    }
-    setSundayModalOpen(true);
-  }
-
-  function openTimePicker() {
-    if (!date) {
-      toast.error("Escolha um domingo antes de selecionar o horário.");
-      return;
-    }
-    setTimeModalOpen(true);
-  }
-
-  function openCourtPicker() {
-    if (!date || !startTime || !endTime) {
-      toast.error("Escolha data e horário antes de selecionar a quadra.");
-      return;
-    }
-    setCourtModalOpen(true);
-  }
-
-  const dateLabel = date ? `${formatWeekdayBR(date)}, ${formatDateBR(date)}` : null;
-  const timeLabel =
-    startTime && endTime ? formatTimeSlotLabel(startTime, endTime) : null;
 
   async function handleCreate() {
     if (!title.trim()) {
@@ -142,7 +144,7 @@ function NewMatchPage() {
       return;
     }
     if (!date || !startTime || !endTime) {
-      toast.error("Escolha data e horário disponíveis.");
+      toast.error("Escolha domingo, horário e quadra na agenda.");
       return;
     }
     if (!courtNumber) {
@@ -167,30 +169,32 @@ function NewMatchPage() {
       );
       if (!stillAvailable) {
         toast.error("Essa quadra acabou de ser reservada. Escolha outro horário.");
-        resetSchedule();
+        setDate("");
+        setStartTime("");
+        setEndTime("");
+        setCourtNumber(null);
+        setCourtName("");
         return;
       }
 
-      const { error } = await (supabase
-        .from("matches") as any)
-        .insert({
-          creator_id: u.user.id,
-          arena_id: arenaId,
-          court_number: courtNumber,
-          title: title.trim(),
-          modality: modality as MatchModality,
-          match_type: matchType as MatchType,
-          date,
-          start_time: startTime,
-          end_time: endTime,
-          max_players: maxPlayers,
-          notes: notes.trim() || null,
-          status: "open" satisfies MatchStatus,
-        })
-        .select("id")
-        .single();
+      const insertRow: Database["public"]["Tables"]["matches"]["Insert"] = {
+        creator_id: u.user.id,
+        arena_id: arenaId,
+        court_number: courtNumber,
+        title: title.trim(),
+        modality: modality as MatchModality,
+        match_type: matchType as MatchType,
+        date,
+        start_time: startTime,
+        end_time: endTime,
+        max_players: maxPlayers,
+        notes: notes.trim() || null,
+        status: "open" satisfies MatchStatus,
+      };
+
+      const { error } = await supabase.from("matches").insert(insertRow);
       if (error) throw error;
-      toast.success("Partida criada!");
+      toast.success("Partida amistosa criada!");
       navigate({ to: "/partidas" });
     } catch (e: unknown) {
       toast.error(getErrorMessage(e, "Erro ao criar partida"));
@@ -201,190 +205,143 @@ function NewMatchPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
-        <button
-          onClick={() => navigate({ to: "/partidas" })}
-          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
-        >
-          <ArrowLeft className="size-4" /> Voltar
-        </button>
-        <Card className="p-5 border-border/60 shadow-card overflow-hidden relative">
-          <div className="absolute inset-0 gradient-sand opacity-50 pointer-events-none" />
-          <div className="relative">
-            <h1 className="page-title text-2xl sm:text-3xl">Criar partida</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Escolha domingo, horário e quadra com disponibilidade em tempo real.
-            </p>
-          </div>
-        </Card>
+      <div className="relative min-h-full">
+        <div className="fixed inset-0 pointer-events-none -z-10 opacity-30">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
+        </div>
 
-        <Card className="p-5 sm:p-6 shadow-card border-border/60 space-y-4">
-          <div>
-            <Label>Título</Label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Treino de domingo"
-              maxLength={100}
-            />
-          </div>
-
-          <div>
-            <Label>Arena</Label>
-            <Select value={arenaId} onValueChange={handleArenaChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione uma arena" />
-              </SelectTrigger>
-              <SelectContent>
-                {arenas.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                    {a.city ? ` — ${a.city}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Modalidade</Label>
-              <Select value={modality} onValueChange={setModality}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {MODALITIES.map((m) => (
-                    <SelectItem key={m.v} value={m.v}>
-                      {m.l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Tipo</Label>
-              <Select
-                value={matchType}
-                onValueChange={(v) => {
-                  setMatchType(v);
-                  const t = TYPES.find((x) => x.v === v);
-                  if (t) setMaxPlayers(t.max);
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TYPES.map((t) => (
-                    <SelectItem key={t.v} value={t.v}>
-                      {t.l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <SchedulePickerButton
-            label="Data"
-            value={dateLabel}
-            placeholder="Escolher domingo"
-            disabled={!arenaId}
-            onClick={openSundayPicker}
-          />
-
-          <SchedulePickerButton
-            label="Horário"
-            value={timeLabel}
-            placeholder={date ? "Escolher horário" : "Escolha a data primeiro"}
-            disabled={!date}
-            onClick={openTimePicker}
-          />
-
-          <SchedulePickerButton
-            label="Quadra"
-            value={courtLabel || null}
-            placeholder={
-              startTime && endTime ? "Escolher quadra" : "Escolha data e horário primeiro"
-            }
-            disabled={!date || !startTime || !endTime}
-            onClick={openCourtPicker}
-          />
-
-          {date && startTime && endTime && courtNumber ? (
-            <p className="text-xs text-muted-foreground rounded-lg bg-secondary/40 px-3 py-2">
-              {formatSundayLong(date)} · {timeLabel} · {courtLabel}
-            </p>
-          ) : null}
-
-          <div>
-            <Label>Máximo de jogadores</Label>
-            <Input
-              type="number"
-              min={2}
-              max={20}
-              value={maxPlayers}
-              onChange={(e) => setMaxPlayers(Number(e.target.value))}
-            />
-          </div>
-          <div>
-            <Label>Observações</Label>
-            <Textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Detalhes adicionais (opcional)"
-              maxLength={500}
-            />
-          </div>
-          <Button
-            variant="beach"
-            className="w-full"
-            onClick={handleCreate}
-            disabled={saving}
+        <div className="max-w-3xl mx-auto px-4 lg:px-6 py-6 space-y-5">
+          <Link
+            to="/partidas"
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
           >
-            {saving ? "Criando..." : "Criar partida"}
-          </Button>
-        </Card>
+            <ArrowLeft className="size-4" /> Voltar às partidas
+          </Link>
 
-        <SundayPickerModal
-          open={sundayModalOpen}
-          onOpenChange={setSundayModalOpen}
-          arenaId={arenaId}
-          onSelect={(selectedDate) => {
-            setDate(selectedDate);
-            setStartTime("");
-            setEndTime("");
-            setCourtNumber(null);
-            setCourtLabel("");
-          }}
-        />
+          <Card className="p-5 sm:p-6 challenge-panel overflow-hidden relative">
+            <div className="absolute inset-0 gradient-sand opacity-40 pointer-events-none" />
+            <div className="relative">
+              <span className="coastal-pill bg-primary/10 text-primary border border-primary/20 text-[10px] mb-3 inline-block">
+                Partida amistosa
+              </span>
+              <h1 className="page-title text-2xl sm:text-3xl">Criar partida</h1>
+              <p className="text-sm text-muted-foreground mt-2">
+                Use a mesma agenda de domingos do ranking. Não altera posições — apenas diversão na
+                areia.
+              </p>
+            </div>
+          </Card>
 
-        <TimeSlotPickerModal
-          open={timeModalOpen}
-          onOpenChange={setTimeModalOpen}
-          arenaId={arenaId}
-          matchDate={date}
-          onSelect={(slot) => {
-            setStartTime(slot.start_time);
-            setEndTime(slot.end_time);
-            setCourtNumber(null);
-            setCourtLabel("");
-          }}
-        />
+          <Card className="p-5 sm:p-6 challenge-panel space-y-5">
+            <div>
+              <Label>Título</Label>
+              <Input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ex: Treino de domingo"
+                maxLength={100}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
 
-        <CourtPickerModal
-          open={courtModalOpen}
-          onOpenChange={setCourtModalOpen}
-          arenaId={arenaId}
-          matchDate={date}
-          startTime={startTime}
-          endTime={endTime}
-          onSelect={(court) => {
-            setCourtNumber(court.court_number);
-            setCourtLabel(court.court_name);
-          }}
-        />
+            <div>
+              <Label>Arena</Label>
+              <Select value={arenaId} onValueChange={handleArenaChange}>
+                <SelectTrigger className="mt-1.5 rounded-xl">
+                  <SelectValue placeholder="Selecione uma arena" />
+                </SelectTrigger>
+                <SelectContent>
+                  {arenas.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.name}
+                      {a.city ? ` — ${a.city}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Modalidade</Label>
+                <Select value={modality} onValueChange={setModality}>
+                  <SelectTrigger className="mt-1.5 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MODALITIES.map((m) => (
+                      <SelectItem key={m.v} value={m.v}>
+                        {m.l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <Select
+                  value={matchType}
+                  onValueChange={(v) => {
+                    setMatchType(v);
+                    const t = TYPES.find((x) => x.v === v);
+                    if (t) setMaxPlayers(t.max);
+                  }}
+                >
+                  <SelectTrigger className="mt-1.5 rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TYPES.map((t) => (
+                      <SelectItem key={t.v} value={t.v}>
+                        {t.l}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <FriendlySchedulePicker
+              arenaId={arenaId}
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              courtNumber={courtNumber}
+              courtName={courtName}
+              onChange={handleScheduleChange}
+            />
+
+            <div>
+              <Label>Máximo de jogadores</Label>
+              <Input
+                type="number"
+                min={2}
+                max={20}
+                value={maxPlayers}
+                onChange={(e) => setMaxPlayers(Number(e.target.value))}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <div>
+              <Label>Observações</Label>
+              <Textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Detalhes adicionais (opcional)"
+                maxLength={500}
+                className="mt-1.5 rounded-xl"
+              />
+            </div>
+            <Button
+              variant="beach"
+              className="w-full rounded-xl font-bold text-base py-6"
+              onClick={handleCreate}
+              disabled={saving || !arenaId}
+            >
+              {saving ? "Criando…" : "Criar partida amistosa"}
+            </Button>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );
