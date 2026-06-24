@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ChevronDown, ChevronUp, Crown, MapPin, Medal } from "lucide-react";
 import { RANKING_ARENA_UNDEFINED } from "@/lib/ranking.types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AvatarThumb } from "@/components/avatar-thumb";
 import { cn } from "@/lib/utils";
 import type { RankingTableRow } from "@/lib/ranking.types";
@@ -107,28 +109,51 @@ export function PlayerChips({
   players: RankingTableRow["players"];
   compact?: boolean;
 }) {
+  const [open, setOpen] = useState(false);
   if (players.length === 0) {
     return <span className="text-xs text-muted-foreground">—</span>;
   }
+  const size = compact ? "size-7" : "size-9";
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {players.map((p) => (
-        <div
-          key={p.id}
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full bg-secondary/70",
-            compact ? "pl-0.5 pr-2 py-0.5" : "pl-1 pr-2.5 py-1",
-          )}
-        >
-          <AvatarThumb src={p.avatar_url} name={p.name} className={compact ? "size-5" : "size-6"} />
-          <span className={cn("truncate", compact ? "text-[11px] max-w-[88px]" : "text-xs max-w-[120px]")}>
-            {p.name}
-          </span>
-        </div>
-      ))}
-    </div>
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        className="flex -space-x-2 items-center hover:opacity-90 transition-opacity"
+        aria-label="Ver jogadores"
+      >
+        {players.map((p) => (
+          <AvatarThumb
+            key={p.id}
+            src={p.avatar_url}
+            name={p.name}
+            className={cn(size, "ring-2 ring-background rounded-full")}
+          />
+        ))}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Jogadores</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            {players.map((p) => (
+              <div key={p.id} className="flex items-center gap-3">
+                <AvatarThumb src={p.avatar_url} name={p.name} className="size-14 rounded-full" />
+                <span className="font-medium text-base">{p.name}</span>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
+
+
 
 export function ArenaLabel({ label, dark }: { label: string; dark?: boolean }) {
   const isUndefined = label === RANKING_ARENA_UNDEFINED;
