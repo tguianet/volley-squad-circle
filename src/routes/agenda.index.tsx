@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+
 import { CalendarDays, Clock, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -230,6 +230,3 @@ function AgendaPage() {
     </AppLayout>
   );
 }
-
-// Button retained for tree-shaking compat
-void Button;
