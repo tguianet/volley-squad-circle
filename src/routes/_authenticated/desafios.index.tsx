@@ -37,11 +37,11 @@ import { useMyProfile } from "@/hooks/use-auth";
 
 type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
 const CATEGORIES: Array<{ key: CatKey; label: string; category: "dupla" | "quarteto"; gender?: "X" }> = [
-  { key: "dupla", label: "Dupla" },
-  { key: "quarteto", label: "Quarteto" },
-  { key: "dupla_mista", label: "Dupla Mista", gender: "X" },
-  { key: "quarteto_misto", label: "Quarteto Misto", gender: "X" },
-].map((c) => ({ ...c, category: c.key.startsWith("dupla") ? "dupla" : "quarteto" }));
+  { key: "dupla", label: "Dupla", category: "dupla" },
+  { key: "quarteto", label: "Quarteto", category: "quarteto" },
+  { key: "dupla_mista", label: "Dupla Mista", category: "dupla", gender: "X" },
+  { key: "quarteto_misto", label: "Quarteto Misto", category: "quarteto", gender: "X" },
+];
 
 function teamCatKey(t: { category: string; gender?: string | null }): CatKey {
   if (t.category === "dupla") return t.gender === "X" ? "dupla_mista" : "dupla";
