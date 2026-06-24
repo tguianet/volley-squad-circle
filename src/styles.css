@@ -214,6 +214,32 @@
   border: 1px solid oklch(0.91 0.015 85 / 0.9);
 }
 
+@utility challenge-glass {
+  background: oklch(1 0 0 / 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid oklch(1 0 0 / 0.4);
+  box-shadow: 0 20px 40px oklch(0.52 0.12 225 / 0.08);
+}
+
+@utility challenge-panel {
+  background: oklch(1 0 0);
+  border-radius: 1rem;
+  border: 1px solid oklch(0.91 0.015 85 / 0.6);
+  box-shadow: 0 4px 24px oklch(0.52 0.12 225 / 0.06);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: oklch(0.94 0.02 85);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--coastal-ocean-light);
+  border-radius: 10px;
+}
+
 .ranking-table-shell {
   background: oklch(0.2 0.035 240);
   color: oklch(0.95 0.02 85);

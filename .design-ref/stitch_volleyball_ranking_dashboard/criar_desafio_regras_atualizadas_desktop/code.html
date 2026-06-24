@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Criar Desafio | PLAYBEACH</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@400;600;700&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#00a3ad",
+                        "tertiary": "#5f5e5b",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "primary-fixed-dim": "#5dd8e2",
+                        "inverse-surface": "#2f3131",
+                        "tertiary-container": "#95938f",
+                        "outline-variant": "#bcc9ca",
+                        "tertiary-fixed-dim": "#c9c6c2",
+                        "surface-container-low": "#f3f3f4",
+                        "inverse-primary": "#5dd8e2",
+                        "inverse-on-surface": "#f0f1f1",
+                        "on-error": "#ffffff",
+                        "on-surface": "#1a1c1c",
+                        "primary-fixed": "#7df4ff",
+                        "on-tertiary-fixed": "#1c1c19",
+                        "on-tertiary-container": "#2c2c29",
+                        "on-tertiary-fixed-variant": "#474743",
+                        "on-background": "#1a1c1c",
+                        "surface-tint": "#006970",
+                        "secondary-fixed-dim": "#ffb785",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#3d494a",
+                        "surface-container-high": "#e8e8e8",
+                        "secondary-fixed": "#ffdcc6",
+                        "primary": "#006970",
+                        "secondary-container": "#fd8100",
+                        "on-primary-container": "#003235",
+                        "on-secondary-container": "#5d2c00",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed": "#301400",
+                        "background": "#f9f9f9",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-highest": "#e2e2e2",
+                        "on-secondary-fixed-variant": "#723700",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-bright": "#f9f9f9",
+                        "on-primary-fixed-variant": "#004f54",
+                        "surface-variant": "#e2e2e2",
+                        "outline": "#6d797b",
+                        "surface": "#f9f9f9",
+                        "surface-dim": "#dadada",
+                        "surface-container": "#eeeeee",
+                        "secondary": "#954a00",
+                        "tertiary-fixed": "#e5e2dd",
+                        "on-primary-fixed": "#002022"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "xl": "80px",
+                        "margin-mobile": "16px",
+                        "base": "8px",
+                        "xs": "4px",
+                        "sm": "12px",
+                        "md": "24px",
+                        "lg": "48px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Plus Jakarta Sans"],
+                        "label-sm": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Archivo Narrow"],
+                        "label-bold": ["Plus Jakarta Sans"],
+                        "headline-xl": ["Archivo Narrow"],
+                        "body-md": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-md": ["Archivo Narrow"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "label-bold": ["14px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .step-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #00A3AD;
+            border-radius: 10px;
+        }
+        #non-captain-overlay {
+            display: none;
+        }
+        body.not-captain #non-captain-overlay {
+            display: flex;
+        }
+        body.not-captain main {
+            filter: blur(2px);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-background font-body-md text-on-surface overflow-x-hidden">
+<!-- Non-Captain Warning Overlay -->
+<div class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-md items-center justify-center p-md" id="non-captain-overlay">
+<div class="bg-white rounded-2xl p-lg max-w-md w-full shadow-2xl text-center">
+<div class="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mx-auto mb-6">
+<span class="material-symbols-outlined text-4xl">lock</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-4">Acesso Restrito</h2>
+<p class="text-on-surface-variant mb-8">Apenas o <b>Capitão da Equipe</b> pode iniciar novos desafios no ranking. Solicite ao seu capitão para prosseguir.</p>
+<button class="w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all" onclick="window.history.back()">
+            Voltar para o Ranking
+        </button>
+</div>
+</div>
+<!-- Top Navigation -->
+<header class="fixed top-0 z-50 w-full h-16 bg-surface/70 backdrop-blur-xl border-b border-white/40 shadow-sm flex justify-between items-center px-margin-desktop">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-3xl">waves</span>
+<span class="font-headline-lg text-headline-lg font-bold tracking-tighter text-primary">PLAYBEACH</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGLAwzTrPwssuqLZWPyvw1SqG0I3lcUMSclsuet1quofOnHWxPr0hqyzKRRZJfMf5evM2fqGC-JpWPpDPBTz7mIIvwUn9f5eenU1LK-iE1Sm50g8LBtZ0TApI0yrN5celDthwWDmSPMLgRHkXZKW2ct51PcaAL2F_n55sDQF9uk8zP5xTdYaSCMH1UDmPupiB4FPvLZqv00-sVM6doS-tXpMAjckLfJ6v3Id0a8M7V0n6d5fi_tEsB9PdTFL75YLkwseb4DlhHYCU"/>
+</div>
+</div>
+</header>
+<main class="pt-32 pb-xl px-margin-desktop max-w-[1440px] mx-auto grid grid-cols-12 gap-gutter relative">
+<!-- Background Accent -->
+<div class="fixed inset-0 pointer-events-none -z-10 opacity-30">
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]"></div>
+<div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[120px]"></div>
+</div>
+<!-- Left Column: Challenge Stepper -->
+<div class="col-span-8">
+<div class="mb-lg">
+<h1 class="font-headline-xl text-headline-xl text-primary tracking-tight">🏆 Criar Desafio</h1>
+<p class="text-on-surface-variant text-body-lg">Desafie equipes do ranking e dispute posições.</p>
+</div>
+<!-- Stepper Progress -->
+<div class="mb-gutter flex items-center gap-4">
+<div class="flex-1 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm" id="step-dot-1">1</div>
+<div class="h-1 flex-1 bg-primary rounded-full"></div>
+</div>
+<div class="flex-1 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm" id="step-dot-2">2</div>
+<div class="h-1 flex-1 bg-surface-variant rounded-full"></div>
+</div>
+<div class="flex-1 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm" id="step-dot-3">3</div>
+<div class="h-1 flex-1 bg-surface-variant rounded-full"></div>
+</div>
+<div class="flex-1 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm" id="step-dot-4">4</div>
+<div class="h-1 flex-1 bg-surface-variant rounded-full"></div>
+</div>
+<div class="flex-1 flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm" id="step-dot-5">5</div>
+</div>
+</div>
+<!-- Steps Container -->
+<div class="min-h-[500px]" id="stepper-content">
+<!-- Step 1: My Team -->
+<section class="step-transition" id="step-1">
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-surface-variant/50">
+<div class="flex items-center gap-6 mb-gutter">
+<div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary text-4xl border-4 border-white shadow-md relative">
+<span class="material-symbols-outlined text-5xl">group</span>
+<div class="absolute -bottom-2 right-0 bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold shadow-sm">CAPITÃO</div>
+</div>
+<div>
+<div class="flex items-center gap-3">
+<h3 class="font-headline-md text-headline-md text-on-surface">Minha Equipe: <span class="text-primary">China</span></h3>
+</div>
+<p class="text-on-surface-variant">Posição Atual: <span class="font-bold text-secondary">#12</span> | Nível: Avançado</p>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-lg bg-surface border border-primary/20 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">person</span>
+<div>
+<p class="text-xs font-label-sm text-on-surface-variant">Atleta 1 (Você)</p>
+<p class="font-body-md font-semibold">Ricardo Santos</p>
+</div>
+</div>
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] rounded font-bold uppercase">Capitão</span>
+</div>
+<div class="p-4 rounded-lg bg-surface flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">person</span>
+<div>
+<p class="text-xs font-label-sm text-on-surface-variant">Atleta 2</p>
+<p class="font-body-md font-semibold">Felipe Almeida</p>
+</div>
+</div>
+</div>
+<div class="mt-8 p-4 bg-primary-container/5 border border-primary-container/20 rounded-lg flex items-start gap-3">
+<span class="material-symbols-outlined text-primary-container mt-0.5">info</span>
+<p class="text-sm text-on-surface-variant">Sua equipe está com os 2 membros obrigatórios ativos. Você está apto a realizar desafios no ranking.</p>
+</div>
+<div class="mt-8 flex justify-end">
+<button class="px-8 py-3 bg-primary-container text-white font-bold rounded-lg hover:shadow-lg active:scale-95 transition-all" onclick="goToStep(2)">Continuar para Adversários</button>
+</div>
+</div>
+</section>
+<!-- Step 2: Adversary -->
+<section class="hidden step-transition" id="step-2">
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-variant/50 overflow-hidden">
+<div class="p-gutter border-b border-surface-variant/50 flex flex-col gap-4 bg-surface-container-low">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md">Escolha seu Adversário</h3>
+<div class="relative">
+<input class="pl-10 pr-4 py-2 rounded-full border-surface-variant bg-white text-sm focus:ring-primary focus:border-primary w-64" placeholder="Buscar equipe..." type="text"/>
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-[10px] rounded-full font-bold uppercase border border-secondary/20">Até 3 posições acima</span>
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] rounded-full font-bold uppercase border border-primary/20">Até 2 posições abaixo</span>
+<span class="px-3 py-1 bg-surface-variant text-on-surface-variant text-[10px] rounded-full font-bold uppercase">Top 5 Exclusivo</span>
+</div>
+</div>
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface text-on-surface-variant text-xs uppercase tracking-wider">
+<th class="px-6 py-4 font-bold">Posição</th>
+<th class="px-6 py-4 font-bold">Equipe</th>
+<th class="px-6 py-4 font-bold">Status Legível</th>
+<th class="px-6 py-4 font-bold text-right">Ação</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant/30">
+<!-- Eligible Up (Position 9) -->
+<tr class="hover:bg-surface-variant/10 transition-colors">
+<td class="px-6 py-4 font-headline-md text-secondary">#09</td>
+<td class="px-6 py-4 font-bold">Areia Quente</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] rounded-full font-bold uppercase">Disputa de Subida</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container hover:text-white transition-all text-sm" onclick="selectAdversary('Areia Quente', '#09')">Desafiar</button>
+</td>
+</tr>
+<!-- Eligible Up (Position 10) -->
+<tr class="hover:bg-surface-variant/10 transition-colors">
+<td class="px-6 py-4 font-headline-md text-secondary">#10</td>
+<td class="px-6 py-4 font-bold">Team Alpha</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] rounded-full font-bold uppercase">Disputa de Subida</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container hover:text-white transition-all text-sm" onclick="selectAdversary('Team Alpha', '#10')">Desafiar</button>
+</td>
+</tr>
+<!-- Eligible Up (Position 11) -->
+<tr class="hover:bg-surface-variant/10 transition-colors">
+<td class="px-6 py-4 font-headline-md text-secondary">#11</td>
+<td class="px-6 py-4 font-bold">Sunset Warriors</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-secondary/10 text-secondary text-[10px] rounded-full font-bold uppercase">Disputa de Subida</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container hover:text-white transition-all text-sm" onclick="selectAdversary('Sunset Warriors', '#11')">Desafiar</button>
+</td>
+</tr>
+<!-- Eligible Down (Position 13) -->
+<tr class="hover:bg-surface-variant/10 transition-colors">
+<td class="px-6 py-4 font-headline-md text-primary">#13</td>
+<td class="px-6 py-4 font-bold">Marujos Pro</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] rounded-full font-bold uppercase">Defesa de Posição</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container hover:text-white transition-all text-sm" onclick="selectAdversary('Marujos Pro', '#13')">Desafiar</button>
+</td>
+</tr>
+<!-- Eligible Down (Position 14) -->
+<tr class="hover:bg-surface-variant/10 transition-colors">
+<td class="px-6 py-4 font-headline-md text-primary">#14</td>
+<td class="px-6 py-4 font-bold">Vôlei Beach</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] rounded-full font-bold uppercase">Defesa de Posição</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="px-4 py-2 border-2 border-primary-container text-primary-container font-bold rounded-lg hover:bg-primary-container hover:text-white transition-all text-sm" onclick="selectAdversary('Vôlei Beach', '#14')">Desafiar</button>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="p-gutter flex justify-start">
+<button class="px-6 py-2 text-on-surface-variant font-bold flex items-center gap-2 hover:bg-surface-variant/30 rounded-lg transition-all" onclick="goToStep(1)">
+<span class="material-symbols-outlined">arrow_back</span> Voltar
+                        </button>
+</div>
+</div>
+</section>
+<!-- Step 3: Date Selector -->
+<section class="hidden step-transition" id="step-3">
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-surface-variant/50">
+<h3 class="font-headline-md text-headline-md mb-gutter">Selecione a Data (Domingos)</h3>
+<div class="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
+<button class="date-btn flex-shrink-0 w-24 h-32 rounded-xl border-2 border-surface-variant flex flex-col items-center justify-center hover:border-primary-container hover:bg-primary/5 transition-all group" onclick="selectDate('12 Nov')">
+<span class="text-xs uppercase font-bold text-on-surface-variant group-hover:text-primary">Nov</span>
+<span class="text-3xl font-headline-xl text-on-surface group-hover:text-primary">12</span>
+<span class="text-xs font-semibold text-secondary">DOM</span>
+</button>
+<button class="date-btn flex-shrink-0 w-24 h-32 rounded-xl border-2 border-surface-variant flex flex-col items-center justify-center hover:border-primary-container hover:bg-primary/5 transition-all group" onclick="selectDate('19 Nov')">
+<span class="text-xs uppercase font-bold text-on-surface-variant group-hover:text-primary">Nov</span>
+<span class="text-3xl font-headline-xl text-on-surface group-hover:text-primary">19</span>
+<span class="text-xs font-semibold text-secondary">DOM</span>
+</button>
+<button class="date-btn flex-shrink-0 w-24 h-32 rounded-xl border-2 border-surface-variant flex flex-col items-center justify-center hover:border-primary-container hover:bg-primary/5 transition-all group" onclick="selectDate('26 Nov')">
+<span class="text-xs uppercase font-bold text-on-surface-variant group-hover:text-primary">Nov</span>
+<span class="text-3xl font-headline-xl text-on-surface group-hover:text-primary">26</span>
+<span class="text-xs font-semibold text-secondary">DOM</span>
+</button>
+</div>
+<div class="mt-8 flex justify-between items-center">
+<button class="px-6 py-2 text-on-surface-variant font-bold flex items-center gap-2 hover:bg-surface-variant/30 rounded-lg transition-all" onclick="goToStep(2)">
+<span class="material-symbols-outlined">arrow_back</span> Voltar
+                        </button>
+<button class="px-8 py-3 bg-primary-container text-white font-bold rounded-lg opacity-50 cursor-not-allowed transition-all" disabled="" id="next-to-4">Próximo: Horário</button>
+</div>
+</div>
+</section>
+<!-- Step 4: Time Selection -->
+<section class="hidden step-transition" id="step-4">
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-surface-variant/50">
+<h3 class="font-headline-md text-headline-md mb-gutter">Horários Disponíveis</h3>
+<div class="grid grid-cols-4 gap-4">
+<button class="time-btn py-4 border-2 border-surface-variant rounded-lg font-bold hover:border-primary-container hover:text-primary transition-all" onclick="selectTime('08:00')">08:00</button>
+<button class="time-btn py-4 border-2 border-surface-variant rounded-lg font-bold hover:border-primary-container hover:text-primary transition-all" onclick="selectTime('09:30')">09:30</button>
+<button class="time-btn py-4 border-2 border-surface-variant rounded-lg font-bold hover:border-primary-container hover:text-primary transition-all" onclick="selectTime('11:00')">11:00</button>
+<button class="time-btn py-4 border-2 border-surface-variant rounded-lg font-bold hover:border-primary-container hover:text-primary transition-all" onclick="selectTime('17:00')">17:00</button>
+</div>
+<div class="mt-8 flex justify-between items-center">
+<button class="px-6 py-2 text-on-surface-variant font-bold flex items-center gap-2 hover:bg-surface-variant/30 rounded-lg transition-all" onclick="goToStep(3)">
+<span class="material-symbols-outlined">arrow_back</span> Voltar
+                        </button>
+<button class="px-8 py-3 bg-primary-container text-white font-bold rounded-lg opacity-50 cursor-not-allowed transition-all" disabled="" id="next-to-5">Próximo: Quadra</button>
+</div>
+</div>
+</section>
+<!-- Step 5: Court Selection -->
+<section class="hidden step-transition" id="step-5">
+<div class="bg-surface-container-lowest p-md rounded-xl shadow-sm border border-surface-variant/50">
+<h3 class="font-headline-md text-headline-md mb-gutter">Escolha a Quadra</h3>
+<div class="grid grid-cols-2 gap-6">
+<button class="court-btn text-left group" onclick="selectCourt('Quadra Central')">
+<div class="relative h-48 rounded-xl overflow-hidden border-4 border-transparent group-hover:border-primary transition-all shadow-md">
+<img alt="Quadra Central" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU36_Zb_ADvlpomGVQadA72iDMRjUrViMD3PRZPl9Wv9wlOGIVYTv5prng8r_ocvUAaTOpYmKHCesB8HVi1U5y5nePPWILHmxbFUhynnRfSlaRoiZTGRoUcGm9hCibcMV6XkNnmIMbMJe__pL71Tnpua7iwnFZNrmwxSSb-GH2rJT0U5ltmmoj2Qz6nGdU4jz9_E02E5rsIb_7NViTZAikea_O4TymMKPH6QPcrZyMg24u6uhJTYpB2qo5TxFYz_Wi1AdYNgd45Ak"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<p class="font-bold text-lg">Quadra Central</p>
+<p class="text-xs opacity-80 uppercase font-bold tracking-widest">Areia Profissional</p>
+</div>
+</div>
+</button>
+<button class="court-btn text-left group" onclick="selectCourt('Quadra 02')">
+<div class="relative h-48 rounded-xl overflow-hidden border-4 border-transparent group-hover:border-primary transition-all shadow-md">
+<img alt="Quadra 02" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWWovN2bDscN3Sw3Gy_ndbHrY-S2aQspvoD-ayJkz_MUFDIwYls-SRgqhMhLocwLWN5Kb1XWU-JbgylT7q-AeUSS1KTRRs8kzi7t8ROlPIM3IkUDergH-X-CoX9rWLIcfgV_POnn8MR9eIXT5xom1_I-O121twNb01EHzDBuqsAoOGgUiL7sF4ebD6jd7Aj0xif_bBzWPS22PwiS2GGd86_RKmrgmiFkQ1bVXBnA4gxJqgeEsxKztQgfMDhwvK6LVD-U1clwfggxY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+<div class="absolute bottom-4 left-4 text-white">
+<p class="font-bold text-lg">Quadra 02</p>
+<p class="text-xs opacity-80 uppercase font-bold tracking-widest">Vista Mar</p>
+</div>
+</div>
+</button>
+</div>
+<div class="mt-8 flex justify-between items-center">
+<button class="px-6 py-2 text-on-surface-variant font-bold flex items-center gap-2 hover:bg-surface-variant/30 rounded-lg transition-all" onclick="goToStep(4)">
+<span class="material-symbols-outlined">arrow_back</span> Voltar
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Right Column: Sticky Summary -->
+<div class="col-span-4">
+<div class="sticky top-24 glass-card p-gutter rounded-2xl shadow-xl border-white/50">
+<div class="flex items-center gap-2 mb-6 text-primary">
+<span class="material-symbols-outlined">assignment</span>
+<h2 class="font-headline-md text-headline-md">Resumo do Desafio</h2>
+</div>
+<div class="space-y-6">
+<!-- Teams Comparison -->
+<div class="p-4 bg-white/50 rounded-xl border border-white relative overflow-hidden">
+<div class="flex items-center justify-between mb-4">
+<div class="text-center w-1/3">
+<p class="text-[10px] font-bold text-primary mb-2">CASA</p>
+<div class="w-12 h-12 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-sm mx-auto mb-2 shadow-sm border-2 border-white">CH</div>
+<p class="font-bold text-sm">China</p>
+<p class="text-[10px] font-bold text-secondary">#12</p>
+</div>
+<div class="font-headline-lg text-primary-container italic text-2xl">VS</div>
+<div class="text-center w-1/3">
+<p class="text-[10px] font-bold text-on-surface-variant mb-2">VISITANTE</p>
+<div class="w-12 h-12 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-bold text-sm mx-auto mb-2 shadow-sm border-2 border-white" id="summary-adv-avatar">
+<span class="material-symbols-outlined">person_add</span>
+</div>
+<p class="font-bold text-sm text-on-surface-variant italic leading-tight" id="summary-adv-name">A definir</p>
+<p class="text-[10px] font-bold text-secondary" id="summary-adv-rank">-</p>
+</div>
+</div>
+<!-- Ranking Exchange Warning -->
+<div class="bg-secondary/5 border border-secondary/20 p-2 rounded-lg text-center hidden" id="position-warning">
+<p class="text-[10px] text-on-surface-variant">
+<span class="font-bold text-secondary uppercase">Aviso de Posição:</span><br/>
+                            Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem iguais.
+                        </p>
+</div>
+</div>
+<!-- Details -->
+<div class="space-y-3">
+<div class="flex items-center gap-4 p-3 bg-surface/50 rounded-lg">
+<div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined">calendar_today</span>
+</div>
+<div>
+<p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Data Selecionada</p>
+<p class="font-bold text-sm" id="summary-date">A definir</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 bg-surface/50 rounded-lg">
+<div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<div>
+<p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Horário</p>
+<p class="font-bold text-sm" id="summary-time">A definir</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-3 bg-surface/50 rounded-lg">
+<div class="w-10 h-10 rounded-lg bg-white flex items-center justify-center text-primary shadow-sm">
+<span class="material-symbols-outlined">stadium</span>
+</div>
+<div>
+<p class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-wider">Quadra</p>
+<p class="font-bold text-sm" id="summary-court">A definir</p>
+</div>
+</div>
+</div>
+<hr class="border-white/40"/>
+<!-- Actions -->
+<div class="flex flex-col gap-3">
+<button class="w-full py-4 bg-secondary-container text-on-secondary-container font-headline-md rounded-xl opacity-50 cursor-not-allowed shadow-md hover:shadow-orange-200 active:scale-95 transition-all" disabled="" id="final-submit">
+                        ENVIAR DESAFIO
+                    </button>
+<button class="w-full py-3 text-on-surface-variant font-bold hover:bg-white/40 rounded-xl transition-all" onclick="window.location.reload()">
+                        Cancelar
+                    </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<footer class="h-20 bg-surface-container border-t border-white/40 flex items-center justify-center text-on-surface-variant/60 font-label-sm mt-xl">
+    © 2023 PLAYBEACH - Elite Beach Sports Management.
+</footer>
+<script>
+    // CAPTAIN CHECK SIMULATION
+    // Set to 'true' to allow interaction, 'false' to show warning
+    const IS_CAPTAIN = true; 
+    if (!IS_CAPTAIN) {
+        document.body.classList.add('not-captain');
+    }
+
+    let currentStep = 1;
+    const selections = {
+        adversary: null,
+        date: null,
+        time: null,
+        court: null
+    };
+
+    function goToStep(step) {
+        // Hide all steps
+        for (let i = 1; i <= 5; i++) {
+            const stepEl = document.getElementById(`step-${i}`);
+            if (stepEl) stepEl.classList.add('hidden');
+            
+            // Update dots
+            const dot = document.getElementById(`step-dot-${i}`);
+            if (dot) {
+                if (i < step) {
+                    dot.classList.remove('bg-surface-variant', 'bg-primary');
+                    dot.classList.add('bg-primary');
+                    dot.innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+                } else if (i === step) {
+                    dot.classList.remove('bg-surface-variant');
+                    dot.classList.add('bg-primary');
+                    dot.innerHTML = step;
+                } else {
+                    dot.classList.remove('bg-primary');
+                    dot.classList.add('bg-surface-variant');
+                    dot.innerHTML = i;
+                }
+            }
+        }
+        // Show current
+        const nextStepEl = document.getElementById(`step-${step}`);
+        if (nextStepEl) nextStepEl.classList.remove('hidden');
+        
+        currentStep = step;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function selectAdversary(name, rank) {
+        selections.adversary = name;
+        document.getElementById('summary-adv-name').innerText = name;
+        document.getElementById('summary-adv-name').classList.remove('italic', 'text-on-surface-variant');
+        document.getElementById('summary-adv-name').classList.add('text-primary');
+        document.getElementById('summary-adv-rank').innerText = rank;
+        document.getElementById('summary-adv-rank').classList.remove('opacity-0');
+        document.getElementById('summary-adv-avatar').innerHTML = name.substring(0, 2).toUpperCase();
+        document.getElementById('summary-adv-avatar').classList.replace('bg-surface-variant', 'bg-secondary-container');
+        document.getElementById('summary-adv-avatar').classList.replace('text-on-surface-variant', 'text-on-secondary-container');
+        
+        // Show position warning logic (Always relevant in ranking challenges)
+        document.getElementById('position-warning').classList.remove('hidden');
+        
+        goToStep(3);
+    }
+
+    function selectDate(date) {
+        selections.date = date;
+        document.getElementById('summary-date').innerText = date;
+        
+        // UI highlight
+        document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('border-primary-container', 'bg-primary/10'));
+        event.currentTarget.classList.add('border-primary-container', 'bg-primary/10');
+        
+        document.getElementById('next-to-4').disabled = false;
+        document.getElementById('next-to-4').classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        goToStep(4);
+    }
+
+    function selectTime(time) {
+        selections.time = time;
+        document.getElementById('summary-time').innerText = time;
+
+        // UI highlight
+        document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('border-primary-container', 'bg-primary/10', 'text-primary'));
+        event.currentTarget.classList.add('border-primary-container', 'bg-primary/10', 'text-primary');
+
+        document.getElementById('next-to-5').disabled = false;
+        document.getElementById('next-to-5').classList.remove('opacity-50', 'cursor-not-allowed');
+        
+        goToStep(5);
+    }
+
+    function selectCourt(court) {
+        selections.court = court;
+        document.getElementById('summary-court').innerText = court;
+
+        // UI highlight
+        document.querySelectorAll('.court-btn .relative').forEach(b => b.classList.remove('border-primary'));
+        event.currentTarget.querySelector('.relative').classList.add('border-primary');
+
+        // Final Validation
+        checkFinalValidity();
+    }
+
+    function checkFinalValidity() {
+        if (selections.adversary && selections.date && selections.time && selections.court) {
+            const btn = document.getElementById('final-submit');
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.classList.add('hover:scale-[1.02]');
+            
+            // Add success interaction
+            btn.onclick = () => {
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span> ENVIANDO...';
+                setTimeout(() => {
+                    alert('Desafio enviado com sucesso para a equipe ' + selections.adversary + '! Aguarde a confirmação do adversário.');
+                    window.location.reload();
+                }, 1500);
+            }
+        }
+    }
+</script>
+</body></html>

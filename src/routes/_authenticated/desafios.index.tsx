@@ -3,7 +3,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -27,10 +26,15 @@ import {
   CalendarDays,
   Clock,
   MapPin,
-  ClipboardList,
-  Trophy,
-  AlertTriangle,
   ShieldAlert,
+  Star,
+  Lock,
+  Info,
+  Volleyball,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Verified,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -43,6 +47,8 @@ import {
   isTeamComplete,
   isUserTeamCaptain,
 } from "@/lib/challenge-rules";
+import { ChallengeStepIndicator } from "@/components/challenges/challenge-step-indicator";
+import { ChallengeSummaryPanel } from "@/components/challenges/challenge-summary-panel";
 
 
 type CatKey =
@@ -107,7 +113,7 @@ type CourtSlot = {
   is_free: boolean;
 };
 
-const WEEKDAYS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 function initials(name?: string | null) {
@@ -126,6 +132,28 @@ function levelFromRank(pos: number | null | undefined): string {
   if (pos <= 15) return "Avançado";
   if (pos <= 30) return "Intermediário";
   return "Iniciante";
+}
+
+function eligibilityMeta(eligibility: "top5" | "above" | "below") {
+  if (eligibility === "top5") {
+    return {
+      label: "TOP 5",
+      rowLabel: "Regra TOP 5",
+      cls: "bg-accent/10 text-accent border-accent/20",
+    };
+  }
+  if (eligibility === "above") {
+    return {
+      label: "3 acima",
+      rowLabel: "Disputa de Subida",
+      cls: "bg-accent/10 text-accent border-accent/20",
+    };
+  }
+  return {
+    label: "2 abaixo",
+    rowLabel: "Defesa de Posição",
+    cls: "bg-primary/10 text-primary border-primary/20",
+  };
 }
 
 function DesafiosPage() {
@@ -402,684 +430,680 @@ function DesafiosPage() {
   if (!userId) {
     return (
       <AppLayout>
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="max-w-[1440px] mx-auto px-4 py-12">
           <p className="text-sm text-muted-foreground">Carregando…</p>
         </div>
       </AppLayout>
     );
   }
 
+  const summaryPanel = (
+    <ChallengeSummaryPanel
+      myTeamName={myTeam?.name}
+      myTeamRank={myTeam?.rank_position}
+      opponentName={opponent?.name}
+      opponentRank={opponent?.rank_position}
+      date={date}
+      time={time}
+      courtName={selectedCourt?.court_name}
+      canSubmit={!!canSubmit}
+      isPending={sendM.isPending}
+      onSubmit={handleSubmit}
+      onCancel={reset}
+    />
+  );
+
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
-        {/* Header */}
-        <div className="text-center space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2">
-            <Trophy className="size-6 text-primary" /> Criar Desafio
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Desafie equipes do ranking e dispute posições.
-          </p>
+      <div className="relative min-h-full">
+        <div className="fixed inset-0 pointer-events-none -z-10 opacity-30">
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-accent/10 rounded-full blur-[120px]" />
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-center justify-center gap-2 sm:gap-3">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <div key={n} className="flex items-center gap-2 sm:gap-3">
-              <div
-                className={cn(
-                  "size-8 sm:size-9 rounded-full grid place-items-center text-sm font-bold border-2 transition-colors",
-                  step >= n
-                    ? "bg-primary text-primary-foreground border-primary shadow-glow"
-                    : "bg-card text-muted-foreground border-border",
-                )}
-              >
-                {n}
-              </div>
-              {n < 5 && (
-                <div
-                  className={cn(
-                    "h-0.5 w-4 sm:w-8 transition-colors",
-                    step > n ? "bg-primary" : "bg-border",
-                  )}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+        <div className="max-w-[1440px] mx-auto px-4 lg:px-10 py-6 lg:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+            {/* Coluna principal — wizard */}
+            <div className="lg:col-span-8 space-y-6">
+              <header>
+                <h1 className="page-title text-3xl sm:text-4xl text-primary flex items-center gap-3">
+                  🏆 Criar Desafio
+                </h1>
+                <p className="text-muted-foreground text-base sm:text-lg mt-2">
+                  Desafie equipes do ranking e dispute posições seguindo as regras oficiais.
+                </p>
+              </header>
 
-        {selectableCaptainedTeams.length === 0 ? (
-          <Card className="p-8 text-center">
-            <p className="font-semibold mb-1">
-              Você precisa ser capitão de um time completo para criar desafios.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {captainedTeams.length > 0
-                ? "Complete a formação da sua equipe para liberar os desafios."
-                : "Crie uma equipe ou torne-se capitão para começar a desafiar."}
-            </p>
-          </Card>
-        ) : (
-          <>
-            {/* STEP 1 — My Team */}
-            {step === 1 && (
-              <Card className="p-5 space-y-4">
-                <div className="flex items-center gap-2 text-primary">
-                  <Users className="size-5" />
-                  <h2 className="font-semibold">Minha Equipe</h2>
+              {selectableCaptainedTeams.length > 0 && <ChallengeStepIndicator step={step} />}
+
+              {selectableCaptainedTeams.length === 0 ? (
+                <div className="challenge-panel p-8 sm:p-12 text-center max-w-2xl">
+                  <div className="size-16 mx-auto mb-4 rounded-full bg-destructive/10 text-destructive grid place-items-center">
+                    <Lock className="size-8" />
+                  </div>
+                  <p className="font-display text-xl font-bold mb-2">
+                    Você precisa ser capitão de um time completo para criar desafios.
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {captainedTeams.length > 0
+                      ? "Complete a formação da sua equipe para liberar os desafios."
+                      : "Crie uma equipe ou torne-se capitão para começar a desafiar."}
+                  </p>
                 </div>
+              ) : (
+                <>
+                  {/* STEP 1 */}
+                  {step === 1 && (
+                    <section className="challenge-panel p-5 sm:p-6 space-y-5">
+                      <div className="flex items-center gap-2 text-primary">
+                        <Users className="size-5" />
+                        <h2 className="font-display text-xl font-bold tracking-wide">Minha Equipe</h2>
+                      </div>
 
-                {/* My profile chip */}
-                <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
-                  <Avatar className="size-12">
-                    <AvatarImage src={myProfile?.avatar_url ?? undefined} />
-                    <AvatarFallback>{initials(myProfile?.display_name)}</AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Meu perfil
-                    </div>
-                    <div className="font-semibold truncate">
-                      {myProfile?.display_name ?? "Você"}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Category pills — qual ranking vou desafiar */}
-                <div>
-                  <div className="text-xs text-muted-foreground mb-2">
-                    Qual ranking deseja desafiar?
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map((c) => {
-                      const count = selectableCaptainedTeams.filter(
-                        (t) => teamCatKey(t) === c.key,
-                      ).length;
-                      const active = categoryKey === c.key;
-                      const disabled = count === 0;
-                      return (
-                        <button
-                          key={c.key}
-                          type="button"
-                          disabled={disabled}
-                          onClick={() => {
-                            setCategoryKey(active ? "" : c.key);
-                            setMyTeamId("");
-                            setOpponentId("");
-                          }}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-colors",
-                            active
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-card border-border hover:border-primary/40",
-                            disabled && "opacity-40 cursor-not-allowed",
-                          )}
-                        >
-                          {c.label}
-                          {count > 0 && (
-                            <span className="ml-1.5 text-[10px] opacity-70">({count})</span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {teamsInCategory.length > 1 && (
-                  <div>
-                    <label className="text-xs text-muted-foreground">Selecione a equipe</label>
-                    <Select value={myTeamId} onValueChange={setMyTeamId}>
-                      <SelectTrigger className="mt-1">
-                        <SelectValue placeholder="Escolha a equipe" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {teamsInCategory.map((t) => (
-                          <SelectItem key={t.id} value={t.id}>
-                            {t.name} — {catLabel(t)} (Capitão)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {myTeam ? (
-                  <>
-                    <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <div className="font-bold text-lg">{myTeam.name}</div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold">
-                            Capitão
-                          </span>
-                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
-                            {catLabel(myTeam)}
-                          </span>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                          Qual ranking deseja desafiar?
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {CATEGORIES.map((c) => {
+                            const count = selectableCaptainedTeams.filter(
+                              (t) => teamCatKey(t) === c.key,
+                            ).length;
+                            const active = categoryKey === c.key;
+                            const disabled = count === 0;
+                            return (
+                              <button
+                                key={c.key}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => {
+                                  setCategoryKey(active ? "" : c.key);
+                                  setMyTeamId("");
+                                  setOpponentId("");
+                                }}
+                                className={cn(
+                                  "coastal-pill border-2 transition-all",
+                                  active
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-card border-border hover:border-primary/40",
+                                  disabled && "opacity-40 cursor-not-allowed",
+                                )}
+                              >
+                                {c.label}
+                                {count > 0 && <span className="ml-1 opacity-70">({count})</span>}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Posição Atual:{" "}
-                        <span className="text-primary font-semibold">
-                          #{myTeam.rank_position ?? "—"}
-                        </span>{" "}
-                        | Nível:{" "}
-                        <span className="text-primary font-semibold">
-                          {levelFromRank(myTeam.rank_position)}
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {players.map((m, i) => (
-                        <div
-                          key={m.profile?.id ?? i}
-                          className={cn(
-                            "rounded-xl border p-3 text-center",
-                            m.isMe ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card",
-                          )}
-                        >
-                          <Avatar className="size-12 mx-auto mb-2">
-                            <AvatarImage src={m.profile?.avatar_url ?? undefined} />
-                            <AvatarFallback>{initials(m.profile?.display_name)}</AvatarFallback>
-                          </Avatar>
-                          <div className="text-[10px] text-muted-foreground uppercase">
-                            {m.isMe ? "Você" : `Atleta ${i + 1}`}
+                      {teamsInCategory.length > 1 && (
+                        <div>
+                          <label className="text-xs text-muted-foreground font-medium">
+                            Selecione a equipe
+                          </label>
+                          <Select value={myTeamId} onValueChange={setMyTeamId}>
+                            <SelectTrigger className="mt-1 rounded-xl">
+                              <SelectValue placeholder="Escolha a equipe" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {teamsInCategory.map((t) => (
+                                <SelectItem key={t.id} value={t.id}>
+                                  {t.name} — {catLabel(t)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {myTeam && (
+                        <div className="challenge-glass rounded-xl border-l-4 border-l-primary p-5 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 flex items-center gap-1 rounded-bl-lg">
+                            <Star className="size-3 fill-current" />
+                            VOCÊ É O CAPITÃO
                           </div>
-                          <div className="text-sm font-semibold truncate">
-                            {m.profile?.display_name ?? "—"}
+                          <div className="flex gap-4 items-start pr-24">
+                            <div className="size-16 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                              <Volleyball className="size-8 text-primary" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-display text-xl font-bold">{myTeam.name}</h3>
+                                <span className="coastal-pill bg-primary/10 text-primary border-0">
+                                  {catLabel(myTeam)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                Posição atual:{" "}
+                                <span className="font-bold text-accent">#{myTeam.rank_position ?? "—"}</span>
+                                <span className="mx-2">·</span>
+                                Nível:{" "}
+                                <span className="font-bold text-primary">
+                                  {levelFromRank(myTeam.rank_position)}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {players.map((m, i) => (
+                              <div
+                                key={m.profile?.id ?? i}
+                                className={cn(
+                                  "p-3 rounded-lg border",
+                                  m.isMe
+                                    ? "bg-primary/5 border-primary/25"
+                                    : "bg-muted/30 border-border/60",
+                                )}
+                              >
+                                <p
+                                  className={cn(
+                                    "text-[10px] font-bold uppercase mb-1 flex items-center gap-1",
+                                    m.isMe ? "text-primary" : "text-muted-foreground",
+                                  )}
+                                >
+                                  {m.isMe && <Star className="size-3 fill-current" />}
+                                  {m.isMe ? "Capitão" : `Atleta ${i + 1}`}
+                                </p>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="size-8">
+                                    <AvatarImage src={m.profile?.avatar_url ?? undefined} />
+                                    <AvatarFallback className="text-xs">
+                                      {initials(m.profile?.display_name)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <p className="font-bold text-sm truncate">
+                                    {m.profile?.display_name ?? "—"}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {myTeamIsComplete && (
+                            <div className="mt-4 p-3 bg-primary/5 border border-primary/15 rounded-lg flex items-start gap-2">
+                              <Info className="size-4 text-primary shrink-0 mt-0.5" />
+                              <p className="text-sm text-muted-foreground">
+                                Sua equipe está completa e apta a realizar desafios no ranking.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {!myTeam && categoryKey && (
+                        <p className="text-sm text-muted-foreground">
+                          Selecione um time completo que você capitaneia nesta categoria.
+                        </p>
+                      )}
+                      {!categoryKey && (
+                        <p className="text-sm text-muted-foreground">Escolha uma categoria acima.</p>
+                      )}
+
+                      {incompleteCaptainedInCategory.map((t) => (
+                        <div
+                          key={t.id}
+                          className="p-4 border border-dashed border-border rounded-xl opacity-90"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="size-10 rounded-lg bg-muted flex items-center justify-center">
+                              <Users className="size-5 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm">{t.name}</p>
+                              <p className="text-xs text-destructive font-medium">
+                                Time incompleto ({t.members?.length ?? 0}/
+                                {requiredTeamMemberCount(t.category as "dupla" | "quarteto")} membros)
+                              </p>
+                            </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {categoryKey
-                      ? "Selecione um time completo que você capitaneia nesta categoria."
-                      : "Escolha uma categoria acima."}
-                  </p>
-                )}
 
-                {incompleteCaptainedInCategory.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300"
-                  >
-                    <AlertTriangle className="size-4 mt-0.5 shrink-0" />
-                    <span>
-                      <span className="font-semibold">{t.name}</span> — time incompleto (
-                      {t.members?.length ?? 0}/{requiredTeamMemberCount(t.category as "dupla" | "quarteto")}{" "}
-                      membros). Complete a formação para criar desafios.
-                    </span>
-                  </div>
-                ))}
+                      {memberOnlyInCategory.map((t) => (
+                        <div
+                          key={t.id}
+                          className="p-4 bg-muted/40 border border-border/60 rounded-xl opacity-75"
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="size-10 rounded-lg bg-muted flex items-center justify-center">
+                              <Lock className="size-5 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-sm">
+                                {t.name} ({catLabel(t)})
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                #{t.rank_position ?? "—"} no ranking
+                              </p>
+                            </div>
+                          </div>
+                          <div className="bg-destructive/10 text-destructive text-[11px] font-bold p-2 rounded flex items-center gap-2">
+                            <Info className="size-3.5 shrink-0" />
+                            Você participa deste time, mas não é o capitão.
+                          </div>
+                        </div>
+                      ))}
 
-                {memberOnlyInCategory.map((t) => (
-                  <div
-                    key={t.id}
-                    className="flex items-start gap-2 rounded-lg border border-border bg-secondary/30 p-3 text-sm text-muted-foreground"
-                  >
-                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                    <span>
-                      <span className="font-semibold text-foreground">{t.name}</span> — Você
-                      participa deste time, mas não é o capitão.
-                    </span>
-                  </div>
-                ))}
+                      <div className="flex justify-end pt-2">
+                        <Button
+                          size="lg"
+                          className="rounded-xl font-bold px-8"
+                          onClick={() => setStep(2)}
+                          disabled={!canProceedWithChallenge}
+                        >
+                          Continuar para Adversários
+                        </Button>
+                      </div>
+                    </section>
+                  )}
 
-                {myTeam && !isCaptainOfSelected && (
-                  <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                    <span>Somente o capitão pode criar desafios por este time.</span>
-                  </div>
-                )}
-
-                {myTeam && isCaptainOfSelected && !myTeamIsComplete && (
-                  <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                    <span>
-                      Seu time precisa estar completo para criar desafios (
-                      {myTeamMemberCount}/
-                      {requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto")} membros).
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={() => setStep(2)}
-                    disabled={!canProceedWithChallenge}
-                  >
-                    Continuar para Adversários
-                  </Button>
-                </div>
-              </Card>
-            )}
-
-
-            {/* STEP 2 — Opponent */}
-            {step === 2 && (
-              <Card className="p-5 space-y-4">
-                {!canProceedWithChallenge ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                      <span>Somente o capitão pode criar desafios por este time.</span>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                      <ArrowLeft className="size-4 mr-1" /> Voltar
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <h2 className="font-semibold">Escolha seu Adversário</h2>
-                    {myTeam && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Meu time: <span className="font-semibold text-foreground">{myTeam.name}</span> · Posição{" "}
-                        <span className="text-primary font-semibold">#{myTeam.rank_position ?? "—"}</span>
-                        {myTeam.rank_position != null && myTeam.rank_position <= 5
-                          ? " — TOP 5 (pode desafiar qualquer time do TOP 5)"
-                          : " — até 3 acima / 2 abaixo"}
-                      </p>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Buscar equipe"
-                      className="h-9 rounded-xl border border-border/70 bg-card pl-8 pr-3 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto rounded-xl border border-border/60">
-                  <table className="w-full text-sm">
-                    <thead className="bg-secondary/40 text-xs uppercase text-muted-foreground">
-                      <tr>
-                        <th className="px-3 py-2 text-left">Pos.</th>
-                        <th className="px-3 py-2 text-left">Equipe</th>
-                        <th className="px-3 py-2 text-left">Capitão</th>
-                        <th className="px-3 py-2 text-center">Jog.</th>
-                        <th className="px-3 py-2 text-right">Pontos</th>
-                        <th className="px-3 py-2 text-right">Ação</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {candidates.length === 0 && (
-                        <tr>
-                          <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
-                            Nenhuma equipe elegível para desafio no momento.
-                          </td>
-                        </tr>
-                      )}
-                      {candidates.map((t) => {
-                        const captain = t.members?.find((m) => m.profile?.id === t.captain_id)?.profile;
-                        const badge =
-                          t.eligibility === "top5"
-                            ? { label: "TOP 5", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" }
-                            : t.eligibility === "above"
-                              ? { label: "3 acima", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" }
-                              : { label: "2 abaixo", cls: "bg-sky-500/15 text-sky-600 dark:text-sky-400" };
-                        return (
-                          <tr key={t.id} className="border-t border-border/40">
-                            <td className="px-3 py-2 font-semibold">#{t.rank_position}</td>
-                            <td className="px-3 py-2">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-medium">{t.name}</span>
-                                <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-semibold", badge.cls)}>
-                                  {badge.label}
-                                </span>
+                  {/* STEP 2 */}
+                  {step === 2 && (
+                    <section className="challenge-panel overflow-hidden">
+                      {!canProceedWithChallenge ? (
+                        <div className="p-6 space-y-4">
+                          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                            <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                            <span>Somente o capitão pode criar desafios por este time.</span>
+                          </div>
+                          <Button variant="outline" onClick={() => setStep(1)}>
+                            <ArrowLeft className="size-4 mr-1" /> Voltar
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="p-5 sm:p-6 border-b border-border/50 bg-muted/30 space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div>
+                                <h2 className="font-display text-xl font-bold">Escolha seu Adversário</h2>
+                                {myTeam && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {myTeam.name} · #{myTeam.rank_position ?? "—"}
+                                    {myTeam.rank_position != null && myTeam.rank_position <= 5
+                                      ? " · TOP 5"
+                                      : " · até 3 acima / 2 abaixo"}
+                                  </p>
+                                )}
                               </div>
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground truncate max-w-[160px]">
-                              {captain?.display_name ?? "—"}
-                            </td>
-                            <td className="px-3 py-2 text-center text-muted-foreground">
-                              {t.members?.length ?? 0}
-                            </td>
-                            <td className="px-3 py-2 text-right font-semibold">{t.points ?? 0}</td>
-                            <td className="px-3 py-2 text-right">
-                              <Button
-                                size="sm"
-                                variant={opponentId === t.id ? "default" : "outline"}
-                                onClick={() => setOpponentId(t.id)}
+                              <div className="relative">
+                                <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                <input
+                                  value={search}
+                                  onChange={(e) => setSearch(e.target.value)}
+                                  placeholder="Buscar equipe..."
+                                  className="h-10 w-full sm:w-64 rounded-full border border-border bg-card pl-9 pr-4 text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none"
+                                />
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="coastal-pill bg-accent/10 text-accent border border-accent/20">
+                                Até 3 posições acima
+                              </span>
+                              <span className="coastal-pill bg-primary/10 text-primary border border-primary/20">
+                                Até 2 posições abaixo
+                              </span>
+                              <span className="coastal-pill bg-muted text-muted-foreground border border-border">
+                                Top 5 Exclusivo
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="bg-muted/40 text-muted-foreground text-xs uppercase tracking-wider">
+                                  <th className="px-4 sm:px-6 py-3 text-left font-bold">Posição</th>
+                                  <th className="px-4 sm:px-6 py-3 text-left font-bold">Equipe</th>
+                                  <th className="px-4 sm:px-6 py-3 text-left font-bold hidden sm:table-cell">
+                                    Status
+                                  </th>
+                                  <th className="px-4 sm:px-6 py-3 text-right font-bold">Ação</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border/40">
+                                {candidates.length === 0 && (
+                                  <tr>
+                                    <td
+                                      colSpan={4}
+                                      className="px-6 py-10 text-center text-muted-foreground"
+                                    >
+                                      Nenhuma equipe elegível para desafio no momento.
+                                    </td>
+                                  </tr>
+                                )}
+                                {candidates.map((t) => {
+                                  const meta = eligibilityMeta(t.eligibility);
+                                  const selected = opponentId === t.id;
+                                  const captain = t.members?.find(
+                                    (m) => m.profile?.id === t.captain_id,
+                                  )?.profile;
+                                  return (
+                                    <tr
+                                      key={t.id}
+                                      className={cn(
+                                        "hover:bg-primary/5 transition-colors",
+                                        selected && "bg-primary/5 border-l-4 border-l-primary",
+                                      )}
+                                    >
+                                      <td className="px-4 sm:px-6 py-4">
+                                        <div
+                                          className={cn(
+                                            "size-8 rounded-full font-bold text-sm grid place-items-center border",
+                                            t.eligibility === "top5"
+                                              ? "bg-amber-500/10 text-amber-700 border-amber-500/20"
+                                              : t.eligibility === "above"
+                                                ? "bg-accent/10 text-accent border-accent/20"
+                                                : "bg-primary/10 text-primary border-primary/20",
+                                          )}
+                                        >
+                                          {t.rank_position}
+                                        </div>
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-4">
+                                        <p className="font-bold">{t.name}</p>
+                                        <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">
+                                          {captain?.display_name ?? "—"} · {t.members?.length ?? 0}{" "}
+                                          jog.
+                                        </p>
+                                        <span
+                                          className={cn(
+                                            "sm:hidden inline-flex mt-1 coastal-pill border text-[10px]",
+                                            meta.cls,
+                                          )}
+                                        >
+                                          {meta.label}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-4 hidden sm:table-cell">
+                                        <span
+                                          className={cn(
+                                            "inline-flex items-center gap-1 coastal-pill border text-[10px]",
+                                            meta.cls,
+                                          )}
+                                        >
+                                          {t.eligibility === "top5" && (
+                                            <Verified className="size-3" />
+                                          )}
+                                          {t.eligibility === "above" && (
+                                            <ChevronUp className="size-3" />
+                                          )}
+                                          {t.eligibility === "below" && (
+                                            <ChevronDown className="size-3" />
+                                          )}
+                                          {meta.rowLabel}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 sm:px-6 py-4 text-right">
+                                        <Button
+                                          size="sm"
+                                          variant={selected ? "beach" : "outline"}
+                                          className={cn(
+                                            "rounded-lg font-bold",
+                                            !selected &&
+                                              "border-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground",
+                                          )}
+                                          onClick={() => setOpponentId(t.id)}
+                                        >
+                                          {selected ? (
+                                            <>
+                                              <Check className="size-3.5 mr-1" /> Selecionado
+                                            </>
+                                          ) : (
+                                            "Desafiar"
+                                          )}
+                                        </Button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          <div className="p-5 sm:p-6 flex justify-between gap-3 border-t border-border/40">
+                            <Button variant="ghost" onClick={() => setStep(1)}>
+                              <ArrowLeft className="size-4 mr-1" /> Voltar
+                            </Button>
+                            <Button disabled={!opponentId} onClick={() => setStep(3)}>
+                              Próximo: Data
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </section>
+                  )}
+
+                  {/* STEP 3 */}
+                  {step === 3 && (
+                    <section className="challenge-panel p-5 sm:p-6 space-y-5">
+                      {!canProceedWithChallenge || !opponentId ? (
+                        <BlockedStep onBack={() => setStep(1)} />
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 text-primary">
+                            <CalendarDays className="size-5" />
+                            <h2 className="font-display text-xl font-bold">
+                              Selecione a Data (Domingos)
+                            </h2>
+                          </div>
+                          <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                            {nextSundays.map((s) => (
+                              <button
+                                key={s.iso}
+                                type="button"
+                                onClick={() => {
+                                  setDate(s.iso);
+                                  setTime("");
+                                  setCourtId("");
+                                }}
+                                className={cn(
+                                  "shrink-0 w-24 h-32 rounded-xl border-2 flex flex-col items-center justify-center transition-all group",
+                                  date === s.iso
+                                    ? "border-primary bg-primary/10 shadow-md"
+                                    : "border-border hover:border-primary/50 hover:bg-primary/5",
+                                )}
                               >
-                                {opponentId === t.id ? "Selecionado" : "Desafiar"}
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Confirmação do confronto */}
-                {opponent && myTeam && (
-                  <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 space-y-3">
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-                      <div className="text-center">
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Seu time
-                        </div>
-                        <div className="font-bold">{myTeam.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          #{myTeam.rank_position ?? "—"} · {myTeam.points ?? 0} pts
-                        </div>
-                      </div>
-                      <div className="font-bold text-primary">VS</div>
-                      <div className="text-center">
-                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          Adversário
-                        </div>
-                        <div className="font-bold">{opponent.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          #{opponent.rank_position ?? "—"} · {opponent.points ?? 0} pts
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/40 rounded-lg p-2">
-                      <AlertTriangle className="size-3.5 mt-0.5 text-amber-500 shrink-0" />
-                      <span>
-                        Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem
-                        iguais.
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-between">
-                  <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                    <ArrowLeft className="size-4 mr-1" /> Voltar
-                  </Button>
-                  <Button size="sm" disabled={!opponentId} onClick={() => setStep(3)}>
-                    Próximo: Data
-                  </Button>
-                </div>
-                  </>
-                )}
-              </Card>
-            )}
-
-
-            {/* STEP 3 — Date */}
-            {step === 3 && (
-              <Card className="p-5 space-y-4">
-                {!canProceedWithChallenge || !opponentId ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                      <span>{CHALLENGE_INVALID_MESSAGE}</span>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                      <ArrowLeft className="size-4 mr-1" /> Voltar
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                <div className="flex items-center gap-2 text-primary">
-                  <CalendarDays className="size-5" />
-                  <h2 className="font-semibold">Selecione a Data (Domingos)</h2>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {nextSundays.map((s) => (
-                    <button
-                      key={s.iso}
-                      type="button"
-                      onClick={() => {
-                        setDate(s.iso);
-                        setTime("");
-                        setCourtId("");
-                        setStep(4);
-                      }}
-                      className={cn(
-                        "rounded-xl border-2 p-3 text-center transition-colors",
-                        date === s.iso
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/40",
+                                <span
+                                  className={cn(
+                                    "text-xs uppercase font-bold",
+                                    date === s.iso
+                                      ? "text-primary"
+                                      : "text-muted-foreground group-hover:text-primary",
+                                  )}
+                                >
+                                  {s.month}
+                                </span>
+                                <span
+                                  className={cn(
+                                    "text-3xl font-display font-bold my-1",
+                                    date === s.iso && "text-primary",
+                                  )}
+                                >
+                                  {s.day}
+                                </span>
+                                <span className="text-xs font-semibold text-accent">DOM</span>
+                              </button>
+                            ))}
+                          </div>
+                          <div className="flex justify-between gap-3 pt-2">
+                            <Button variant="ghost" onClick={() => setStep(2)}>
+                              <ArrowLeft className="size-4 mr-1" /> Voltar
+                            </Button>
+                            <Button disabled={!date} onClick={() => setStep(4)}>
+                              Próximo: Horário
+                            </Button>
+                          </div>
+                        </>
                       )}
-                    >
-                      <div className="text-xs text-muted-foreground">{s.month}</div>
-                      <div className="text-2xl font-bold">{s.day}</div>
-                      <div className="text-[10px] text-muted-foreground">DOM</div>
-                    </button>
-                  ))}
-                </div>
-                <div className="flex justify-between">
-                  <Button variant="outline" size="sm" onClick={() => setStep(2)}>
-                    <ArrowLeft className="size-4 mr-1" /> Voltar
-                  </Button>
-                  <Button size="sm" disabled={!date} onClick={() => setStep(4)}>
-                    Próximo: Horário
-                  </Button>
-                </div>
-                  </>
-                )}
-              </Card>
-            )}
+                    </section>
+                  )}
 
-            {/* STEP 4 — Time */}
-            {step === 4 && (
-              <Card className="p-5 space-y-4">
-                {!canProceedWithChallenge || !opponentId || !date ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                      <span>{CHALLENGE_INVALID_MESSAGE}</span>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                      <ArrowLeft className="size-4 mr-1" /> Voltar
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                <div className="flex items-center gap-2 text-primary">
-                  <Clock className="size-5" />
-                  <h2 className="font-semibold">Horários Disponíveis</h2>
-                </div>
-                {availQ.isLoading ? (
-                  <p className="text-sm text-muted-foreground">Carregando horários…</p>
-                ) : availableTimes.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhum horário livre neste domingo.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
-                    {availableTimes.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => {
-                          setTime(t);
-                          setCourtId("");
-                          setStep(5);
-                        }}
-                        className={cn(
-                          "rounded-xl border-2 py-3 font-semibold transition-colors",
-                          time === t
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border hover:border-primary/40",
-                        )}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <Button variant="outline" size="sm" onClick={() => setStep(3)}>
-                    <ArrowLeft className="size-4 mr-1" /> Voltar
-                  </Button>
-                  <Button size="sm" disabled={!time} onClick={() => setStep(5)}>
-                    Próximo: Quadra
-                  </Button>
-                </div>
-                  </>
-                )}
-              </Card>
-            )}
-
-            {/* STEP 5 — Court */}
-            {step === 5 && (
-              <Card className="p-5 space-y-4">
-                {!canProceedWithChallenge || !opponentId || !date || !time ? (
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                      <span>{CHALLENGE_INVALID_MESSAGE}</span>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
-                      <ArrowLeft className="size-4 mr-1" /> Voltar
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                <div className="flex items-center gap-2 text-primary">
-                  <MapPin className="size-5" />
-                  <h2 className="font-semibold">Escolha a Quadra</h2>
-                </div>
-                {availableCourts.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Nenhuma quadra livre neste horário.
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {availableCourts.map((c) => (
-                      <button
-                        key={c.court_id}
-                        type="button"
-                        onClick={() => setCourtId(c.court_id)}
-                        className={cn(
-                          "rounded-xl border-2 p-4 text-left transition-colors",
-                          courtId === c.court_id
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/40",
-                        )}
-                      >
-                        <div className="font-bold">{c.court_name}</div>
-                        <div className="text-xs text-muted-foreground">Quadra {c.court_number}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <Button variant="outline" size="sm" onClick={() => setStep(4)}>
-                    <ArrowLeft className="size-4 mr-1" /> Voltar
-                  </Button>
-                </div>
-                  </>
-                )}
-              </Card>
-            )}
-
-            {/* RESUMO — fixo abaixo */}
-            <Card className="p-5 space-y-4 border-primary/30">
-              <div className="flex items-center gap-2 text-primary">
-                <ClipboardList className="size-5" />
-                <h2 className="font-semibold">Resumo do Desafio</h2>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-4">
-                {/* Meu time */}
-                <div className="text-center space-y-2">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Meu time
-                  </div>
-                  <Avatar className="size-14 mx-auto">
-                    <AvatarFallback className="bg-primary/20 text-primary font-bold">
-                      {initials(myTeam?.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="font-semibold text-sm">{myTeam?.name ?? "—"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Posição atual: #{myTeam?.rank_position ?? "—"}
-                  </div>
-                </div>
-
-                <div className="text-center font-bold text-muted-foreground">VS</div>
-
-                {/* Adversário */}
-                <div className="text-center space-y-2">
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Adversário
-                  </div>
-                  <Avatar className="size-14 mx-auto">
-                    <AvatarFallback
-                      className={cn(
-                        "font-bold",
-                        opponent ? "bg-primary/20 text-primary" : "bg-secondary",
+                  {/* STEP 4 */}
+                  {step === 4 && (
+                    <section className="challenge-panel p-5 sm:p-6 space-y-5">
+                      {!canProceedWithChallenge || !opponentId || !date ? (
+                        <BlockedStep onBack={() => setStep(1)} />
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 text-primary">
+                            <Clock className="size-5" />
+                            <h2 className="font-display text-xl font-bold">Horários Disponíveis</h2>
+                          </div>
+                          {availQ.isLoading ? (
+                            <p className="text-sm text-muted-foreground">Carregando horários…</p>
+                          ) : availableTimes.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              Nenhum horário livre neste domingo.
+                            </p>
+                          ) : (
+                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                              {availableTimes.map((t) => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => {
+                                    setTime(t);
+                                    setCourtId("");
+                                  }}
+                                  className={cn(
+                                    "py-3 px-2 rounded-lg border-2 font-bold text-sm transition-all",
+                                    time === t
+                                      ? "border-primary bg-primary text-primary-foreground shadow-md"
+                                      : "border-border bg-card hover:border-primary/50 hover:bg-primary/5",
+                                  )}
+                                >
+                                  {t}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex justify-between gap-3 pt-2">
+                            <Button variant="ghost" onClick={() => setStep(3)}>
+                              <ArrowLeft className="size-4 mr-1" /> Voltar
+                            </Button>
+                            <Button disabled={!time} onClick={() => setStep(5)}>
+                              Próximo: Quadra
+                            </Button>
+                          </div>
+                        </>
                       )}
-                    >
-                      {opponent ? initials(opponent.name) : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="font-semibold text-sm">{opponent?.name ?? "A definir"}</div>
-                  <div className="text-xs text-muted-foreground">
-                    Posição atual:{" "}
-                    {opponent?.rank_position ? `#${opponent.rank_position}` : "—"}
-                  </div>
-                </div>
-              </div>
+                    </section>
+                  )}
 
-              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/40 rounded-lg p-3">
-                <AlertTriangle className="size-3.5 mt-0.5 text-amber-500 shrink-0" />
-                <span>
-                  Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem iguais.
-                </span>
-              </div>
+                  {/* STEP 5 */}
+                  {step === 5 && (
+                    <section className="challenge-panel p-5 sm:p-6 space-y-5">
+                      {!canProceedWithChallenge || !opponentId || !date || !time ? (
+                        <BlockedStep onBack={() => setStep(1)} />
+                      ) : (
+                        <>
+                          <div className="flex items-center gap-2 text-primary">
+                            <MapPin className="size-5" />
+                            <h2 className="font-display text-xl font-bold">Escolha a Quadra</h2>
+                          </div>
+                          {availableCourts.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              Nenhuma quadra livre neste horário.
+                            </p>
+                          ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {availableCourts.map((c) => {
+                                const selected = courtId === c.court_id;
+                                return (
+                                  <button
+                                    key={c.court_id}
+                                    type="button"
+                                    onClick={() => setCourtId(c.court_id)}
+                                    className={cn(
+                                      "text-left rounded-xl overflow-hidden border-2 transition-all bg-card",
+                                      selected
+                                        ? "border-primary shadow-lg ring-2 ring-primary/20"
+                                        : "border-border hover:border-primary/50",
+                                    )}
+                                  >
+                                    <div className="relative h-36 bg-gradient-to-br from-primary/20 via-accent/10 to-muted">
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                      {selected && (
+                                        <div className="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] px-2 py-1 rounded font-bold flex items-center gap-1">
+                                          <span className="size-1.5 bg-white rounded-full animate-pulse" />
+                                          SELECIONADA
+                                        </div>
+                                      )}
+                                      <div className="absolute bottom-3 left-3 text-white">
+                                        <p className="font-bold text-lg">{c.court_name}</p>
+                                        <p className="text-[10px] uppercase font-bold tracking-widest opacity-80">
+                                          Quadra {c.court_number}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="p-3 flex justify-between items-center">
+                                      <p className="text-xs text-muted-foreground">Disponível neste horário</p>
+                                      {selected && <Check className="size-5 text-primary" />}
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <div className="flex justify-start pt-2">
+                            <Button variant="ghost" onClick={() => setStep(4)}>
+                              <ArrowLeft className="size-4 mr-1" /> Voltar
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </section>
+                  )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-                <div className="rounded-lg bg-secondary/30 p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <CalendarDays className="size-3.5" /> Data
+                  {/* Resumo mobile — abaixo do wizard */}
+                  <div className="lg:hidden space-y-4">
+                    {summaryPanel}
+                    <InfoFooter />
                   </div>
-                  <div className="font-semibold mt-1">
-                    {date
-                      ? new Date(date + "T12:00:00").toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "A definir"}
-                  </div>
-                </div>
-                <div className="rounded-lg bg-secondary/30 p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Clock className="size-3.5" /> Horário
-                  </div>
-                  <div className="font-semibold mt-1">{time || "A definir"}</div>
-                </div>
-                <div className="rounded-lg bg-secondary/30 p-3">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <MapPin className="size-3.5" /> Quadra
-                  </div>
-                  <div className="font-semibold mt-1">
-                    {selectedCourt?.court_name ?? "A definir"}
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
+            </div>
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button
-                  className="flex-1"
-                  variant="beach"
-                  disabled={!canSubmit}
-                  onClick={handleSubmit}
-                >
-                  {sendM.isPending ? "Enviando…" : "Enviar Desafio"}
-                </Button>
-                <Button variant="outline" onClick={reset}>
-                  Cancelar
-                </Button>
-              </div>
-            </Card>
-          </>
-        )}
+            {/* Sidebar desktop */}
+            {selectableCaptainedTeams.length > 0 && (
+              <aside className="hidden lg:block lg:col-span-4">
+                <div className="sticky top-24 space-y-4">
+                  {summaryPanel}
+                  <InfoFooter />
+                </div>
+              </aside>
+            )}
+          </div>
+        </div>
       </div>
     </AppLayout>
+  );
+}
+
+function BlockedStep({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+        <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+        <span>{CHALLENGE_INVALID_MESSAGE}</span>
+      </div>
+      <Button variant="outline" onClick={onBack}>
+        <ArrowLeft className="size-4 mr-1" /> Voltar
+      </Button>
+    </div>
+  );
+}
+
+function InfoFooter() {
+  return (
+    <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl border border-primary/10">
+      <Info className="size-4 text-primary shrink-0 mt-0.5" />
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
+        O time desafiado terá até 24h antes do horário marcado para confirmar ou solicitar
+        alteração. O não comparecimento resulta em W.O. e penalidade no ranking.
+      </p>
+    </div>
   );
 }
