@@ -29,10 +29,14 @@ import {
   MapPin,
   ClipboardList,
   Trophy,
+  AlertTriangle,
+  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useMyProfile } from "@/hooks/use-auth";
+import { requiredTeamMemberCount } from "@/lib/team-format";
+
 
 type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
 const CATEGORIES: Array<{ key: CatKey; label: string; category: "dupla" | "quarteto"; gender?: "X" }> = [
@@ -155,24 +159,44 @@ function DesafiosPage() {
     return (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === myTeamId);
   }, [teamsQ.data, myTeamId]);
 
-  const candidates = useMemo(() => {
-    if (!myTeam) return [];
+  const isCaptainOfSelected = !!myTeam && myTeam.captain_id === userId;
+
+
+
+
+  type Candidate = TeamLite & { eligibility: "top5" | "above" | "below" };
+
+  const candidates = useMemo<Candidate[]>(() => {
+    if (!myTeam || myTeam.rank_position == null) return [];
     const all = (teamsQ.data as TeamLite[] | undefined) ?? [];
     const myPos = myTeam.rank_position;
+    const myIsTop5 = myPos <= 5;
+    const reqMembers = requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto");
+
     return all
-      .filter(
-        (t) =>
-          t.id !== myTeam.id &&
-          t.category === myTeam.category &&
-          (myTeam.gender ? t.gender === myTeam.gender : true) &&
-          t.rank_position != null &&
-          myPos != null &&
-          t.rank_position >= myPos - 3 &&
-          t.rank_position <= myPos + 2,
-      )
+      .filter((t) => {
+        if (t.id === myTeam.id) return false;
+        if (t.category !== myTeam.category) return false;
+        if (myTeam.gender ? t.gender !== myTeam.gender : false) return false;
+        if (t.rank_position == null) return false;
+        // completo (não suspenso/inativo já filtrado por is_active no listTeams)
+        const memberCount = t.members?.length ?? 0;
+        if (memberCount < reqMembers) return false;
+        if (myIsTop5 && t.rank_position <= 5) return true;
+        return t.rank_position >= myPos - 3 && t.rank_position <= myPos + 2;
+      })
+      .map((t) => {
+        const pos = t.rank_position as number;
+        let eligibility: Candidate["eligibility"];
+        if (myIsTop5 && pos <= 5) eligibility = "top5";
+        else if (pos < myPos) eligibility = "above";
+        else eligibility = "below";
+        return { ...t, eligibility };
+      })
       .filter((t) => (search ? t.name.toLowerCase().includes(search.toLowerCase()) : true))
       .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
   }, [teamsQ.data, myTeam, search]);
+
 
   const opponent = useMemo(
     () => (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === opponentId),
@@ -475,19 +499,41 @@ function DesafiosPage() {
                   </p>
                 )}
 
+                {myTeam && !isCaptainOfSelected && (
+                  <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                    <span>Somente o capitão pode criar desafios.</span>
+                  </div>
+                )}
+
                 <div className="flex justify-end">
-                  <Button onClick={() => setStep(2)} disabled={!myTeam}>
+                  <Button
+                    onClick={() => setStep(2)}
+                    disabled={!myTeam || !isCaptainOfSelected}
+                  >
                     Continuar para Adversários
                   </Button>
                 </div>
               </Card>
             )}
 
+
             {/* STEP 2 — Opponent */}
             {step === 2 && (
               <Card className="p-5 space-y-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <h2 className="font-semibold">Escolha seu Adversário</h2>
+                  <div>
+                    <h2 className="font-semibold">Escolha seu Adversário</h2>
+                    {myTeam && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Meu time: <span className="font-semibold text-foreground">{myTeam.name}</span> · Posição{" "}
+                        <span className="text-primary font-semibold">#{myTeam.rank_position ?? "—"}</span>
+                        {myTeam.rank_position != null && myTeam.rank_position <= 5
+                          ? " — TOP 5 (pode desafiar qualquer time do TOP 5)"
+                          : " — até 3 acima / 2 abaixo"}
+                      </p>
+                    )}
+                  </div>
                   <div className="relative">
                     <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
@@ -503,52 +549,109 @@ function DesafiosPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-secondary/40 text-xs uppercase text-muted-foreground">
                       <tr>
-                        <th className="px-3 py-2 text-left">Posição</th>
+                        <th className="px-3 py-2 text-left">Pos.</th>
                         <th className="px-3 py-2 text-left">Equipe</th>
-                        <th className="px-3 py-2 text-left">Nível</th>
+                        <th className="px-3 py-2 text-left">Capitão</th>
+                        <th className="px-3 py-2 text-center">Jog.</th>
+                        <th className="px-3 py-2 text-right">Pontos</th>
                         <th className="px-3 py-2 text-right">Ação</th>
                       </tr>
                     </thead>
                     <tbody>
                       {candidates.length === 0 && (
                         <tr>
-                          <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
-                            Nenhuma equipe elegível (até 3 acima / 2 abaixo).
+                          <td colSpan={6} className="px-3 py-6 text-center text-muted-foreground">
+                            Nenhuma equipe elegível para desafio no momento.
                           </td>
                         </tr>
                       )}
-                      {candidates.map((t) => (
-                        <tr key={t.id} className="border-t border-border/40">
-                          <td className="px-3 py-2 font-semibold">#{t.rank_position}</td>
-                          <td className="px-3 py-2">{t.name}</td>
-                          <td className="px-3 py-2 text-muted-foreground">
-                            {levelFromRank(t.rank_position)}
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            <Button
-                              size="sm"
-                              variant={opponentId === t.id ? "default" : "outline"}
-                              onClick={() => {
-                                setOpponentId(t.id);
-                                setStep(3);
-                              }}
-                            >
-                              {opponentId === t.id ? "Selecionado" : "Desafiar"}
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
+                      {candidates.map((t) => {
+                        const captain = t.members?.find((m) => m.profile?.id === t.captain_id)?.profile;
+                        const badge =
+                          t.eligibility === "top5"
+                            ? { label: "TOP 5", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" }
+                            : t.eligibility === "above"
+                              ? { label: "3 acima", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" }
+                              : { label: "2 abaixo", cls: "bg-sky-500/15 text-sky-600 dark:text-sky-400" };
+                        return (
+                          <tr key={t.id} className="border-t border-border/40">
+                            <td className="px-3 py-2 font-semibold">#{t.rank_position}</td>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-medium">{t.name}</span>
+                                <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-semibold", badge.cls)}>
+                                  {badge.label}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2 text-muted-foreground truncate max-w-[160px]">
+                              {captain?.display_name ?? "—"}
+                            </td>
+                            <td className="px-3 py-2 text-center text-muted-foreground">
+                              {t.members?.length ?? 0}
+                            </td>
+                            <td className="px-3 py-2 text-right font-semibold">{t.points ?? 0}</td>
+                            <td className="px-3 py-2 text-right">
+                              <Button
+                                size="sm"
+                                variant={opponentId === t.id ? "default" : "outline"}
+                                onClick={() => setOpponentId(t.id)}
+                              >
+                                {opponentId === t.id ? "Selecionado" : "Desafiar"}
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
+
+                {/* Confirmação do confronto */}
+                {opponent && myTeam && (
+                  <div className="rounded-xl border-2 border-primary/40 bg-primary/5 p-4 space-y-3">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <div className="text-center">
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Seu time
+                        </div>
+                        <div className="font-bold">{myTeam.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          #{myTeam.rank_position ?? "—"} · {myTeam.points ?? 0} pts
+                        </div>
+                      </div>
+                      <div className="font-bold text-primary">VS</div>
+                      <div className="text-center">
+                        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          Adversário
+                        </div>
+                        <div className="font-bold">{opponent.name}</div>
+                        <div className="text-xs text-muted-foreground">
+                          #{opponent.rank_position ?? "—"} · {opponent.points ?? 0} pts
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/40 rounded-lg p-2">
+                      <AlertTriangle className="size-3.5 mt-0.5 text-amber-500 shrink-0" />
+                      <span>
+                        Em caso de vitória, as posições serão trocadas conforme as regras do ranking.
+                        Os pontos permanecem os mesmos.
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-between">
                   <Button variant="outline" size="sm" onClick={() => setStep(1)}>
                     <ArrowLeft className="size-4 mr-1" /> Voltar
                   </Button>
+                  <Button size="sm" disabled={!opponentId} onClick={() => setStep(3)}>
+                    Próximo: Data
+                  </Button>
                 </div>
               </Card>
             )}
+
 
             {/* STEP 3 — Date */}
             {step === 3 && (
