@@ -499,13 +499,24 @@ function DesafiosPage() {
                   </p>
                 )}
 
+                {myTeam && !isCaptainOfSelected && (
+                  <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                    <span>Somente o capitão pode criar desafios.</span>
+                  </div>
+                )}
+
                 <div className="flex justify-end">
-                  <Button onClick={() => setStep(2)} disabled={!myTeam}>
+                  <Button
+                    onClick={() => setStep(2)}
+                    disabled={!myTeam || !isCaptainOfSelected}
+                  >
                     Continuar para Adversários
                   </Button>
                 </div>
               </Card>
             )}
+
 
             {/* STEP 2 — Opponent */}
             {step === 2 && (
