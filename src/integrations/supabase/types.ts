@@ -659,7 +659,6 @@ export type Database = {
         Row: {
           altura: number | null
           apelido: string | null
-          arena_id: string | null
           avatar_url: string | null
           banner_url: string | null
           bio: string | null
@@ -690,7 +689,6 @@ export type Database = {
         Insert: {
           altura?: number | null
           apelido?: string | null
-          arena_id?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -721,7 +719,6 @@ export type Database = {
         Update: {
           altura?: number | null
           apelido?: string | null
-          arena_id?: string | null
           avatar_url?: string | null
           banner_url?: string | null
           bio?: string | null
@@ -749,15 +746,7 @@ export type Database = {
           vitorias?: number
           whatsapp?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_arena_id_fkey"
-            columns: ["arena_id"]
-            isOneToOne: false
-            referencedRelation: "arenas"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       reports: {
         Row: {
@@ -1112,14 +1101,6 @@ export type Database = {
         Returns: {
           sunday_date: string
         }[]
-      }
-      get_player_ranking_details: {
-        Args: { p_profile_id: string }
-        Returns: Json
-      }
-      get_team_ranking_details: {
-        Args: { p_team_id: string }
-        Returns: Json
       }
       has_role: {
         Args: {
