@@ -37,9 +37,12 @@ const MODALITIES = [
   { v: "futevolei", l: "Futevôlei" },
 ];
 const TYPES = [
-  { v: "dupla", l: "Dupla", max: 4 },
-  { v: "quarteto", l: "Quarteto", max: 8 },
-  { v: "sexteto", l: "Sexteto", max: 12 },
+  { v: "dupla_m", l: "Dupla masculina", category: "dupla", max: 4 },
+  { v: "dupla_f", l: "Dupla feminina", category: "dupla", max: 4 },
+  { v: "dupla_x", l: "Dupla mista", category: "dupla", max: 4 },
+  { v: "quarteto_m", l: "Quarteto masculino", category: "quarteto", max: 8 },
+  { v: "quarteto_f", l: "Quarteto feminino", category: "quarteto", max: 8 },
+  { v: "quarteto_x", l: "Quarteto misto", category: "quarteto", max: 8 },
 ];
 
 function NewMatchPage() {
