@@ -25,7 +25,7 @@ export function RankingSidebar({ analytics }: RankingSidebarProps) {
   const challenges = (challengesQ.data ?? []).slice(0, 3);
 
   return (
-    <div className="space-y-4 lg:sticky lg:top-6">
+    <div className="grid gap-4 md:grid-cols-3">
       <Card className="p-0 overflow-hidden border-border/60 shadow-card ranking-glass">
         <div className="p-4 sm:p-5 relative overflow-hidden">
           <div className="absolute top-0 right-0 size-24 bg-primary/10 rounded-full blur-3xl -mr-8 -mt-8 pointer-events-none" />
