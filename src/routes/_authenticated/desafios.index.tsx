@@ -161,13 +161,8 @@ function DesafiosPage() {
 
   const isCaptainOfSelected = !!myTeam && myTeam.captain_id === userId;
 
-  const requiredMembers = useMemo(
-    () =>
-      myTeam
-        ? requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto")
-        : 0,
-    [myTeam],
-  );
+
+
 
   type Candidate = TeamLite & { eligibility: "top5" | "above" | "below" };
 
