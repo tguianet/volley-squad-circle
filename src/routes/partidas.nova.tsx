@@ -50,7 +50,7 @@ function NewMatchPage() {
   const [title, setTitle] = useState("");
   const [arenaId, setArenaId] = useState<string>("");
   const [modality, setModality] = useState("beach_volley");
-  const [matchType, setMatchType] = useState("dupla");
+  const [matchType, setMatchType] = useState("dupla_m");
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
