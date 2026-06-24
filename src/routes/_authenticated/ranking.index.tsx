@@ -55,7 +55,7 @@ function GenderPill({
 function RankingPage() {
   const [tab, setTab] = useState<RankingTab>("ind");
   const [gender, setGender] = useState<GenderFilter>("M");
-  const effectiveGender: GenderFilter = tab === "ind" && gender === "X" ? "M" : gender;
+  const effectiveGender: GenderFilter = gender;
 
   const individualQ = useQuery({
     queryKey: ["ranking-individual-rows", effectiveGender],
