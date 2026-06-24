@@ -14,9 +14,11 @@ function formatSunday(iso: string): string {
 
 type RankingSidebarProps = {
   analytics: RankingAnalytics;
+  entriesLabel?: string;
 };
 
-export function RankingSidebar({ analytics }: RankingSidebarProps) {
+export function RankingSidebar({ analytics, entriesLabel = "Atletas" }: RankingSidebarProps) {
+
   const fetchScheduled = useServerFn(listScheduledChallenges);
   const challengesQ = useQuery({
     queryKey: ["scheduled-challenges"],
@@ -66,7 +68,7 @@ export function RankingSidebar({ analytics }: RankingSidebarProps) {
         <div className="grid grid-cols-3 gap-2 mb-4">
           <div className="rounded-lg bg-secondary/40 px-2 py-2 text-center">
             <div className="font-display text-xl leading-none">{analytics.totalEntries}</div>
-            <div className="text-[10px] text-muted-foreground uppercase mt-0.5">Atletas</div>
+            <div className="text-[10px] text-muted-foreground uppercase mt-0.5">{entriesLabel}</div>
           </div>
           <div className="rounded-lg bg-secondary/40 px-2 py-2 text-center">
             <div className="font-display text-xl leading-none">{analytics.totalGames}</div>

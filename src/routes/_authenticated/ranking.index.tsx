@@ -170,8 +170,12 @@ function RankingPage() {
             </div>
 
             <section className="min-w-0">
-              <RankingSidebar analytics={analytics} />
+              <RankingSidebar
+                analytics={analytics}
+                entriesLabel={tab === "ind" ? "Atletas" : tab === "dupla" ? "Duplas" : "Quartetos"}
+              />
             </section>
+
           </div>
 
         </div>
