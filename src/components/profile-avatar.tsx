@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,6 +15,12 @@ import { Camera, Loader2, Trash2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 type Diag = { step: string; message: string; details?: unknown };
+
+export type ProfileAvatarHandle = {
+  pickPhoto: () => void;
+  removePhoto: () => void;
+  hasPhoto: boolean;
+};
 
 async function fetchAvatar(userId: string) {
   const { data, error } = await supabase
@@ -54,222 +67,268 @@ function SignedAvatar({
   );
 }
 
-export function ProfileAvatar({
-  fallback,
-  className,
-  editable = false,
-}: {
+type ProfileAvatarProps = {
   fallback: string;
   className?: string;
   editable?: boolean;
-}) {
-  const qc = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [diag, setDiag] = useState<Diag | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
+  /** Exibe botões "Trocar foto" / "Remover" (ex.: formulário interno). */
+  showActionButtons?: boolean;
+};
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
+export const ProfileAvatar = forwardRef<ProfileAvatarHandle, ProfileAvatarProps>(
+  function ProfileAvatar(
+    { fallback, className, editable = false, showActionButtons = false },
+    ref,
+  ) {
+    const qc = useQueryClient();
+    const [userId, setUserId] = useState<string | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [diag, setDiag] = useState<Diag | null>(null);
+    const fileRef = useRef<HTMLInputElement>(null);
 
-  const avatarQ = useQuery({
-    queryKey: ["profile-avatar", userId],
-    queryFn: () => fetchAvatar(userId!),
-    enabled: !!userId,
-  });
+    useEffect(() => {
+      supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
+    }, []);
 
-  const reportError = (step: string, message: string, details?: unknown) => {
-    console.error(`[avatar] ${step}:`, message, details ?? "");
-    setDiag({ step, message, details });
-    toast.error(`${step}: ${message}`);
-  };
+    const avatarQ = useQuery({
+      queryKey: ["profile-avatar", userId],
+      queryFn: () => fetchAvatar(userId!),
+      enabled: !!userId,
+    });
 
-  const uploadMut = useMutation({
-    mutationFn: async (file: File) => {
-      setDiag(null);
+    const reportError = (step: string, message: string, details?: unknown) => {
+      console.error(`[avatar] ${step}:`, message, details ?? "");
+      setDiag({ step, message, details });
+      toast.error(`${step}: ${message}`);
+    };
 
-      console.info("[avatar] step: auth");
-      const { data: u, error: authErr } = await supabase.auth.getUser();
-      if (authErr || !u.user) {
-        throw {
-          step: "Autenticação",
-          message: "Você precisa estar logado para enviar a foto.",
-          details: authErr,
-        };
-      }
-      const uid = u.user.id;
-      console.info("[avatar] auth ok", uid);
+    const uploadMut = useMutation({
+      mutationFn: async (file: File) => {
+        setDiag(null);
 
-      console.info("[avatar] step: validar arquivo", {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
-      if (!file.type.startsWith("image/")) {
-        throw {
-          step: "Validação",
-          message: "Selecione uma imagem (jpg, png, webp).",
-          details: { type: file.type },
-        };
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        throw {
-          step: "Validação",
-          message: `Tamanho ${(file.size / 1024 / 1024).toFixed(2)}MB excede o limite de 5MB.`,
-        };
-      }
+        const { data: u, error: authErr } = await supabase.auth.getUser();
+        if (authErr || !u.user) {
+          throw {
+            step: "Autenticação",
+            message: "Você precisa estar logado para enviar a foto.",
+            details: authErr,
+          };
+        }
+        const uid = u.user.id;
 
-      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-      const path = `${uid}/avatar-${Date.now()}.${ext}`;
-      const local = URL.createObjectURL(file);
-      setPreviewUrl(local);
+        if (!file.type.startsWith("image/")) {
+          throw {
+            step: "Validação",
+            message: "Selecione uma imagem (jpg, png, webp).",
+            details: { type: file.type },
+          };
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          throw {
+            step: "Validação",
+            message: `Tamanho ${(file.size / 1024 / 1024).toFixed(2)}MB excede o limite de 5MB.`,
+          };
+        }
 
-      console.info("[avatar] step: upload ->", path);
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
-        cacheControl: "3600",
-        upsert: true,
-        contentType: file.type,
-      });
-      if (upErr) {
-        const m = upErr.message || "";
-        const msg = /bucket/i.test(m)
-          ? "Bucket 'avatars' inacessível."
-          : /policy|permission|unauthorized|403/i.test(m)
-            ? "Permissão negada pelo Storage (RLS). Verifique as políticas do bucket 'avatars'."
+        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+        const path = `${uid}/avatar-${Date.now()}.${ext}`;
+        const local = URL.createObjectURL(file);
+        setPreviewUrl(local);
+
+        const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
+          cacheControl: "3600",
+          upsert: true,
+          contentType: file.type,
+        });
+        if (upErr) {
+          const m = upErr.message || "";
+          const msg = /bucket/i.test(m)
+            ? "Bucket 'avatars' inacessível."
+            : /policy|permission|unauthorized|403/i.test(m)
+              ? "Permissão negada pelo Storage (RLS). Verifique as políticas do bucket 'avatars'."
+              : m;
+          throw { step: "Upload no Storage", message: msg, details: upErr };
+        }
+
+        const old = avatarQ.data;
+        const { error: dbErr } = await supabase
+          .from("profiles")
+          .upsert({ id: uid, avatar_url: path }, { onConflict: "id" });
+        if (dbErr) {
+          await supabase.storage
+            .from("avatars")
+            .remove([path])
+            .catch(() => {});
+          const m = dbErr.message || "";
+          const msg = /policy|permission|row-level/i.test(m)
+            ? "Permissão negada na tabela 'profiles' (RLS)."
             : m;
-        throw { step: "Upload no Storage", message: msg, details: upErr };
-      }
-      console.info("[avatar] upload ok");
+          throw { step: "Atualizar perfil", message: msg, details: dbErr };
+        }
 
-      console.info("[avatar] step: atualizar profile");
-      const old = avatarQ.data;
-      const { error: dbErr } = await supabase
-        .from("profiles")
-        .upsert({ id: uid, avatar_url: path }, { onConflict: "id" });
-      if (dbErr) {
-        await supabase.storage
-          .from("avatars")
-          .remove([path])
-          .catch(() => {});
-        const m = dbErr.message || "";
-        const msg = /policy|permission|row-level/i.test(m)
-          ? "Permissão negada na tabela 'profiles' (RLS)."
-          : m;
-        throw { step: "Atualizar perfil", message: msg, details: dbErr };
-      }
-      console.info("[avatar] profile updated");
+        if (old && old !== path) {
+          await supabase.storage
+            .from("avatars")
+            .remove([old])
+            .catch((e) => {
+              console.warn("[avatar] não foi possível remover a antiga", e);
+            });
+        }
 
-      if (old && old !== path) {
-        await supabase.storage
-          .from("avatars")
-          .remove([old])
-          .catch((e) => {
-            console.warn("[avatar] não foi possível remover a antiga", e);
-          });
-      }
+        qc.setQueryData(["profile-avatar", uid], path);
+        return path;
+      },
+      onSuccess: () => {
+        setDiag(null);
+        toast.success("Foto atualizada");
+        qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
+      },
+      onError: (e: unknown) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
+        if (e && typeof e === "object" && "step" in e && "message" in e) {
+          const err = e as { step: string; message: string; details?: unknown };
+          reportError(err.step, err.message, err.details);
+        } else {
+          reportError("Erro inesperado", e instanceof Error ? e.message : String(e), e);
+        }
+      },
+    });
 
-      qc.setQueryData(["profile-avatar", uid], path);
-      return path;
-    },
-    onSuccess: () => {
-      setDiag(null);
-      toast.success("Foto atualizada");
-      qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
-    },
-    onError: (e: unknown) => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-      qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
-      if (e && typeof e === "object" && "step" in e && "message" in e) {
-        const err = e as { step: string; message: string; details?: unknown };
-        reportError(err.step, err.message, err.details);
-      } else {
-        reportError("Erro inesperado", e instanceof Error ? e.message : String(e), e);
-      }
-    },
-  });
+    const removeMut = useMutation({
+      mutationFn: async () => {
+        if (!userId) throw new Error("Faça login");
+        const old = avatarQ.data;
+        if (!old) throw new Error("Não há foto para remover");
+        await supabase.storage.from("avatars").remove([old]);
+        const { error } = await supabase
+          .from("profiles")
+          .update({ avatar_url: null })
+          .eq("id", userId);
+        if (error) throw error;
+      },
+      onSuccess: () => {
+        setPreviewUrl(null);
+        setDiag(null);
+        toast.success("Foto removida");
+        qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
+      },
+      onError: (e: unknown) =>
+        reportError("Remover foto", e instanceof Error ? e.message : "Falha ao remover", e),
+    });
 
-  const removeMut = useMutation({
-    mutationFn: async () => {
-      if (!userId) throw new Error("Faça login");
-      const old = avatarQ.data;
-      if (old) await supabase.storage.from("avatars").remove([old]);
-      const { error } = await supabase
-        .from("profiles")
-        .update({ avatar_url: null })
-        .eq("id", userId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      setPreviewUrl(null);
-      setDiag(null);
-      toast.success("Foto removida");
-      qc.invalidateQueries({ queryKey: ["profile-avatar", userId] });
-    },
-    onError: (e: unknown) =>
-      reportError("Remover foto", e instanceof Error ? e.message : "Falha ao remover", e),
-  });
+    const onFile = (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (file) uploadMut.mutate(file);
+    };
 
-  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (file) uploadMut.mutate(file);
-  };
+    const hasPhoto = Boolean(avatarQ.data);
 
-  if (!editable) {
-    return (
+    useImperativeHandle(
+      ref,
+      () => ({
+        pickPhoto: () => fileRef.current?.click(),
+        removePhoto: () => removeMut.mutate(),
+        hasPhoto,
+      }),
+      [hasPhoto, removeMut],
+    );
+
+    if (!editable) {
+      return (
+        <Avatar className={className}>
+          <SignedAvatar path={avatarQ.data ?? null} preview={previewUrl} fallback={fallback} />
+        </Avatar>
+      );
+    }
+
+    const avatarNode = (
       <Avatar className={className}>
         <SignedAvatar path={avatarQ.data ?? null} preview={previewUrl} fallback={fallback} />
       </Avatar>
     );
-  }
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-4">
-        <Avatar className={className}>
-          <SignedAvatar path={avatarQ.data ?? null} preview={previewUrl} fallback={fallback} />
-        </Avatar>
-        <div className="flex flex-col gap-2">
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploadMut.isPending}
-          >
-            {uploadMut.isPending ? (
-              <Loader2 className="size-4 mr-1 animate-spin" />
-            ) : (
-              <Camera className="size-4 mr-1" />
-            )}
-            {avatarQ.data ? "Trocar foto" : "Enviar foto"}
-          </Button>
-          {avatarQ.data && (
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              onClick={() => removeMut.mutate()}
-              disabled={removeMut.isPending}
-            >
-              <Trash2 className="size-4 mr-1" /> Remover
-            </Button>
+    if (showActionButtons) {
+      return (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-4">
+            {avatarNode}
+            <div className="flex flex-col gap-2">
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                onClick={() => fileRef.current?.click()}
+                disabled={uploadMut.isPending}
+              >
+                {uploadMut.isPending ? (
+                  <Loader2 className="size-4 mr-1 animate-spin" />
+                ) : (
+                  <Camera className="size-4 mr-1" />
+                )}
+                {avatarQ.data ? "Trocar foto" : "Enviar foto"}
+              </Button>
+              {avatarQ.data && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => removeMut.mutate()}
+                  disabled={removeMut.isPending}
+                >
+                  <Trash2 className="size-4 mr-1" /> Remover
+                </Button>
+              )}
+            </div>
+          </div>
+          {diag && (
+            <Alert variant="destructive">
+              <AlertCircle className="size-4" />
+              <AlertTitle>Falha em: {diag.step}</AlertTitle>
+              <AlertDescription className="text-xs">
+                {diag.message}
+                <div className="mt-1 opacity-70">Abra o console (F12) para ver detalhes técnicos.</div>
+              </AlertDescription>
+            </Alert>
           )}
         </div>
+      );
+    }
+
+    return (
+      <div className="inline-flex flex-col gap-2">
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploadMut.isPending}
+          className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          aria-label="Alterar foto de perfil"
+        >
+          <Avatar className={className}>
+            <SignedAvatar path={avatarQ.data ?? null} preview={previewUrl} fallback={fallback} />
+          </Avatar>
+          <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+            {uploadMut.isPending ? (
+              <Loader2 className="size-7 text-white animate-spin" />
+            ) : (
+              <Camera className="size-7 text-white" />
+            )}
+          </span>
+        </button>
+        {diag && (
+          <Alert variant="destructive" className="max-w-xs">
+            <AlertCircle className="size-4" />
+            <AlertTitle>Falha em: {diag.step}</AlertTitle>
+            <AlertDescription className="text-xs">{diag.message}</AlertDescription>
+          </Alert>
+        )}
       </div>
-      {diag && (
-        <Alert variant="destructive">
-          <AlertCircle className="size-4" />
-          <AlertTitle>Falha em: {diag.step}</AlertTitle>
-          <AlertDescription className="text-xs">
-            {diag.message}
-            <div className="mt-1 opacity-70">Abra o console (F12) para ver detalhes técnicos.</div>
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
-  );
-}
+    );
+  },
+);
+
+ProfileAvatar.displayName = "ProfileAvatar";

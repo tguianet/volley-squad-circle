@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import Cropper, { Area } from "react-easy-crop";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -11,12 +18,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 const BANNER_W = 1600;
-const BANNER_H = 600; // ~8:3 aspect to match the taller header
+const BANNER_H = 600;
+
+export type ProfileBannerHandle = {
+  pickBanner: () => void;
+  removeBanner: () => void;
+  hasBanner: boolean;
+};
 
 async function fetchBanner(userId: string) {
   const { data, error } = await supabase
@@ -70,153 +84,172 @@ async function cropToBlob(src: string, area: Area): Promise<Blob> {
 }
 
 type ProfileBannerProps = {
-  /** Altura compacta estilo rede social (capa do perfil) */
   compact?: boolean;
+  /** Exibe botões visíveis sobre a capa. */
+  showActionButtons?: boolean;
 };
 
-export function ProfileBanner({ compact = false }: ProfileBannerProps) {
-  const qc = useQueryClient();
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
+export const ProfileBanner = forwardRef<ProfileBannerHandle, ProfileBannerProps>(
+  function ProfileBanner({ compact = false, showActionButtons = false }, ref) {
+    const qc = useQueryClient();
+    const fileRef = useRef<HTMLInputElement>(null);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [authChecked, setAuthChecked] = useState(false);
 
-  const [cropOpen, setCropOpen] = useState(false);
-  const [srcUrl, setSrcUrl] = useState<string | null>(null);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [areaPx, setAreaPx] = useState<Area | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [cropOpen, setCropOpen] = useState(false);
+    const [srcUrl, setSrcUrl] = useState<string | null>(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [areaPx, setAreaPx] = useState<Area | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
-      setAuthChecked(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) =>
-      setUserId(s?.user?.id ?? null),
-    );
-    return () => sub.subscription.unsubscribe();
-  }, []);
-
-  const bannerQ = useQuery({
-    queryKey: ["profile_banner", userId],
-    queryFn: () => fetchBanner(userId!),
-    enabled: !!userId && authChecked,
-  });
-
-  const onCropComplete = useCallback((_: Area, pixels: Area) => setAreaPx(pixels), []);
-
-  const uploadMut = useMutation({
-    mutationFn: async () => {
-      if (!userId) throw new Error("Faça login para alterar a capa");
-      if (!srcUrl) throw new Error("Selecione uma imagem");
-      if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
-      const blob = await cropToBlob(srcUrl, areaPx);
-      const localPreview = URL.createObjectURL(blob);
-      const path = `${userId}/banner-${Date.now()}.jpg`;
-
-      // Optimistic preview — show cropped image instantly
-      const old = bannerQ.data;
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(localPreview);
-      qc.setQueryData(["profile_banner", userId], path);
-      closeCropper();
-      toast.success("Capa atualizada");
-
-      const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
-        upsert: true,
-        contentType: "image/jpeg",
+    useEffect(() => {
+      supabase.auth.getUser().then(({ data }) => {
+        setUserId(data.user?.id ?? null);
+        setAuthChecked(true);
       });
-      if (upErr) throw upErr;
+      const { data: sub } = supabase.auth.onAuthStateChange((_e, s) =>
+        setUserId(s?.user?.id ?? null),
+      );
+      return () => sub.subscription.unsubscribe();
+    }, []);
 
-      const { error: dbErr } = await supabase
-        .from("profiles")
-        .update({ banner_url: path })
-        .eq("id", userId)
-        .select("banner_url")
-        .single();
-      if (dbErr) {
-        await supabase.storage
-          .from("banners")
-          .remove([path])
-          .catch(() => {});
-        throw dbErr;
-      }
+    const bannerQ = useQuery({
+      queryKey: ["profile_banner", userId],
+      queryFn: () => fetchBanner(userId!),
+      enabled: !!userId && authChecked,
+    });
 
-      if (old && old !== path)
-        await supabase.storage
-          .from("banners")
-          .remove([old])
-          .catch(() => {});
-      return path;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
-    },
-    onError: (e: unknown) => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-      qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
-      toast.error(e instanceof Error ? e.message : "Falha ao enviar");
-    },
-  });
+    const onCropComplete = useCallback((_: Area, pixels: Area) => setAreaPx(pixels), []);
 
-  const removeMut = useMutation({
-    mutationFn: async () => {
-      if (!userId) throw new Error("Sem sessão");
-      const current = bannerQ.data;
-      if (current)
+    const uploadMut = useMutation({
+      mutationFn: async () => {
+        if (!userId) throw new Error("Faça login para alterar a capa");
+        if (!srcUrl) throw new Error("Selecione uma imagem");
+        if (!areaPx) throw new Error("Aguarde a imagem carregar e tente novamente");
+        const blob = await cropToBlob(srcUrl, areaPx);
+        const localPreview = URL.createObjectURL(blob);
+        const path = `${userId}/banner-${Date.now()}.jpg`;
+
+        const old = bannerQ.data;
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(localPreview);
+        qc.setQueryData(["profile_banner", userId], path);
+        closeCropper();
+        toast.success("Capa atualizada");
+
+        const { error: upErr } = await supabase.storage.from("banners").upload(path, blob, {
+          upsert: true,
+          contentType: "image/jpeg",
+        });
+        if (upErr) throw upErr;
+
+        const { error: dbErr } = await supabase
+          .from("profiles")
+          .update({ banner_url: path })
+          .eq("id", userId)
+          .select("banner_url")
+          .single();
+        if (dbErr) {
+          await supabase.storage
+            .from("banners")
+            .remove([path])
+            .catch(() => {});
+          throw dbErr;
+        }
+
+        if (old && old !== path)
+          await supabase.storage
+            .from("banners")
+            .remove([old])
+            .catch(() => {});
+        return path;
+      },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
+      },
+      onError: (e: unknown) => {
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl(null);
+        qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
+        toast.error(e instanceof Error ? e.message : "Falha ao enviar");
+      },
+    });
+
+    const removeMut = useMutation({
+      mutationFn: async () => {
+        if (!userId) throw new Error("Sem sessão");
+        const current = bannerQ.data;
+        if (!current) throw new Error("Não há capa para remover");
         await supabase.storage
           .from("banners")
           .remove([current])
           .catch(() => {});
-      const { error } = await supabase
-        .from("profiles")
-        .update({ banner_url: null })
-        .eq("id", userId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
-      toast.success("Capa removida");
-    },
-    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao remover"),
-  });
+        const { error } = await supabase
+          .from("profiles")
+          .update({ banner_url: null })
+          .eq("id", userId);
+        if (error) throw error;
+      },
+      onSuccess: () => {
+        qc.invalidateQueries({ queryKey: ["profile_banner", userId] });
+        toast.success("Capa removida");
+      },
+      onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Falha ao remover"),
+    });
 
-  const closeCropper = () => {
-    if (srcUrl) URL.revokeObjectURL(srcUrl);
-    setSrcUrl(null);
-    setAreaPx(null);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCropOpen(false);
-  };
+    const closeCropper = () => {
+      if (srcUrl) URL.revokeObjectURL(srcUrl);
+      setSrcUrl(null);
+      setAreaPx(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setCropOpen(false);
+    };
 
-  const onFile = (f: File) => {
-    if (!f.type.startsWith("image/")) {
-      toast.error("Selecione uma imagem");
-      return;
-    }
-    if (srcUrl) URL.revokeObjectURL(srcUrl);
-    setAreaPx(null);
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setSrcUrl(URL.createObjectURL(f));
-    setCropOpen(true);
-  };
-
-  const isLoading = uploadMut.isPending || removeMut.isPending;
-
-  return (
-    <div
-      className={
-        compact
-          ? "h-44 sm:h-52 md:h-56 gradient-ocean relative overflow-hidden"
-          : "h-64 md:h-72 gradient-ocean relative overflow-hidden"
+    const onFile = (f: File) => {
+      if (!f.type.startsWith("image/")) {
+        toast.error("Selecione uma imagem");
+        return;
       }
-    >
-      {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
-      <div className="absolute top-3 right-3 flex gap-1.5 z-10">
+      if (srcUrl) URL.revokeObjectURL(srcUrl);
+      setAreaPx(null);
+      setCrop({ x: 0, y: 0 });
+      setZoom(1);
+      setSrcUrl(URL.createObjectURL(f));
+      setCropOpen(true);
+    };
+
+    const openPicker = () => {
+      if (!userId) {
+        toast.error("Faça login para alterar a capa");
+        return;
+      }
+      fileRef.current?.click();
+    };
+
+    const isLoading = uploadMut.isPending || removeMut.isPending;
+    const hasBanner = Boolean(bannerQ.data);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        pickBanner: openPicker,
+        removeBanner: () => removeMut.mutate(),
+        hasBanner,
+      }),
+      [hasBanner, removeMut, userId],
+    );
+
+    return (
+      <div
+        className={cn(
+          "group/banner gradient-ocean relative overflow-hidden",
+          compact ? "h-44 sm:h-52 md:h-56" : "h-64 md:h-72",
+        )}
+      >
+        {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
+
         <input
           ref={fileRef}
           type="file"
@@ -228,86 +261,103 @@ export function ProfileBanner({ compact = false }: ProfileBannerProps) {
             e.target.value = "";
           }}
         />
-        <Button
-          size="sm"
-          variant="secondary"
-          className="h-8 px-2.5 bg-card/90 backdrop-blur-md border border-border/50 shadow-sm text-xs"
-          onClick={() => {
-            if (!userId) {
-              toast.error("Faça login para alterar a capa");
-              return;
-            }
-            fileRef.current?.click();
-          }}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader2 className="size-3.5 animate-spin" />
-          ) : (
-            <ImagePlus className="size-3.5" />
-          )}
-          <span className="hidden sm:inline ml-1.5">
-            {bannerQ.data ? "Trocar capa" : "Capa"}
-          </span>
-        </Button>
-        {bannerQ.data && userId && (
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-8 w-8 p-0 bg-card/90 backdrop-blur-md border border-border/50 shadow-sm"
-            onClick={() => removeMut.mutate()}
-            disabled={isLoading}
-            aria-label="Remover capa"
-          >
-            <Trash2 className="size-3.5 text-destructive" />
-          </Button>
-        )}
-      </div>
 
-      <Dialog open={cropOpen} onOpenChange={(o) => (o ? setCropOpen(true) : closeCropper())}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Ajustar capa</DialogTitle>
-            <DialogDescription>Reposicione a imagem para encaixar no banner.</DialogDescription>
-          </DialogHeader>
-          <div
-            className="relative w-full bg-muted rounded-md overflow-hidden"
-            style={{ height: 320 }}
+        {!showActionButtons && userId ? (
+          <button
+            type="button"
+            onClick={openPicker}
+            disabled={isLoading}
+            className="absolute inset-0 z-[1] flex items-center justify-center bg-black/40 opacity-0 group-hover/banner:opacity-100 transition-opacity cursor-pointer focus-visible:opacity-100 focus-visible:outline-none"
+            aria-label="Alterar capa"
           >
-            {srcUrl && (
-              <Cropper
-                image={srcUrl}
-                crop={crop}
-                zoom={zoom}
-                aspect={BANNER_W / BANNER_H}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={onCropComplete}
-                objectFit="contain"
-              />
+            {isLoading ? (
+              <Loader2 className="size-9 text-white animate-spin" />
+            ) : (
+              <Camera className="size-9 text-white drop-shadow-md" />
+            )}
+          </button>
+        ) : null}
+
+        {showActionButtons ? (
+          <div className="absolute top-3 right-3 flex gap-1.5 z-10">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-8 px-2.5 bg-card/90 backdrop-blur-md border border-border/50 shadow-sm text-xs"
+              onClick={openPicker}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <ImagePlus className="size-3.5" />
+              )}
+              <span className="hidden sm:inline ml-1.5">
+                {bannerQ.data ? "Trocar capa" : "Capa"}
+              </span>
+            </Button>
+            {bannerQ.data && userId && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-8 w-8 p-0 bg-card/90 backdrop-blur-md border border-border/50 shadow-sm"
+                onClick={() => removeMut.mutate()}
+                disabled={isLoading}
+                aria-label="Remover capa"
+              >
+                <Trash2 className="size-3.5 text-destructive" />
+              </Button>
             )}
           </div>
-          <div className="space-y-2">
-            <div className="text-xs text-muted-foreground">Zoom</div>
-            <Slider
-              value={[zoom]}
-              min={1}
-              max={4}
-              step={0.05}
-              onValueChange={(v) => setZoom(v[0])}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeCropper} disabled={uploadMut.isPending}>
-              Cancelar
-            </Button>
-            <Button onClick={() => uploadMut.mutate()} disabled={uploadMut.isPending}>
-              {uploadMut.isPending ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
-              Salvar capa
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
+        ) : null}
+
+        <Dialog open={cropOpen} onOpenChange={(o) => (o ? setCropOpen(true) : closeCropper())}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Ajustar capa</DialogTitle>
+              <DialogDescription>Reposicione a imagem para encaixar no banner.</DialogDescription>
+            </DialogHeader>
+            <div
+              className="relative w-full bg-muted rounded-md overflow-hidden"
+              style={{ height: 320 }}
+            >
+              {srcUrl && (
+                <Cropper
+                  image={srcUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={BANNER_W / BANNER_H}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={onCropComplete}
+                  objectFit="contain"
+                />
+              )}
+            </div>
+            <div className="space-y-2">
+              <div className="text-xs text-muted-foreground">Zoom</div>
+              <Slider
+                value={[zoom]}
+                min={1}
+                max={4}
+                step={0.05}
+                onValueChange={(v) => setZoom(v[0])}
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={closeCropper} disabled={uploadMut.isPending}>
+                Cancelar
+              </Button>
+              <Button onClick={() => uploadMut.mutate()} disabled={uploadMut.isPending}>
+                {uploadMut.isPending ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
+                Salvar capa
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    );
+  },
+);
+
+ProfileBanner.displayName = "ProfileBanner";

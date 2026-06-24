@@ -7,7 +7,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ProfileAvatar } from "@/components/profile-avatar";
@@ -59,15 +58,18 @@ type MyProfileEditDialogProps = {
   profile: MyProfileFormData;
   displayName: string;
   fallbackInitial: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
 export function MyProfileEditDialog({
   profile,
   displayName,
   fallbackInitial,
+  open,
+  onOpenChange,
 }: MyProfileEditDialogProps) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     apelido: "",
@@ -162,7 +164,7 @@ export function MyProfileEditDialog({
           : prev,
       );
       toast.success("Perfil atualizado");
-      setOpen(false);
+      onOpenChange(false);
       await qc.invalidateQueries({ queryKey: ["my-profile"] });
       await qc.invalidateQueries({ queryKey: ["ranking-individual-rows"] });
       await qc.invalidateQueries({ queryKey: ["ranking-team-rows"] });
@@ -174,13 +176,7 @@ export function MyProfileEditDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="shrink-0 gap-1.5">
-          <Settings className="size-4" />
-          Editar
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -190,7 +186,7 @@ export function MyProfileEditDialog({
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>Foto do perfil</Label>
-            <ProfileAvatar fallback={fallbackInitial} className="size-20" editable />
+            <ProfileAvatar fallback={fallbackInitial} className="size-20" editable showActionButtons={false} />
           </div>
           <div className="space-y-1.5">
             <Label>Nome</Label>
@@ -334,7 +330,7 @@ export function MyProfileEditDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button onClick={onSave} disabled={saving}>
