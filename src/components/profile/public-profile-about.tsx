@@ -66,15 +66,19 @@ export function PublicProfileAbout({ profile, compact }: PublicProfileAboutProps
   }
 
   return (
-    <Card className={compact ? "p-4 shadow-card" : "p-5 shadow-card"}>
+    <Card className={compact ? "p-4 shadow-card border-border/60" : "p-5 shadow-card border-border/60"}>
       {!compact ? (
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
           <Info className="size-5 text-primary" />
-          <h2 className="font-semibold text-base">Sobre</h2>
+          <h2 className="font-display text-xl tracking-wide">Sobre</h2>
         </div>
-      ) : null}
+      ) : (
+        <h2 className="font-display text-lg tracking-wide mb-3 pb-2 border-b border-border/50">
+          Informações
+        </h2>
+      )}
 
-      {profile.bio ? (
+      {profile.bio && compact ? null : profile.bio ? (
         <p className="text-sm text-muted-foreground leading-relaxed mb-4 pb-4 border-b border-border/50">
           {profile.bio}
         </p>

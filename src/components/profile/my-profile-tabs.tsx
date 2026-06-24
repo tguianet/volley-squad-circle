@@ -129,14 +129,17 @@ function MyProfilePostsSection({ profile }: { profile: MyProfileCore }) {
 
 function TudoOverview({ profile, aboutData, teamsSection }: MyProfileTabsProps) {
   return (
-    <div className="grid lg:grid-cols-[minmax(260px,1fr)_minmax(0,1.65fr)] gap-4 items-start">
-      <main className="order-1 lg:order-2 min-w-0">
+    <div className="grid xl:grid-cols-[minmax(260px,300px)_minmax(0,1fr)_minmax(240px,280px)] gap-4 items-start">
+      <aside className="order-2 xl:order-1 space-y-4 min-w-0">
+        <PublicProfileAbout profile={aboutData} compact />
+        <PublicProfileConnectionsPanel profileId={profile.id} compact />
+      </aside>
+
+      <main className="order-1 xl:order-2 min-w-0">
         <MyProfilePostsSection profile={profile} />
       </main>
-      <aside className="order-2 lg:order-1 space-y-4 min-w-0">
-        <PublicProfileAbout profile={aboutData} compact />
-        <PublicProfileGallery profileId={profile.id} />
-        <PublicProfileConnectionsPanel profileId={profile.id} compact />
+
+      <aside className="order-3 space-y-4 min-w-0">
         <PublicProfileStats
           profileId={profile.id}
           pontos={profile.pontos ?? 0}
@@ -144,6 +147,7 @@ function TudoOverview({ profile, aboutData, teamsSection }: MyProfileTabsProps) 
           derrotas={profile.derrotas ?? 0}
           compact
         />
+        <PublicProfileGallery profileId={profile.id} />
         {teamsSection}
       </aside>
     </div>
@@ -162,8 +166,8 @@ export function MyProfileTabs(props: MyProfileTabsProps) {
 
   return (
     <div className="space-y-0">
-      <Card className="shadow-card border-border/60 p-0 gap-0 overflow-hidden sticky top-0 z-20 bg-card/95 backdrop-blur-md">
-        <div className="flex items-stretch border-b border-border/60">
+      <Card className="shadow-card border-border/60 p-0 gap-0 overflow-hidden sticky top-0 z-20 bg-card backdrop-blur-md rounded-none sm:rounded-2xl">
+        <div className="flex items-stretch border-b border-border/60 bg-secondary/20">
           <div className="flex flex-1 min-w-0 overflow-x-auto scrollbar-none">
             {PRIMARY_TABS.map((tab) => (
               <TabButton

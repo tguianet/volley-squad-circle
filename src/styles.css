@@ -103,8 +103,8 @@
     var(--coastal-sand) 100%
   );
 
-  --shadow-card: 0 4px 24px -8px oklch(0.35 0.06 240 / 0.12);
-  --shadow-card-hover: 0 12px 32px -10px oklch(0.35 0.06 240 / 0.16);
+  --shadow-card: 0 8px 30px -12px oklch(0.35 0.06 240 / 0.18);
+  --shadow-card-hover: 0 16px 40px -12px oklch(0.35 0.06 240 / 0.22);
   --shadow-glow: 0 8px 24px -6px oklch(0.68 0.17 45 / 0.35);
   --shadow-inset-soft: inset 0 1px 0 oklch(1 0 0 / 0.6);
 }

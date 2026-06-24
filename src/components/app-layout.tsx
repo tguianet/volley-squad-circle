@@ -46,19 +46,19 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex w-full">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-64 border-r border-border/60 bg-card/80 backdrop-blur-md sticky top-0 h-screen p-5 gap-2 shadow-sm">
-        <Link to="/" className="flex items-center gap-3 mb-6 px-1">
-          <div className="size-11 rounded-2xl overflow-hidden flex items-center justify-center shadow-glow gradient-beach">
-            <Waves className="size-6 text-white" aria-hidden="true" />
+      <aside className="hidden md:flex flex-col w-[260px] border-r border-border/70 bg-card sticky top-0 h-screen p-4 gap-1">
+        <Link to="/" className="flex items-center gap-3 mb-5 px-2 py-3 rounded-2xl gradient-sand border border-border/40">
+          <div className="size-10 rounded-xl flex items-center justify-center gradient-beach shadow-glow">
+            <Waves className="size-5 text-white" aria-hidden="true" />
           </div>
           <div>
-            <div className="font-display text-2xl leading-none tracking-wide">PlayBeach</div>
-            <div className="text-[10px] text-muted-foreground tracking-[0.2em] leading-tight uppercase mt-0.5">
-              Ranking Rio Preto
+            <div className="font-display text-xl leading-none tracking-wide">PlayBeach</div>
+            <div className="text-[9px] text-muted-foreground tracking-[0.18em] uppercase mt-0.5">
+              Rio Preto
             </div>
           </div>
         </Link>
-        <nav className="flex flex-col gap-0.5">
+        <nav className="flex flex-col gap-0.5 flex-1">
           {[...navItems, ...extra].map((it) => {
             const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
             return (
@@ -66,10 +66,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 key={it.to}
                 to={it.to}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all border-l-[3px]",
                   active
-                    ? "gradient-beach text-white shadow-glow"
-                    : "text-foreground/75 hover:bg-secondary/80 hover:text-foreground",
+                    ? "border-primary bg-primary/10 text-primary font-semibold"
+                    : "border-transparent text-foreground/70 hover:bg-secondary/60 hover:text-foreground",
                 )}
               >
                 <it.icon className="size-4" />
@@ -90,8 +90,8 @@ export function AppLayout({ children }: { children: ReactNode }) {
             Sair
           </button>
         </div>
-        <div className="mt-auto p-4 rounded-2xl gradient-sand border border-border/50 text-sm shadow-card">
-          <div className="font-display text-xl leading-none tracking-wide text-sunset">
+        <div className="mt-auto p-4 rounded-2xl border border-accent/30 bg-accent/5 text-sm">
+          <div className="font-display text-lg leading-none tracking-wide text-accent">
             Pronto pra jogar?
           </div>
           <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
@@ -99,7 +99,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
           </p>
           <Link
             to="/partidas/nova"
-            className="mt-3 inline-flex items-center justify-center w-full rounded-xl bg-accent text-accent-foreground px-3 py-2.5 text-xs font-bold shadow-glow hover:brightness-105 transition"
+            className="mt-3 inline-flex items-center justify-center w-full rounded-xl gradient-beach text-white px-3 py-2.5 text-xs font-bold shadow-glow hover:brightness-105 transition"
           >
             Criar partida amistosa
           </Link>
@@ -140,7 +140,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     className={cn(
                       "size-9 rounded-xl flex items-center justify-center transition-all",
                       active
-                        ? "gradient-beach text-white shadow-glow scale-110"
+                        ? "bg-primary text-primary-foreground shadow-sm scale-105"
                         : "text-muted-foreground",
                     )}
                   >

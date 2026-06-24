@@ -171,12 +171,15 @@ function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4">
         <MyProfileHeader
           profile={profile}
           displayName={displayName}
           username={username}
           fallbackInitial={fallbackInitial}
+          pontos={profile.pontos ?? 0}
+          vitorias={profile.vitorias ?? 0}
+          derrotas={profile.derrotas ?? 0}
         />
 
         <MyProfileTabs

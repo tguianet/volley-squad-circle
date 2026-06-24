@@ -216,7 +216,7 @@ export function ProfileBanner({ compact = false }: ProfileBannerProps) {
       }
     >
       {bannerQ.data && <SignedBanner path={bannerQ.data} preview={previewUrl} />}
-      <div className="absolute top-3 left-3 flex gap-2 z-10">
+      <div className="absolute top-3 right-3 flex gap-1.5 z-10">
         <input
           ref={fileRef}
           type="file"
@@ -231,6 +231,7 @@ export function ProfileBanner({ compact = false }: ProfileBannerProps) {
         <Button
           size="sm"
           variant="secondary"
+          className="h-8 px-2.5 bg-card/90 backdrop-blur-md border border-border/50 shadow-sm text-xs"
           onClick={() => {
             if (!userId) {
               toast.error("Faça login para alterar a capa");
@@ -241,20 +242,24 @@ export function ProfileBanner({ compact = false }: ProfileBannerProps) {
           disabled={isLoading}
         >
           {isLoading ? (
-            <Loader2 className="size-4 mr-1 animate-spin" />
+            <Loader2 className="size-3.5 animate-spin" />
           ) : (
-            <ImagePlus className="size-4 mr-1" />
+            <ImagePlus className="size-3.5" />
           )}
-          {bannerQ.data ? "Trocar capa" : "Adicionar capa"}
+          <span className="hidden sm:inline ml-1.5">
+            {bannerQ.data ? "Trocar capa" : "Capa"}
+          </span>
         </Button>
         {bannerQ.data && userId && (
           <Button
             size="sm"
-            variant="destructive"
+            variant="secondary"
+            className="h-8 w-8 p-0 bg-card/90 backdrop-blur-md border border-border/50 shadow-sm"
             onClick={() => removeMut.mutate()}
             disabled={isLoading}
+            aria-label="Remover capa"
           >
-            <Trash2 className="size-4" />
+            <Trash2 className="size-3.5 text-destructive" />
           </Button>
         )}
       </div>

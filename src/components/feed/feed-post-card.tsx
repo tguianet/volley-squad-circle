@@ -98,7 +98,10 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
 
   return (
     <>
-    <Card className={cn("shadow-card border-border/60 overflow-hidden hover:shadow-card-hover transition-shadow", compact ? "p-3" : "p-0")}>
+    <Card className={cn("shadow-card border-border/60 overflow-hidden hover:shadow-card-hover transition-shadow duration-200", compact ? "p-3" : "p-0")}>
+      {!compact ? (
+        <div className="h-1 gradient-beach w-full" aria-hidden />
+      ) : null}
       <div className={cn(compact ? "space-y-2.5" : "p-4 sm:p-5 space-y-3")}>
         <div className="flex items-start gap-3">
           <Link {...profileLink} className="shrink-0">
