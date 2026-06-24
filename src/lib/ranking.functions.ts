@@ -1,6 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import {
+  CHALLENGE_INVALID_MESSAGE,
+  canChallengeTeam,
+  isTeamComplete,
+  isUserTeamCaptain,
+} from "@/lib/challenge-rules";
 import { supabase } from "@/integrations/supabase/client";
 import { isMissingRpcError, normalizeProfileHandle } from "@/lib/media-url";
 
@@ -76,7 +82,7 @@ export const listTeams = createServerFn({ method: "GET" })
       `,
       )
       .eq("is_active", true)
-      .order("points", { ascending: false });
+      .order("rank_position", { ascending: true, nullsFirst: false });
     if (error) throw new Error(error.message);
     return data ?? [];
   });
@@ -94,13 +100,25 @@ export const getMyTeams = createServerFn({ method: "GET" })
       // also include teams where i'm captain even with no members yet
       const { data: captained } = await context.supabase
         .from("teams")
-        .select("*")
+        .select(
+          `
+          id, name, category, gender, captain_id, preferred_arena_id,
+          rank_position, points, wins, losses, current_streak, is_active,
+          members:team_members(profile:profiles(id, display_name, avatar_url))
+        `,
+        )
         .eq("captain_id", context.userId);
       return captained ?? [];
     }
     const { data, error } = await context.supabase
       .from("teams")
-      .select("*")
+      .select(
+        `
+        id, name, category, gender, captain_id, preferred_arena_id,
+        rank_position, points, wins, losses, current_streak, is_active,
+        members:team_members(profile:profiles(id, display_name, avatar_url))
+      `,
+      )
       .or(`id.in.(${ids.join(",")}),captain_id.eq.${context.userId}`);
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -355,6 +373,52 @@ export const createChallenge = createServerFn({ method: "POST" })
     if (Number.isNaN(hour) || hour < 8 || hour > 16) {
       throw new Error("Horário fora da janela permitida (08:00 às 17:00).");
     }
+
+    const { data: challenger, error: chErr } = await context.supabase
+      .from("teams")
+      .select(
+        `
+        id, captain_id, category, gender, rank_position, is_active,
+        members:team_members(profile_id)
+      `,
+      )
+      .eq("id", data.challengerTeamId)
+      .maybeSingle();
+    if (chErr) throw new Error(chErr.message);
+
+    const { data: challenged, error: cdErr } = await context.supabase
+      .from("teams")
+      .select(
+        `
+        id, category, gender, rank_position, is_active,
+        members:team_members(profile_id)
+      `,
+      )
+      .eq("id", data.challengedTeamId)
+      .maybeSingle();
+    if (cdErr) throw new Error(cdErr.message);
+
+    const challengerMemberCount = challenger?.members?.length ?? 0;
+    const challengedMemberCount = challenged?.members?.length ?? 0;
+
+    const rankingValid =
+      challenger &&
+      challenged &&
+      challenger.is_active &&
+      challenged.is_active &&
+      isUserTeamCaptain(challenger, context.userId) &&
+      challenger.rank_position != null &&
+      challenged.rank_position != null &&
+      challenger.category === challenged.category &&
+      challenger.gender === challenged.gender &&
+      isTeamComplete(challenger.category as "dupla" | "quarteto", challengerMemberCount) &&
+      isTeamComplete(challenged.category as "dupla" | "quarteto", challengedMemberCount) &&
+      canChallengeTeam(challenger.rank_position, challenged.rank_position);
+
+    if (!rankingValid) {
+      throw new Error(CHALLENGE_INVALID_MESSAGE);
+    }
+
     const { data: setting, error: sErr } = await context.supabase
       .from("app_settings")
       .select("value")
@@ -402,7 +466,12 @@ export const createChallenge = createServerFn({ method: "POST" })
       })
       .select()
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (error.message.includes("Desafio inválido pelas regras do ranking")) {
+        throw new Error(CHALLENGE_INVALID_MESSAGE);
+      }
+      throw new Error(error.message);
+    }
     return row;
   });
 

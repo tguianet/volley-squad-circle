@@ -36,6 +36,13 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useMyProfile } from "@/hooks/use-auth";
 import { requiredTeamMemberCount } from "@/lib/team-format";
+import {
+  CHALLENGE_INVALID_MESSAGE,
+  canChallengeTeam,
+  getChallengeEligibilityBadge,
+  isTeamComplete,
+  isUserTeamCaptain,
+} from "@/lib/challenge-rules";
 
 
 type CatKey =
@@ -136,9 +143,22 @@ function DesafiosPage() {
   const teamsQ = useQuery({ queryKey: ["teams"], queryFn: () => fetchTeams() });
   const myTeamsQ = useQuery({ queryKey: ["my-teams"], queryFn: () => fetchMyTeams() });
 
-  const captainedTeams = ((myTeamsQ.data ?? []) as TeamLite[]).filter(
-    (t) => t.captain_id === userId,
-  );
+  const allMyTeams = (myTeamsQ.data ?? []) as TeamLite[];
+
+  const captainedTeams = allMyTeams.filter((t) => isUserTeamCaptain(t, userId));
+
+  const memberOnlyTeams = allMyTeams.filter((t) => !isUserTeamCaptain(t, userId));
+
+  const isTeamSelectable = (t: TeamLite) => {
+    const memberCount = t.members?.length ?? 0;
+    return (
+      isUserTeamCaptain(t, userId) &&
+      isTeamComplete(t.category as "dupla" | "quarteto", memberCount) &&
+      t.rank_position != null
+    );
+  };
+
+  const selectableCaptainedTeams = captainedTeams.filter(isTeamSelectable);
 
   const myProfileQ = useMyProfile();
   const myProfile = myProfileQ.data as
@@ -157,13 +177,27 @@ function DesafiosPage() {
   const [search, setSearch] = useState("");
 
   const teamsInCategory = useMemo(() => {
-    if (!categoryKey) return captainedTeams;
-    return captainedTeams.filter((t) => teamCatKey(t) === categoryKey);
+    if (!categoryKey) return selectableCaptainedTeams;
+    return selectableCaptainedTeams.filter((t) => teamCatKey(t) === categoryKey);
+  }, [selectableCaptainedTeams, categoryKey]);
+
+  const memberOnlyInCategory = useMemo(() => {
+    if (!categoryKey) return memberOnlyTeams;
+    return memberOnlyTeams.filter((t) => teamCatKey(t) === categoryKey);
+  }, [memberOnlyTeams, categoryKey]);
+
+  const incompleteCaptainedInCategory = useMemo(() => {
+    const incomplete = captainedTeams.filter((t) => !isTeamSelectable(t));
+    if (!categoryKey) return incomplete;
+    return incomplete.filter((t) => teamCatKey(t) === categoryKey);
   }, [captainedTeams, categoryKey]);
 
   useEffect(() => {
     if (teamsInCategory[0] && !teamsInCategory.find((t) => t.id === myTeamId)) {
       setMyTeamId(teamsInCategory[0].id);
+    }
+    if (myTeamId && !teamsInCategory.find((t) => t.id === myTeamId)) {
+      setMyTeamId(teamsInCategory[0]?.id ?? "");
     }
   }, [teamsInCategory, myTeamId]);
 
@@ -179,18 +213,25 @@ function DesafiosPage() {
     return (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === myTeamId);
   }, [teamsQ.data, myTeamId]);
 
-  const isCaptainOfSelected = !!myTeam && myTeam.captain_id === userId;
+  const isCaptainOfSelected = isUserTeamCaptain(myTeam ?? { captain_id: "" }, userId);
 
+  const myTeamMemberCount = myTeamFull?.members?.length ?? myTeam?.members?.length ?? 0;
+  const myTeamIsComplete =
+    !!myTeam &&
+    isTeamComplete(myTeam.category as "dupla" | "quarteto", myTeamMemberCount);
 
-
+  const canProceedWithChallenge =
+    !!myTeam &&
+    isCaptainOfSelected &&
+    myTeamIsComplete &&
+    myTeam.rank_position != null;
 
   type Candidate = TeamLite & { eligibility: "top5" | "above" | "below" };
 
   const candidates = useMemo<Candidate[]>(() => {
-    if (!myTeam || myTeam.rank_position == null) return [];
+    if (!myTeam || myTeam.rank_position == null || !canProceedWithChallenge) return [];
     const all = (teamsQ.data as TeamLite[] | undefined) ?? [];
     const myPos = myTeam.rank_position;
-    const myIsTop5 = myPos <= 5;
     const reqMembers = requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto");
 
     return all
@@ -199,23 +240,18 @@ function DesafiosPage() {
         if (t.category !== myTeam.category) return false;
         if (myTeam.gender ? t.gender !== myTeam.gender : false) return false;
         if (t.rank_position == null) return false;
-        // completo (não suspenso/inativo já filtrado por is_active no listTeams)
         const memberCount = t.members?.length ?? 0;
-        if (memberCount < reqMembers) return false;
-        if (myIsTop5 && t.rank_position <= 5) return true;
-        return t.rank_position >= myPos - 3 && t.rank_position <= myPos + 2;
+        if (memberCount !== reqMembers) return false;
+        return canChallengeTeam(myPos, t.rank_position);
       })
       .map((t) => {
         const pos = t.rank_position as number;
-        let eligibility: Candidate["eligibility"];
-        if (myIsTop5 && pos <= 5) eligibility = "top5";
-        else if (pos < myPos) eligibility = "above";
-        else eligibility = "below";
+        const eligibility = getChallengeEligibilityBadge(myPos, pos) ?? "below";
         return { ...t, eligibility };
       })
       .filter((t) => (search ? t.name.toLowerCase().includes(search.toLowerCase()) : true))
       .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
-  }, [teamsQ.data, myTeam, search]);
+  }, [teamsQ.data, myTeam, search, canProceedWithChallenge]);
 
 
   const opponent = useMemo(
@@ -281,10 +317,44 @@ function DesafiosPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const canSubmit = myTeamId && opponentId && date && time && courtId && !sendM.isPending;
+  const validateChallenge = (): boolean => {
+    if (!canProceedWithChallenge || !myTeam || myTeam.rank_position == null) {
+      toast.error(CHALLENGE_INVALID_MESSAGE);
+      return false;
+    }
+    if (!opponent || opponent.rank_position == null) {
+      toast.error(CHALLENGE_INVALID_MESSAGE);
+      return false;
+    }
+    const reqMembers = requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto");
+    const opponentMemberCount = opponent.members?.length ?? 0;
+    if (
+      opponent.category !== myTeam.category ||
+      opponent.gender !== myTeam.gender ||
+      opponentMemberCount !== reqMembers ||
+      !canChallengeTeam(myTeam.rank_position, opponent.rank_position)
+    ) {
+      toast.error(CHALLENGE_INVALID_MESSAGE);
+      return false;
+    }
+    if (!date || !time || !courtId) {
+      toast.error(CHALLENGE_INVALID_MESSAGE);
+      return false;
+    }
+    return true;
+  };
+
+  const canSubmit =
+    canProceedWithChallenge &&
+    !!opponentId &&
+    !!date &&
+    !!time &&
+    !!courtId &&
+    !sendM.isPending &&
+    candidates.some((c) => c.id === opponentId);
 
   const handleSubmit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !validateChallenge()) return;
     sendM.mutate({
       data: {
         challengerTeamId: myTeamId,
@@ -378,11 +448,15 @@ function DesafiosPage() {
           ))}
         </div>
 
-        {captainedTeams.length === 0 ? (
+        {selectableCaptainedTeams.length === 0 ? (
           <Card className="p-8 text-center">
-            <p className="font-semibold mb-1">Você ainda não é capitão de nenhuma equipe</p>
+            <p className="font-semibold mb-1">
+              Você precisa ser capitão de um time completo para criar desafios.
+            </p>
             <p className="text-sm text-muted-foreground">
-              Crie uma equipe para começar a desafiar.
+              {captainedTeams.length > 0
+                ? "Complete a formação da sua equipe para liberar os desafios."
+                : "Crie uma equipe ou torne-se capitão para começar a desafiar."}
             </p>
           </Card>
         ) : (
@@ -418,7 +492,9 @@ function DesafiosPage() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {CATEGORIES.map((c) => {
-                      const count = captainedTeams.filter((t) => teamCatKey(t) === c.key).length;
+                      const count = selectableCaptainedTeams.filter(
+                        (t) => teamCatKey(t) === c.key,
+                      ).length;
                       const active = categoryKey === c.key;
                       const disabled = count === 0;
                       return (
@@ -459,7 +535,7 @@ function DesafiosPage() {
                       <SelectContent>
                         {teamsInCategory.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
-                            {t.name} — {catLabel(t)}
+                            {t.name} — {catLabel(t)} (Capitão)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -472,9 +548,14 @@ function DesafiosPage() {
                     <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div className="font-bold text-lg">{myTeam.name}</div>
-                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
-                          {catLabel(myTeam)}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 font-semibold">
+                            Capitão
+                          </span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
+                            {catLabel(myTeam)}
+                          </span>
+                        </div>
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Posição Atual:{" "}
@@ -514,22 +595,60 @@ function DesafiosPage() {
                 ) : (
                   <p className="text-sm text-muted-foreground">
                     {categoryKey
-                      ? "Você não é capitão de nenhuma equipe nesta categoria."
+                      ? "Selecione um time completo que você capitaneia nesta categoria."
                       : "Escolha uma categoria acima."}
                   </p>
                 )}
 
+                {incompleteCaptainedInCategory.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-800 dark:text-amber-300"
+                  >
+                    <AlertTriangle className="size-4 mt-0.5 shrink-0" />
+                    <span>
+                      <span className="font-semibold">{t.name}</span> — time incompleto (
+                      {t.members?.length ?? 0}/{requiredTeamMemberCount(t.category as "dupla" | "quarteto")}{" "}
+                      membros). Complete a formação para criar desafios.
+                    </span>
+                  </div>
+                ))}
+
+                {memberOnlyInCategory.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-start gap-2 rounded-lg border border-border bg-secondary/30 p-3 text-sm text-muted-foreground"
+                  >
+                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                    <span>
+                      <span className="font-semibold text-foreground">{t.name}</span> — Você
+                      participa deste time, mas não é o capitão.
+                    </span>
+                  </div>
+                ))}
+
                 {myTeam && !isCaptainOfSelected && (
                   <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                     <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                    <span>Somente o capitão pode criar desafios.</span>
+                    <span>Somente o capitão pode criar desafios por este time.</span>
+                  </div>
+                )}
+
+                {myTeam && isCaptainOfSelected && !myTeamIsComplete && (
+                  <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                    <span>
+                      Seu time precisa estar completo para criar desafios (
+                      {myTeamMemberCount}/
+                      {requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto")} membros).
+                    </span>
                   </div>
                 )}
 
                 <div className="flex justify-end">
                   <Button
                     onClick={() => setStep(2)}
-                    disabled={!myTeam || !isCaptainOfSelected}
+                    disabled={!canProceedWithChallenge}
                   >
                     Continuar para Adversários
                   </Button>
@@ -541,6 +660,18 @@ function DesafiosPage() {
             {/* STEP 2 — Opponent */}
             {step === 2 && (
               <Card className="p-5 space-y-4">
+                {!canProceedWithChallenge ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                      <span>Somente o capitão pode criar desafios por este time.</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                      <ArrowLeft className="size-4 mr-1" /> Voltar
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
                     <h2 className="font-semibold">Escolha seu Adversário</h2>
@@ -654,8 +785,8 @@ function DesafiosPage() {
                     <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/40 rounded-lg p-2">
                       <AlertTriangle className="size-3.5 mt-0.5 text-amber-500 shrink-0" />
                       <span>
-                        Em caso de vitória, as posições serão trocadas conforme as regras do ranking.
-                        Os pontos permanecem os mesmos.
+                        Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem
+                        iguais.
                       </span>
                     </div>
                   </div>
@@ -669,6 +800,8 @@ function DesafiosPage() {
                     Próximo: Data
                   </Button>
                 </div>
+                  </>
+                )}
               </Card>
             )}
 
@@ -676,6 +809,18 @@ function DesafiosPage() {
             {/* STEP 3 — Date */}
             {step === 3 && (
               <Card className="p-5 space-y-4">
+                {!canProceedWithChallenge || !opponentId ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                      <span>{CHALLENGE_INVALID_MESSAGE}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                      <ArrowLeft className="size-4 mr-1" /> Voltar
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 <div className="flex items-center gap-2 text-primary">
                   <CalendarDays className="size-5" />
                   <h2 className="font-semibold">Selecione a Data (Domingos)</h2>
@@ -712,12 +857,26 @@ function DesafiosPage() {
                     Próximo: Horário
                   </Button>
                 </div>
+                  </>
+                )}
               </Card>
             )}
 
             {/* STEP 4 — Time */}
             {step === 4 && (
               <Card className="p-5 space-y-4">
+                {!canProceedWithChallenge || !opponentId || !date ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                      <span>{CHALLENGE_INVALID_MESSAGE}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                      <ArrowLeft className="size-4 mr-1" /> Voltar
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 <div className="flex items-center gap-2 text-primary">
                   <Clock className="size-5" />
                   <h2 className="font-semibold">Horários Disponíveis</h2>
@@ -759,12 +918,26 @@ function DesafiosPage() {
                     Próximo: Quadra
                   </Button>
                 </div>
+                  </>
+                )}
               </Card>
             )}
 
             {/* STEP 5 — Court */}
             {step === 5 && (
               <Card className="p-5 space-y-4">
+                {!canProceedWithChallenge || !opponentId || !date || !time ? (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      <ShieldAlert className="size-4 mt-0.5 shrink-0" />
+                      <span>{CHALLENGE_INVALID_MESSAGE}</span>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                      <ArrowLeft className="size-4 mr-1" /> Voltar
+                    </Button>
+                  </div>
+                ) : (
+                  <>
                 <div className="flex items-center gap-2 text-primary">
                   <MapPin className="size-5" />
                   <h2 className="font-semibold">Escolha a Quadra</h2>
@@ -798,6 +971,8 @@ function DesafiosPage() {
                     <ArrowLeft className="size-4 mr-1" /> Voltar
                   </Button>
                 </div>
+                  </>
+                )}
               </Card>
             )}
 
@@ -809,10 +984,10 @@ function DesafiosPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-4">
-                {/* CASA */}
+                {/* Meu time */}
                 <div className="text-center space-y-2">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Casa
+                    Meu time
                   </div>
                   <Avatar className="size-14 mx-auto">
                     <AvatarFallback className="bg-primary/20 text-primary font-bold">
@@ -821,16 +996,16 @@ function DesafiosPage() {
                   </Avatar>
                   <div className="font-semibold text-sm">{myTeam?.name ?? "—"}</div>
                   <div className="text-xs text-muted-foreground">
-                    #{myTeam?.rank_position ?? "—"}
+                    Posição atual: #{myTeam?.rank_position ?? "—"}
                   </div>
                 </div>
 
                 <div className="text-center font-bold text-muted-foreground">VS</div>
 
-                {/* VISITANTE */}
+                {/* Adversário */}
                 <div className="text-center space-y-2">
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Visitante
+                    Adversário
                   </div>
                   <Avatar className="size-14 mx-auto">
                     <AvatarFallback
@@ -844,9 +1019,17 @@ function DesafiosPage() {
                   </Avatar>
                   <div className="font-semibold text-sm">{opponent?.name ?? "A definir"}</div>
                   <div className="text-xs text-muted-foreground">
+                    Posição atual:{" "}
                     {opponent?.rank_position ? `#${opponent.rank_position}` : "—"}
                   </div>
                 </div>
+              </div>
+
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/40 rounded-lg p-3">
+                <AlertTriangle className="size-3.5 mt-0.5 text-amber-500 shrink-0" />
+                <span>
+                  Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem iguais.
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
