@@ -271,7 +271,30 @@ function DesafiosPage() {
     );
   }
 
-  const players = myTeamFull?.members ?? [];
+  // Always include the logged-in user (captain) as the first athlete,
+  // then any other team members.
+  const players = useMemo(() => {
+    const list: Array<{
+      profile: { id: string; display_name: string | null; avatar_url: string | null } | null;
+      isMe: boolean;
+    }> = [];
+    if (myProfile) {
+      list.push({
+        profile: {
+          id: myProfile.id,
+          display_name: myProfile.display_name ?? "Você",
+          avatar_url: myProfile.avatar_url ?? null,
+        },
+        isMe: true,
+      });
+    }
+    (myTeamFull?.members ?? []).forEach((m) => {
+      if (!m.profile) return;
+      if (m.profile.id === myProfile?.id) return;
+      list.push({ profile: m.profile, isMe: false });
+    });
+    return list;
+  }, [myProfile, myTeamFull]);
 
   return (
     <AppLayout>
@@ -329,7 +352,61 @@ function DesafiosPage() {
                   <h2 className="font-semibold">Minha Equipe</h2>
                 </div>
 
-                {captainedTeams.length > 1 && (
+                {/* My profile chip */}
+                <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3">
+                  <Avatar className="size-12">
+                    <AvatarImage src={myProfile?.avatar_url ?? undefined} />
+                    <AvatarFallback>{initials(myProfile?.display_name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      Meu perfil
+                    </div>
+                    <div className="font-semibold truncate">
+                      {myProfile?.display_name ?? "Você"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Category pills — qual ranking vou desafiar */}
+                <div>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Qual ranking deseja desafiar?
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.map((c) => {
+                      const count = captainedTeams.filter((t) => teamCatKey(t) === c.key).length;
+                      const active = categoryKey === c.key;
+                      const disabled = count === 0;
+                      return (
+                        <button
+                          key={c.key}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => {
+                            setCategoryKey(active ? "" : c.key);
+                            setMyTeamId("");
+                            setOpponentId("");
+                          }}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-colors",
+                            active
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-card border-border hover:border-primary/40",
+                            disabled && "opacity-40 cursor-not-allowed",
+                          )}
+                        >
+                          {c.label}
+                          {count > 0 && (
+                            <span className="ml-1.5 text-[10px] opacity-70">({count})</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {teamsInCategory.length > 1 && (
                   <div>
                     <label className="text-xs text-muted-foreground">Selecione a equipe</label>
                     <Select value={myTeamId} onValueChange={setMyTeamId}>
@@ -337,10 +414,9 @@ function DesafiosPage() {
                         <SelectValue placeholder="Escolha a equipe" />
                       </SelectTrigger>
                       <SelectContent>
-                        {captainedTeams.map((t) => (
+                        {teamsInCategory.map((t) => (
                           <SelectItem key={t.id} value={t.id}>
-                            {t.name} — {t.category}
-                            {t.gender === "X" ? " misto" : ""}
+                            {t.name} — {catLabel(t)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -348,10 +424,15 @@ function DesafiosPage() {
                   </div>
                 )}
 
-                {myTeam && (
+                {myTeam ? (
                   <>
                     <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
-                      <div className="font-bold text-lg">{myTeam.name}</div>
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="font-bold text-lg">{myTeam.name}</div>
+                        <span className="text-[11px] px-2 py-0.5 rounded-full bg-primary/15 text-primary font-semibold">
+                          {catLabel(myTeam)}
+                        </span>
+                      </div>
                       <div className="text-xs text-muted-foreground mt-1">
                         Posição Atual:{" "}
                         <span className="text-primary font-semibold">
@@ -365,22 +446,20 @@ function DesafiosPage() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      {players.length === 0 && (
-                        <div className="col-span-full text-xs text-muted-foreground flex items-center gap-2">
-                          <UserPlus className="size-4" /> Sem atletas cadastrados.
-                        </div>
-                      )}
                       {players.map((m, i) => (
                         <div
                           key={m.profile?.id ?? i}
-                          className="rounded-xl border border-border/60 bg-card p-3 text-center"
+                          className={cn(
+                            "rounded-xl border p-3 text-center",
+                            m.isMe ? "border-primary/40 bg-primary/5" : "border-border/60 bg-card",
+                          )}
                         >
                           <Avatar className="size-12 mx-auto mb-2">
                             <AvatarImage src={m.profile?.avatar_url ?? undefined} />
                             <AvatarFallback>{initials(m.profile?.display_name)}</AvatarFallback>
                           </Avatar>
                           <div className="text-[10px] text-muted-foreground uppercase">
-                            Atleta {i + 1}
+                            {m.isMe ? "Você" : `Atleta ${i + 1}`}
                           </div>
                           <div className="text-sm font-semibold truncate">
                             {m.profile?.display_name ?? "—"}
@@ -389,6 +468,12 @@ function DesafiosPage() {
                       ))}
                     </div>
                   </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {categoryKey
+                      ? "Você não é capitão de nenhuma equipe nesta categoria."
+                      : "Escolha uma categoria acima."}
+                  </p>
                 )}
 
                 <div className="flex justify-end">
