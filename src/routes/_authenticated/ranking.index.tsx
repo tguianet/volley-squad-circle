@@ -111,13 +111,11 @@ function RankingPage() {
                     <Venus className="size-4" /> Feminino
                   </span>
                 </GenderPill>
-                {tab !== "ind" ? (
-                  <GenderPill active={effectiveGender === "X"} onClick={() => setGender("X")}>
-                    <span className="inline-flex items-center gap-1.5">
-                      <Users className="size-4" /> Misto
-                    </span>
-                  </GenderPill>
-                ) : null}
+                <GenderPill active={effectiveGender === "X"} onClick={() => setGender("X")}>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Users className="size-4" /> Misto
+                  </span>
+                </GenderPill>
               </div>
             </div>
 
