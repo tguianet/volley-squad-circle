@@ -260,16 +260,6 @@ function DesafiosPage() {
     setCourtId("");
   };
 
-  if (!userId) {
-    return (
-      <AppLayout>
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        </div>
-      </AppLayout>
-    );
-  }
-
   // Always include the logged-in user (captain) as the first athlete,
   // then any other team members.
   const players = useMemo(() => {
@@ -294,6 +284,16 @@ function DesafiosPage() {
     });
     return list;
   }, [myProfile, myTeamFull]);
+
+  if (!userId) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <p className="text-sm text-muted-foreground">Carregando…</p>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
