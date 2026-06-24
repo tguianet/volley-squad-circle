@@ -557,7 +557,7 @@ export const listMyChallenges = createServerFn({ method: "GET" })
       .from("challenges")
       .select(
         `
-        id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes,
+        id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes, created_at,
         score_challenger, score_challenged, score_registered_by, score_registered_at, score_confirmed_by, score_confirmed_at,
         challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
         challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),

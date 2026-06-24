@@ -16,6 +16,7 @@ import { ProfileGallery } from "@/components/profile-gallery";
 import { FollowProfilesSection } from "@/components/follow-profiles-section";
 import { FeedComposer } from "@/components/feed/feed-composer";
 import { FeedPostList } from "@/components/feed/feed-post-list";
+import { MyProfileChallengesPanel } from "@/components/profile/my-profile-challenges-panel";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Film, Trophy, Calendar, BarChart3, Users } from "lucide-react";
 
@@ -25,6 +26,7 @@ export type MyProfileTabId =
   | "amigos"
   | "fotos"
   | "reels"
+  | "desafios"
   | "estatisticas"
   | "times"
   | "ranking"
@@ -53,6 +55,7 @@ const PRIMARY_TABS: { id: MyProfileTabId; label: string }[] = [
   { id: "amigos", label: "Amigos" },
   { id: "fotos", label: "Fotos" },
   { id: "reels", label: "Reels" },
+  { id: "desafios", label: "Desafios" },
 ];
 
 const MORE_TABS: { id: MyProfileTabId; label: string; icon: typeof Trophy }[] = [
@@ -227,6 +230,7 @@ export function MyProfileTabs(props: MyProfileTabsProps) {
         ) : null}
         {activeTab === "fotos" ? <ProfileGallery /> : null}
         {activeTab === "reels" ? <ReelsEmptyState /> : null}
+        {activeTab === "desafios" ? <MyProfileChallengesPanel /> : null}
         {activeTab === "estatisticas" ? (
           <PublicProfileStats
             profileId={profile.id}
