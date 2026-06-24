@@ -159,24 +159,49 @@ function DesafiosPage() {
     return (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === myTeamId);
   }, [teamsQ.data, myTeamId]);
 
-  const candidates = useMemo(() => {
-    if (!myTeam) return [];
+  const isCaptainOfSelected = !!myTeam && myTeam.captain_id === userId;
+
+  const requiredMembers = useMemo(
+    () =>
+      myTeam
+        ? requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto")
+        : 0,
+    [myTeam],
+  );
+
+  type Candidate = TeamLite & { eligibility: "top5" | "above" | "below" };
+
+  const candidates = useMemo<Candidate[]>(() => {
+    if (!myTeam || myTeam.rank_position == null) return [];
     const all = (teamsQ.data as TeamLite[] | undefined) ?? [];
     const myPos = myTeam.rank_position;
+    const myIsTop5 = myPos <= 5;
+    const reqMembers = requiredTeamMemberCount(myTeam.category as "dupla" | "quarteto");
+
     return all
-      .filter(
-        (t) =>
-          t.id !== myTeam.id &&
-          t.category === myTeam.category &&
-          (myTeam.gender ? t.gender === myTeam.gender : true) &&
-          t.rank_position != null &&
-          myPos != null &&
-          t.rank_position >= myPos - 3 &&
-          t.rank_position <= myPos + 2,
-      )
+      .filter((t) => {
+        if (t.id === myTeam.id) return false;
+        if (t.category !== myTeam.category) return false;
+        if (myTeam.gender ? t.gender !== myTeam.gender : false) return false;
+        if (t.rank_position == null) return false;
+        // completo (não suspenso/inativo já filtrado por is_active no listTeams)
+        const memberCount = t.members?.length ?? 0;
+        if (memberCount < reqMembers) return false;
+        if (myIsTop5 && t.rank_position <= 5) return true;
+        return t.rank_position >= myPos - 3 && t.rank_position <= myPos + 2;
+      })
+      .map((t) => {
+        const pos = t.rank_position as number;
+        let eligibility: Candidate["eligibility"];
+        if (myIsTop5 && pos <= 5) eligibility = "top5";
+        else if (pos < myPos) eligibility = "above";
+        else eligibility = "below";
+        return { ...t, eligibility };
+      })
       .filter((t) => (search ? t.name.toLowerCase().includes(search.toLowerCase()) : true))
       .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
   }, [teamsQ.data, myTeam, search]);
+
 
   const opponent = useMemo(
     () => (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === opponentId),
