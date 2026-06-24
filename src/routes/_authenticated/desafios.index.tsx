@@ -5,11 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -17,843 +13,46 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
-  listArenas,
   listTeams,
   getMyTeams,
-  createTeam,
-  listProfiles,
-  getTeamAvailability,
-  upsertSundayAvailability,
   createChallenge,
-  respondToChallenge,
-  listMyChallenges,
-  listCourts,
   getCourtAvailability,
-  scheduleChallenge,
-  reportWalkover,
-  registerScore,
-  confirmScore,
-  disputeScore,
 } from "@/lib/ranking.functions";
 import {
+  Users,
+  Search,
+  ArrowLeft,
   CalendarDays,
-  Swords,
-  Plus,
   Clock,
   MapPin,
-  Check,
-  X,
-  RotateCcw,
-  Crown,
-  Timer,
-  AlertTriangle,
+  ClipboardList,
+  Trophy,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/desafios/")({
   head: () => ({
-    meta: [
-      { title: "Desafios — BeachPlay Arena" },
-      {
-        name: "description",
-        content: "Disponibilidade mensal aos domingos e desafios entre equipes.",
-      },
-    ],
+    meta: [{ title: "Criar Desafio | PLAYBEACH" }],
   }),
   component: DesafiosPage,
 });
 
-function formatSunday(iso: string): string {
-  const d = new Date(iso + "T12:00:00");
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-}
-
-function DesafiosPage() {
-  const qc = useQueryClient();
-  const [userId, setUserId] = useState<string | null>(null);
-  useMemo(() => {
-    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
-  }, []);
-
-  const fetchArenas = useServerFn(listArenas);
-  const fetchTeams = useServerFn(listTeams);
-  const fetchMyTeams = useServerFn(getMyTeams);
-  const fetchMyChallenges = useServerFn(listMyChallenges);
-
-  const arenasQ = useQuery({ queryKey: ["arenas"], queryFn: () => fetchArenas() });
-  const teamsQ = useQuery({ queryKey: ["teams"], queryFn: () => fetchTeams() });
-  const myTeamsQ = useQuery({ queryKey: ["my-teams"], queryFn: () => fetchMyTeams() });
-  const myChallengesQ = useQuery({
-    queryKey: ["my-challenges"],
-    queryFn: () => fetchMyChallenges(),
-  });
-
-  const captainedTeams = (myTeamsQ.data ?? []).filter((t) => t.captain_id === userId);
-  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
-  const activeTeamId = selectedTeamId ?? captainedTeams[0]?.id ?? null;
-
-  if (!userId) {
-    return (
-      <AppLayout>
-        <div className="max-w-3xl mx-auto px-4 py-6">
-          <p className="text-sm text-muted-foreground">Carregando…</p>
-        </div>
-      </AppLayout>
-    );
-  }
-
-  return (
-    <AppLayout>
-      <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div>
-            <h1 className="text-3xl">Desafios</h1>
-            <p className="text-sm text-muted-foreground">
-              Os jogos do ranking acontecem aos domingos. Defina a disponibilidade da sua equipe.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <ChallengeRankingButton
-              captainedTeams={captainedTeams}
-              allTeams={teamsQ.data ?? []}
-              onCreated={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
-            />
-            <CreateTeamButton arenas={arenasQ.data ?? []} />
-          </div>
-        </div>
-
-        {captainedTeams.length > 1 && (
-          <Card className="p-3">
-            <Label className="text-xs mb-1 block">Equipe selecionada</Label>
-            <Select value={activeTeamId ?? ""} onValueChange={setSelectedTeamId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Escolha a equipe" />
-              </SelectTrigger>
-              <SelectContent>
-                {captainedTeams.map((t) => (
-                  <SelectItem key={t.id} value={t.id}>
-                    {t.name} ({t.category})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Card>
-        )}
-
-        <Tabs defaultValue="availability">
-          <TabsList className="bg-secondary">
-            <TabsTrigger value="availability">
-              <CalendarDays className="size-4 mr-1" />
-              Disponibilidade
-            </TabsTrigger>
-            <TabsTrigger value="challenge">
-              <Swords className="size-4 mr-1" />
-              Desafiar
-            </TabsTrigger>
-            <TabsTrigger value="mine">Meus desafios</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="availability" className="mt-4">
-            {activeTeamId ? (
-              <AvailabilityPanel teamId={activeTeamId} arenas={arenasQ.data ?? []} />
-            ) : (
-              <EmptyState
-                title="Você ainda não é capitão de nenhuma equipe"
-                hint="Crie uma equipe para começar a definir sua disponibilidade."
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="challenge" className="mt-4">
-            {activeTeamId ? (
-              <ChallengePanel
-                myTeamId={activeTeamId}
-                allTeams={teamsQ.data ?? []}
-                onCreated={() => {
-                  qc.invalidateQueries({ queryKey: ["my-challenges"] });
-                }}
-              />
-            ) : (
-              <EmptyState
-                title="Crie uma equipe para desafiar outras"
-                hint="Apenas capitães podem enviar desafios."
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="mine" className="mt-4">
-            <MyChallengesPanel data={myChallengesQ.data} loading={myChallengesQ.isLoading} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </AppLayout>
-  );
-}
-
-// =====================================================================
-function EmptyState({ title, hint }: { title: string; hint: string }) {
-  return (
-    <Card className="p-8 text-center">
-      <p className="font-semibold mb-1">{title}</p>
-      <p className="text-sm text-muted-foreground">{hint}</p>
-    </Card>
-  );
-}
-
-// =====================================================================
 type TeamLite = {
   id: string;
   name: string;
   category: string;
-  gender?: string;
+  gender?: string | null;
   rank_position: number | null;
   captain_id: string;
-  points?: number;
+  points?: number | null;
+  members?: Array<{ profile: { id: string; display_name: string | null; avatar_url: string | null } | null }>;
 };
 
-function pointsDelta(myPos: number | null, targetPos: number | null): number {
-  if (!myPos || !targetPos) return 30;
-  const diff = myPos - targetPos;
-  const d = 30 + diff * 5;
-  return Math.max(10, Math.min(60, d));
-}
-
-type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
-
-const CATEGORY_OPTIONS: Array<{
-  key: CatKey;
-  label: string;
-  category: "dupla" | "quarteto";
-  gender?: "X";
-}> = [
-  { key: "dupla", label: "Dupla", category: "dupla" },
-  { key: "quarteto", label: "Quarteto", category: "quarteto" },
-  { key: "dupla_mista", label: "Dupla Mista", category: "dupla", gender: "X" },
-  { key: "quarteto_misto", label: "Quarteto Misto", category: "quarteto", gender: "X" },
-];
-
-function teamCategoryKey(t: { category: string; gender?: string }): CatKey | null {
-  if (t.category === "dupla") return t.gender === "X" ? "dupla_mista" : "dupla";
-  if (t.category === "quarteto") return t.gender === "X" ? "quarteto_misto" : "quarteto";
-  return null;
-}
-
-function categoryLabel(t: { category: string; gender?: string }): string {
-  const k = teamCategoryKey(t);
-  return CATEGORY_OPTIONS.find((o) => o.key === k)?.label ?? t.category;
-}
-
-function ChallengeRankingButton({
-  captainedTeams,
-  allTeams,
-  onCreated,
-}: {
-  captainedTeams: TeamLite[];
-  allTeams: TeamLite[];
-  onCreated: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [categoryKey, setCategoryKey] = useState<CatKey | "">("");
-  const [teamId, setTeamId] = useState<string>("");
-  const [targetId, setTargetId] = useState<string>("");
-  const [sunday, setSunday] = useState<string>("");
-  const [slot1, setSlot1] = useState<string>("");
-  const [courtId, setCourtId] = useState<string>("");
-  const createFn = useServerFn(createChallenge);
-  const fetchCourtAvail = useServerFn(getCourtAvailability);
-
-  const availQ = useQuery({
-    queryKey: ["court-avail", sunday],
-    queryFn: () => fetchCourtAvail({ data: { date: sunday } }),
-    enabled: !!sunday,
-  });
-
-  const nextSundays = useMemo(() => {
-    const out: string[] = [];
-    const d = new Date();
-    d.setHours(12, 0, 0, 0);
-    const offset = (7 - d.getDay()) % 7 || 7;
-    d.setDate(d.getDate() + offset);
-    for (let i = 0; i < 8; i++) {
-      out.push(d.toISOString().slice(0, 10));
-      d.setDate(d.getDate() + 7);
-    }
-    return out;
-  }, []);
-
-  const timeOptions = useMemo(() => {
-    const out: string[] = [];
-    for (let h = 8; h <= 16; h++) out.push(`${String(h).padStart(2, "0")}:00`);
-    return out;
-  }, []);
-
-  const isCaptain = captainedTeams.length > 0;
-
-  const teamsInCategory = useMemo(() => {
-    if (!categoryKey) return captainedTeams;
-    return captainedTeams.filter((t) => teamCategoryKey(t) === categoryKey);
-  }, [captainedTeams, categoryKey]);
-
-  const effectiveTeamId = teamId || teamsInCategory[0]?.id || "";
-  const effectiveMyTeam =
-    allTeams.find((t) => t.id === effectiveTeamId) ??
-    teamsInCategory.find((t) => t.id === effectiveTeamId);
-
-  const candidates = useMemo(() => {
-    if (!effectiveMyTeam) return [];
-    const myPos = effectiveMyTeam.rank_position;
-    return allTeams
-      .filter(
-        (t) =>
-          t.id !== effectiveMyTeam.id &&
-          t.category === effectiveMyTeam.category &&
-          (effectiveMyTeam.gender ? t.gender === effectiveMyTeam.gender : true) &&
-          t.rank_position != null &&
-          myPos != null &&
-          t.rank_position >= myPos - 3 &&
-          t.rank_position <= myPos + 2,
-      )
-      .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
-  }, [allTeams, effectiveMyTeam]);
-
-  const target = candidates.find((t) => t.id === targetId);
-  const delta = pointsDelta(effectiveMyTeam?.rank_position ?? null, target?.rank_position ?? null);
-
-  const m = useMutation({
-    mutationFn: createFn,
-    onSuccess: () => {
-      toast.success("Desafio enviado. Quadra reservada.");
-      setOpen(false);
-      setTargetId("");
-      setSunday("");
-      setSlot1("");
-      setCourtId("");
-      onCreated();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const handleClick = () => {
-    if (!isCaptain) {
-      toast.error("Somente capitães podem enviar desafios.");
-      return;
-    }
-    setOpen(true);
-  };
-
-  return (
-    <>
-      <Button size="sm" onClick={handleClick}>
-        <Swords className="size-4 mr-1" />
-        Desafiar
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Novo desafio de ranking</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label>Categoria</Label>
-              <Select
-                value={categoryKey}
-                onValueChange={(v) => {
-                  setCategoryKey(v as CatKey);
-                  setTeamId("");
-                  setTargetId("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_OPTIONS.map((o) => (
-                    <SelectItem key={o.key} value={o.key}>
-                      {o.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {teamsInCategory.length > 1 && (
-              <div>
-                <Label>Minha equipe</Label>
-                <Select
-                  value={effectiveTeamId}
-                  onValueChange={(v) => {
-                    setTeamId(v);
-                    setTargetId("");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione sua equipe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {teamsInCategory.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name} — {categoryLabel(t)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {effectiveMyTeam ? (
-              <Card className="p-3 bg-secondary/40">
-                <div className="text-xs text-muted-foreground">Minha equipe</div>
-                <div className="font-semibold">{effectiveMyTeam.name}</div>
-                <div className="text-xs">Categoria: {categoryLabel(effectiveMyTeam)}</div>
-                <div className="text-xs">
-                  Posição atual:{" "}
-                  <strong>
-                    {effectiveMyTeam.rank_position ? `${effectiveMyTeam.rank_position}º` : "—"}
-                  </strong>
-                  {typeof effectiveMyTeam.points === "number"
-                    ? ` · ${effectiveMyTeam.points} pts`
-                    : ""}
-                </div>
-              </Card>
-            ) : (
-              categoryKey && (
-                <p className="text-xs text-muted-foreground">
-                  Você não é capitão de nenhuma equipe nesta categoria.
-                </p>
-              )
-            )}
-
-            <div>
-              <Label>Equipes disponíveis para desafiar</Label>
-              <Select value={targetId} onValueChange={setTargetId} disabled={!effectiveMyTeam}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      !effectiveMyTeam
-                        ? "Selecione a categoria primeiro"
-                        : candidates.length === 0
-                          ? "Nenhuma equipe elegível (até 3 acima / 2 abaixo)"
-                          : "Escolha o adversário"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {candidates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.rank_position}º — {t.name}
-                      {typeof t.points === "number" ? ` — ${t.points} pts` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground mt-1">
-                Permitido: até 3 posições acima e até 2 abaixo, mesma categoria.
-              </p>
-            </div>
-
-            {target && (
-              <>
-                <div>
-                  <Label>Domingo do desafio</Label>
-                  <Select
-                    value={sunday}
-                    onValueChange={(v) => {
-                      setSunday(v);
-                      setSlot1("");
-                      setCourtId("");
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Escolha o domingo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {nextSundays.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {formatSunday(s)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {sunday && (
-                  <div>
-                    <Label>Horário (1h) — PlayBeach Arena</Label>
-                    <Select
-                      value={slot1}
-                      onValueChange={(v) => {
-                        setSlot1(v);
-                        setCourtId("");
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={availQ.isLoading ? "Carregando…" : "Escolha o horário"}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((t) => {
-                          const rows = (availQ.data ?? []) as Array<{
-                            slot_time: string;
-                            is_free: boolean;
-                          }>;
-                          const freeCount = rows.filter(
-                            (r) => r.slot_time?.slice(0, 5) === t && r.is_free,
-                          ).length;
-                          const total =
-                            rows.filter((r) => r.slot_time?.slice(0, 5) === t).length || 7;
-                          const disabled = freeCount === 0;
-                          return (
-                            <SelectItem key={t} value={t} disabled={disabled}>
-                              {t} — {freeCount}/{total} quadras livres
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {sunday && slot1 && (
-                  <div>
-                    <Label>Quadra disponível</Label>
-                    <Select value={courtId} onValueChange={setCourtId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Escolha a quadra" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(
-                          (availQ.data ?? []) as Array<{
-                            court_id: string;
-                            court_number: number;
-                            court_name: string;
-                            slot_time: string;
-                            is_free: boolean;
-                          }>
-                        )
-                          .filter((r) => r.slot_time?.slice(0, 5) === slot1 && r.is_free)
-                          .map((r) => (
-                            <SelectItem key={r.court_id} value={r.court_id}>
-                              {r.court_name ?? `Quadra ${r.court_number}`}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      Apenas quadras livres no horário selecionado aparecem aqui.
-                    </p>
-                  </div>
-                )}
-
-                <Card className="p-3">
-                  <div className="text-xs text-muted-foreground">Pontuação estimada</div>
-                  <div className="text-sm">
-                    Vitória: <strong className="text-primary">+{delta} pontos</strong>
-                  </div>
-                  <div className="text-sm">
-                    Derrota: <strong className="text-destructive">-{delta} pontos</strong>
-                  </div>
-                </Card>
-              </>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              disabled={
-                !targetId || !effectiveTeamId || !sunday || !slot1 || !courtId || m.isPending
-              }
-              onClick={() => {
-                m.mutate({
-                  data: {
-                    challengerTeamId: effectiveTeamId,
-                    challengedTeamId: targetId,
-                    date: sunday,
-                    time: slot1,
-                    courtId,
-                  },
-                });
-              }}
-            >
-              <Swords className="size-4 mr-1" />
-              Enviar desafio
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
-// =====================================================================
-function CreateTeamButton({ arenas }: { arenas: Array<{ id: string; name: string }> }) {
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<"dupla" | "quarteto">("dupla");
-  const [gender, setGender] = useState<"M" | "F" | "X">("M");
-  const [arenaId, setArenaId] = useState<string>("");
-  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const qc = useQueryClient();
-  const createFn = useServerFn(createTeam);
-  const fetchProfiles = useServerFn(listProfiles);
-
-  const [myId, setMyId] = useState<string | null>(null);
-  useMemo(() => {
-    supabase.auth.getUser().then(({ data }) => setMyId(data.user?.id ?? null));
-  }, []);
-
-  const profilesQ = useQuery({
-    queryKey: ["profiles-all"],
-    queryFn: () => fetchProfiles(),
-    enabled: open,
-  });
-
-  const required = category === "dupla" ? 1 : 3;
-  const others = (profilesQ.data ?? []).filter((p) => p.id !== myId);
-  const filtered = others.filter((p) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      (p.display_name ?? "").toLowerCase().includes(q) ||
-      (p.username ?? "").toLowerCase().includes(q)
-    );
-  });
-
-  const toggleMember = (id: string) => {
-    setSelectedMembers((s) => {
-      if (s.includes(id)) return s.filter((x) => x !== id);
-      if (s.length >= required) {
-        toast.error(`Selecione no máximo ${required} jogador(es) para ${category}`);
-        return s;
-      }
-      return [...s, id];
-    });
-  };
-
-  const m = useMutation({
-    mutationFn: createFn,
-    onSuccess: () => {
-      toast.success("Equipe criada");
-      qc.invalidateQueries({ queryKey: ["my-teams"] });
-      qc.invalidateQueries({ queryKey: ["teams"] });
-      setOpen(false);
-      setName("");
-      setSelectedMembers([]);
-      setSearch("");
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  // reset selection when category changes (different required count)
-  const onCategoryChange = (v: "dupla" | "quarteto") => {
-    setCategory(v);
-    setSelectedMembers([]);
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm" variant="outline">
-          <Plus className="size-4 mr-1" />
-          Criar equipe
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Criar equipe (você será o capitão)</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label>Nome</Label>
-            <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sol do Mar"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Categoria</Label>
-              <Select
-                value={category}
-                onValueChange={(v) => onCategoryChange(v as "dupla" | "quarteto")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dupla">Dupla</SelectItem>
-                  <SelectItem value="quarteto">Quarteto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Gênero</Label>
-              <Select value={gender} onValueChange={(v) => setGender(v as "M" | "F" | "X")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="M">Masculino</SelectItem>
-                  <SelectItem value="F">Feminino</SelectItem>
-                  <SelectItem value="X">Misto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <Label>Arena preferida (opcional)</Label>
-            <Select value={arenaId} onValueChange={setArenaId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
-              <SelectContent>
-                {arenas.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    {a.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>
-              {category === "dupla" ? "Parceiro(a)" : "Jogadores"}{" "}
-              <span className="text-xs text-muted-foreground">
-                ({selectedMembers.length}/{required})
-              </span>
-            </Label>
-
-            <Select
-              value=""
-              onValueChange={(v) => {
-                if (v) toggleMember(v);
-              }}
-              disabled={
-                profilesQ.isLoading || others.length === 0 || selectedMembers.length >= required
-              }
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    profilesQ.isLoading
-                      ? "Carregando perfis…"
-                      : profilesQ.error
-                        ? "Erro ao carregar perfis"
-                        : others.length === 0
-                          ? "Nenhum outro jogador cadastrado ainda"
-                          : selectedMembers.length >= required
-                            ? `Limite atingido (${required})`
-                            : "Selecione um perfil existente"
-                  }
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {others
-                  .filter((p) => !selectedMembers.includes(p.id))
-                  .map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.display_name ?? "Sem nome"}
-                      {p.username ? ` (@${p.username})` : ""}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-
-            {!profilesQ.isLoading && others.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">
-                Ainda não há outros jogadores cadastrados. Convide pessoas para criar conta em{" "}
-                <code>/auth</code> e elas aparecerão aqui.
-              </p>
-            )}
-            {profilesQ.error && (
-              <p className="text-[11px] text-destructive">{(profilesQ.error as Error).message}</p>
-            )}
-
-            {selectedMembers.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-1">
-                {selectedMembers.map((id) => {
-                  const p = others.find((x) => x.id === id);
-                  if (!p) return null;
-                  return (
-                    <Badge
-                      key={id}
-                      variant="secondary"
-                      className="flex items-center gap-2 pl-1 pr-2 py-1"
-                    >
-                      <Avatar className="size-5">
-                        <AvatarImage src={p.avatar_url ?? undefined} />
-                        <AvatarFallback className="text-[10px]">
-                          {(p.display_name ?? "?").slice(0, 1).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-xs">{p.display_name ?? "Sem nome"}</span>
-                      <button
-                        type="button"
-                        onClick={() => toggleMember(id)}
-                        className="ml-1 rounded hover:bg-background/40"
-                        aria-label="Remover"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </Badge>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            disabled={!name || selectedMembers.length !== required || m.isPending}
-            onClick={() =>
-              m.mutate({
-                data: {
-                  name,
-                  category,
-                  gender,
-                  preferred_arena_id: arenaId || null,
-                  member_profile_ids: selectedMembers,
-                },
-              })
-            }
-          >
-            Criar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// =====================================================================
-type Availability = {
-  id: string;
-  sunday_date: string;
-  is_available: boolean;
-  time_start: string | null;
-  time_end: string | null;
-  arena_id: string | null;
-  court_id: string | null;
-};
-
-type CourtAvailRow = {
+type CourtSlot = {
   court_id: string;
   court_number: number;
   court_name: string;
@@ -861,857 +60,605 @@ type CourtAvailRow = {
   is_free: boolean;
 };
 
-function AvailabilityRow({
-  r,
-  teamId,
-  mutate,
-}: {
-  r: Availability;
-  teamId: string;
-  mutate: (vars: {
-    data: {
-      teamId: string;
-      sundayDate: string;
-      isAvailable: boolean;
-      timeStart?: string | null;
-      timeEnd?: string | null;
-      arenaId?: string | null;
-      courtId?: string | null;
-    };
-  }) => void;
-}) {
-  const fetchCourtAvail = useServerFn(getCourtAvailability);
-  const availQ = useQuery({
-    queryKey: ["court-avail", r.sunday_date],
-    queryFn: () => fetchCourtAvail({ data: { date: r.sunday_date } }),
-    enabled: r.is_available,
-  });
+const WEEKDAYS = ["DOM", "SEG", "TER", "QUA", "QUI", "SEX", "SAB"];
+const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-  const [pendingTime, setPendingTime] = useState(r.time_start?.slice(0, 5) ?? "");
-  const [pendingCourtId, setPendingCourtId] = useState(r.court_id ?? "");
+function initials(name?: string | null) {
+  if (!name) return "?";
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
+function levelFromRank(pos: number | null | undefined): string {
+  if (!pos) return "—";
+  if (pos <= 5) return "Pro";
+  if (pos <= 15) return "Avançado";
+  if (pos <= 30) return "Intermediário";
+  return "Iniciante";
+}
+
+function DesafiosPage() {
+  const qc = useQueryClient();
+  const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
-    setPendingTime(r.time_start?.slice(0, 5) ?? "");
-    setPendingCourtId(r.court_id ?? "");
-  }, [r.time_start, r.court_id]);
-
-  const timeOptions = useMemo(() => {
-    const out: string[] = [];
-    for (let h = 8; h <= 16; h++) out.push(`${String(h).padStart(2, "0")}:00`);
-    return out;
+    supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id ?? null));
   }, []);
 
-  const rows = (availQ.data ?? []) as CourtAvailRow[];
+  const fetchTeams = useServerFn(listTeams);
+  const fetchMyTeams = useServerFn(getMyTeams);
+  const fetchAvail = useServerFn(getCourtAvailability);
+  const create = useServerFn(createChallenge);
 
-  const freeCourtsForSlot = rows.filter(
-    (x) => x.slot_time?.slice(0, 5) === pendingTime && (x.is_free || x.court_id === pendingCourtId),
+  const teamsQ = useQuery({ queryKey: ["teams"], queryFn: () => fetchTeams() });
+  const myTeamsQ = useQuery({ queryKey: ["my-teams"], queryFn: () => fetchMyTeams() });
+
+  const captainedTeams = ((myTeamsQ.data ?? []) as TeamLite[]).filter(
+    (t) => t.captain_id === userId,
   );
 
-  const isDirty =
-    pendingTime !== (r.time_start?.slice(0, 5) ?? "") || pendingCourtId !== (r.court_id ?? "");
-
-  return (
-    <Card className="p-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="font-semibold">Domingo {formatSunday(r.sunday_date)}</div>
-          <div className="text-xs text-muted-foreground">
-            {r.is_available ? "Disponível — PlayBeach Arena" : "Indisponível"}
-          </div>
-        </div>
-        <Switch
-          checked={r.is_available}
-          onCheckedChange={(checked) =>
-            mutate({
-              data: {
-                teamId,
-                sundayDate: r.sunday_date,
-                isAvailable: checked,
-                timeStart: r.time_start,
-                timeEnd: r.time_end,
-                courtId: r.court_id,
-              },
-            })
-          }
-        />
-      </div>
-
-      {r.is_available && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-            <div>
-              <Label className="text-xs">Horário (1h)</Label>
-              <Select
-                value={pendingTime}
-                onValueChange={(v) => {
-                  setPendingTime(v);
-                  setPendingCourtId("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={availQ.isLoading ? "Carregando…" : "Escolha o horário"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((t) => {
-                    const free = rows.filter(
-                      (x) => x.slot_time?.slice(0, 5) === t && x.is_free,
-                    ).length;
-                    const total = rows.filter((x) => x.slot_time?.slice(0, 5) === t).length || 7;
-                    return (
-                      <SelectItem key={t} value={t} disabled={free === 0}>
-                        {t} — {free}/{total} quadras livres
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs">Quadra</Label>
-              <Select
-                value={pendingCourtId}
-                onValueChange={(v) => setPendingCourtId(v)}
-                disabled={!pendingTime}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={!pendingTime ? "Escolha o horário primeiro" : "Escolha a quadra"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {freeCourtsForSlot.map((x) => (
-                    <SelectItem key={x.court_id} value={x.court_id}>
-                      {x.court_name ?? `Quadra ${x.court_number}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button
-            className="w-full mt-3"
-            disabled={!isDirty}
-            onClick={() => {
-              const endH = pendingTime
-                ? String(parseInt(pendingTime.slice(0, 2), 10) + 1).padStart(2, "0") + ":00"
-                : null;
-              mutate({
-                data: {
-                  teamId,
-                  sundayDate: r.sunday_date,
-                  isAvailable: true,
-                  timeStart: pendingTime || null,
-                  timeEnd: endH,
-                  courtId: pendingCourtId || null,
-                },
-              });
-              toast.success("Agendamento confirmado!");
-            }}
-          >
-            <Check className="size-4 mr-1" />
-            Confirmar Agendamento
-          </Button>
-        </>
-      )}
-    </Card>
-  );
-}
-
-function AvailabilityPanel({
-  teamId,
-}: {
-  teamId: string;
-  arenas: Array<{ id: string; name: string }>;
-}) {
-  const qc = useQueryClient();
-  const fetchAvail = useServerFn(getTeamAvailability);
-  const upsertFn = useServerFn(upsertSundayAvailability);
-  const q = useQuery<Availability[]>({
-    queryKey: ["availability", teamId],
-    queryFn: () => fetchAvail({ data: { teamId } }),
-  });
-  const m = useMutation({
-    mutationFn: upsertFn,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["availability", teamId] });
-      qc.invalidateQueries({ queryKey: ["court-avail"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  if (q.isLoading) return <p className="text-sm text-muted-foreground">Carregando domingos…</p>;
-  const rows = q.data ?? [];
-  if (rows.length === 0) {
-    return <EmptyState title="Sem domingos neste mês" hint="Tente novamente em instantes." />;
-  }
-
-  return (
-    <div className="space-y-3">
-      {rows.map((r) => (
-        <AvailabilityRow key={r.id} r={r} teamId={teamId} mutate={m.mutate} />
-      ))}
-    </div>
-  );
-}
-
-// =====================================================================
-function ChallengePanel({
-  myTeamId,
-  allTeams,
-  onCreated,
-}: {
-  myTeamId: string;
-  allTeams: Array<{
-    id: string;
-    name: string;
-    category: string;
-    gender?: string;
-    rank_position: number | null;
-    captain_id: string;
-  }>;
-  onCreated: () => void;
-}) {
-  void myTeamId;
-  void allTeams;
-  void onCreated;
-  return (
-    <Card className="p-4">
-      <p className="text-sm">
-        Use o botão <strong>Desafiar</strong> no topo da tela para enviar um novo desafio. Escolha
-        categoria, equipe, domingo e horário — uma das 7 quadras da arena será reservada
-        automaticamente se estiver livre.
-      </p>
-    </Card>
-  );
-}
-
-// =====================================================================
-type ChallengeRow = {
-  id: string;
-  status: string;
-  scheduled_date: string | null;
-  scheduled_time: string | null;
-  duration_minutes: number | null;
-  reschedule_reason: string | null;
-  challenger: { id: string; name: string; rank_position: number | null };
-  challenged: { id: string; name: string; rank_position: number | null };
-  arena: { id: string; name: string } | null;
-  court: { id: string; number: number; name: string } | null;
-  score_challenger: number | null;
-  score_challenged: number | null;
-  score_registered_by: string | null;
-  score_registered_at: string | null;
-  score_confirmed_by: string | null;
-  score_confirmed_at: string | null;
-};
-
-function MyChallengesPanel({
-  data,
-  loading,
-}: {
-  data: { sent: ChallengeRow[]; received: ChallengeRow[] } | undefined;
-  loading: boolean;
-}) {
-  const qc = useQueryClient();
-  const respond = useServerFn(respondToChallenge);
-  const wo = useServerFn(reportWalkover);
-  const register = useServerFn(registerScore);
-  const confirm = useServerFn(confirmScore);
-  const dispute = useServerFn(disputeScore);
-  const respondM = useMutation({
-    mutationFn: respond,
-    onSuccess: () => {
-      toast.success("Resposta enviada");
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const woM = useMutation({
-    mutationFn: wo,
-    onSuccess: () => {
-      toast.success("W.O. registrado");
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const registerM = useMutation({
-    mutationFn: register,
-    onSuccess: () => {
-      toast.success("Placar registrado");
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const confirmM = useMutation({
-    mutationFn: confirm,
-    onSuccess: () => {
-      toast.success("Placar confirmado");
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-  const disputeM = useMutation({
-    mutationFn: dispute,
-    onSuccess: () => {
-      toast.success("Disputa registrada");
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
-
-  return (
-    <div className="space-y-6">
-      <Section title="Recebidos">
-        {(data?.received ?? []).length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum desafio recebido.</p>
-        )}
-        {data?.received.map((c) => (
-          <Card key={c.id} className="p-4">
-            <ChallengeHeader c={c} />
-            {c.status === "pending" && (
-              <div className="flex flex-wrap gap-2 mt-3">
-                <Button
-                  size="sm"
-                  onClick={() => respondM.mutate({ data: { challengeId: c.id, action: "accept" } })}
-                >
-                  <Check className="size-4 mr-1" />
-                  Aceitar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() =>
-                    respondM.mutate({ data: { challengeId: c.id, action: "decline" } })
-                  }
-                >
-                  <X className="size-4 mr-1" />
-                  Recusar
-                </Button>
-              </div>
-            )}
-            {c.status === "scheduled" &&
-              c.scheduled_date &&
-              isPast(c.scheduled_date, c.scheduled_time) && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <ScoreRegistrationDialog
-                    challengeId={c.id}
-                    challengerName={c.challenger.name}
-                    challengedName={c.challenged.name}
-                    onRegistered={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
-                  />
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => woM.mutate({ data: { challengeId: c.id } })}
-                  >
-                    <AlertTriangle className="size-4 mr-1" />
-                    W.O.
-                  </Button>
-                </div>
-              )}
-            {c.status === "awaiting_confirmation" && (
-              <ScoreConfirmationDialog
-                challenge={c}
-                onConfirmed={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
-                onDisputed={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
-              />
-            )}
-          </Card>
-        ))}
-      </Section>
-
-      <Section title="Enviados">
-        {(data?.sent ?? []).length === 0 && (
-          <p className="text-sm text-muted-foreground">Nenhum desafio enviado.</p>
-        )}
-        {data?.sent.map((c) => (
-          <Card key={c.id} className="p-4">
-            <ChallengeHeader c={c} />
-            {(c.status === "awaiting_schedule" || c.status === "reschedule_requested") && (
-              <div className="mt-3">
-                <ScheduleDialog
-                  challengeId={c.id}
-                  onScheduled={() => qc.invalidateQueries({ queryKey: ["my-challenges"] })}
-                />
-              </div>
-            )}
-            {c.status === "scheduled" && c.scheduled_date && (
-              <Countdown date={c.scheduled_date} time={c.scheduled_time} />
-            )}
-          </Card>
-        ))}
-      </Section>
-    </div>
-  );
-}
-
-function isPast(date: string, time: string | null) {
-  const dt = new Date(date + "T" + (time ?? "23:59") + ":00");
-  return dt.getTime() < Date.now();
-}
-
-function Countdown({ date, time }: { date: string; time: string | null }) {
-  const target = new Date(date + "T" + (time ?? "08:00") + ":00").getTime();
-  const [now, setNow] = useState(Date.now());
-  useMemo(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-  const diff = target - now;
-  if (diff <= 0)
-    return (
-      <p className="text-xs text-primary mt-2 flex items-center gap-1">
-        <Timer className="size-3" />
-        Em andamento ou aguardando registro
-      </p>
-    );
-  const d = Math.floor(diff / 86_400_000);
-  const h = Math.floor((diff % 86_400_000) / 3_600_000);
-  const min = Math.floor((diff % 3_600_000) / 60_000);
-  return (
-    <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-      <Timer className="size-3" />
-      Em {d > 0 ? `${d}d ` : ""}
-      {h}h {min}min
-    </p>
-  );
-}
-
-// =====================================================================
-function ScheduleDialog({
-  challengeId,
-  onScheduled,
-}: {
-  challengeId: string;
-  onScheduled: () => void;
-}) {
-  const [open, setOpen] = useState(false);
+  // Wizard state
+  const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [myTeamId, setMyTeamId] = useState<string>("");
+  const [opponentId, setOpponentId] = useState<string>("");
   const [date, setDate] = useState<string>("");
   const [time, setTime] = useState<string>("");
   const [courtId, setCourtId] = useState<string>("");
+  const [search, setSearch] = useState("");
 
-  const fetchAvail = useServerFn(getCourtAvailability);
-  const scheduleFn = useServerFn(scheduleChallenge);
+  useEffect(() => {
+    if (!myTeamId && captainedTeams[0]) setMyTeamId(captainedTeams[0].id);
+  }, [captainedTeams, myTeamId]);
 
-  const sundays = useMemo(() => nextSundays(8), []);
+  const myTeam = useMemo(
+    () =>
+      (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === myTeamId) ??
+      captainedTeams.find((t) => t.id === myTeamId),
+    [teamsQ.data, captainedTeams, myTeamId],
+  );
+
+  // Enrich with members from teamsQ (which includes members)
+  const myTeamFull = useMemo(() => {
+    return (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === myTeamId);
+  }, [teamsQ.data, myTeamId]);
+
+  const candidates = useMemo(() => {
+    if (!myTeam) return [];
+    const all = (teamsQ.data as TeamLite[] | undefined) ?? [];
+    const myPos = myTeam.rank_position;
+    return all
+      .filter(
+        (t) =>
+          t.id !== myTeam.id &&
+          t.category === myTeam.category &&
+          (myTeam.gender ? t.gender === myTeam.gender : true) &&
+          t.rank_position != null &&
+          myPos != null &&
+          t.rank_position >= myPos - 3 &&
+          t.rank_position <= myPos + 2,
+      )
+      .filter((t) => (search ? t.name.toLowerCase().includes(search.toLowerCase()) : true))
+      .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
+  }, [teamsQ.data, myTeam, search]);
+
+  const opponent = useMemo(
+    () => (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === opponentId),
+    [teamsQ.data, opponentId],
+  );
+
+  const nextSundays = useMemo(() => {
+    const out: { iso: string; day: string; month: string }[] = [];
+    const d = new Date();
+    d.setHours(12, 0, 0, 0);
+    const offset = (7 - d.getDay()) % 7 || 7;
+    d.setDate(d.getDate() + offset);
+    for (let i = 0; i < 6; i++) {
+      out.push({
+        iso: d.toISOString().slice(0, 10),
+        day: String(d.getDate()).padStart(2, "0"),
+        month: MONTHS[d.getMonth()],
+      });
+      d.setDate(d.getDate() + 7);
+    }
+    return out;
+  }, []);
+
   const availQ = useQuery({
-    enabled: open && !!date,
     queryKey: ["court-avail", date],
     queryFn: () => fetchAvail({ data: { date } }),
+    enabled: !!date,
   });
 
-  const m = useMutation({
-    mutationFn: scheduleFn,
+  const slots = (availQ.data as CourtSlot[] | undefined) ?? [];
+
+  const availableTimes = useMemo(() => {
+    const set = new Set<string>();
+    slots.forEach((s) => {
+      if (s.is_free) set.add(s.slot_time.slice(0, 5));
+    });
+    return Array.from(set).sort();
+  }, [slots]);
+
+  const availableCourts = useMemo(() => {
+    if (!time) return [];
+    const m = new Map<string, CourtSlot>();
+    slots.forEach((s) => {
+      if (s.slot_time.slice(0, 5) === time && s.is_free) m.set(s.court_id, s);
+    });
+    return Array.from(m.values()).sort((a, b) => a.court_number - b.court_number);
+  }, [slots, time]);
+
+  const selectedCourt = availableCourts.find((c) => c.court_id === courtId);
+
+  const sendM = useMutation({
+    mutationFn: create,
     onSuccess: () => {
-      toast.success("Partida agendada — notificações enviadas");
-      setOpen(false);
+      toast.success("Desafio enviado! Quadra reservada.");
+      qc.invalidateQueries({ queryKey: ["my-challenges"] });
+      setStep(1);
+      setOpponentId("");
       setDate("");
       setTime("");
       setCourtId("");
-      onScheduled();
     },
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const slotsByCourt = useMemo(() => {
-    const map = new Map<
-      string,
-      { courtName: string; slots: Array<{ time: string; free: boolean }> }
-    >();
-    for (const row of (availQ.data ?? []) as Array<{
-      court_id: string;
-      court_name: string;
-      slot_time: string;
-      is_free: boolean;
-    }>) {
-      if (!map.has(row.court_id)) map.set(row.court_id, { courtName: row.court_name, slots: [] });
-      map.get(row.court_id)!.slots.push({ time: row.slot_time.slice(0, 5), free: row.is_free });
-    }
-    return Array.from(map.entries());
-  }, [availQ.data]);
+  const canSubmit = myTeamId && opponentId && date && time && courtId && !sendM.isPending;
 
-  const selectedCourtSlots = courtId
-    ? (slotsByCourt.find(([id]) => id === courtId)?.[1].slots ?? [])
-    : [];
+  const handleSubmit = () => {
+    if (!canSubmit) return;
+    sendM.mutate({
+      data: {
+        challengerTeamId: myTeamId,
+        challengedTeamId: opponentId,
+        date,
+        time,
+        courtId,
+      },
+    });
+  };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <CalendarDays className="size-4 mr-1" />
-          Agendar partida
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Agendar desafio</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div>
-            <Label>Domingo</Label>
-            <Select
-              value={date}
-              onValueChange={(v) => {
-                setDate(v);
-                setCourtId("");
-                setTime("");
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Escolha um domingo" />
-              </SelectTrigger>
-              <SelectContent>
-                {sundays.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {formatFullSunday(s)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+  const reset = () => {
+    setStep(1);
+    setOpponentId("");
+    setDate("");
+    setTime("");
+    setCourtId("");
+  };
 
-          {date && (
-            <div>
-              <Label>Quadra</Label>
-              <Select
-                value={courtId}
-                onValueChange={(v) => {
-                  setCourtId(v);
-                  setTime("");
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={availQ.isLoading ? "Carregando…" : "Escolha a quadra"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {slotsByCourt.map(([id, info]) => {
-                    const freeCount = info.slots.filter((s) => s.free).length;
-                    return (
-                      <SelectItem key={id} value={id} disabled={freeCount === 0}>
-                        {info.courtName} — {freeCount} horário(s) livre(s)
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {courtId && (
-            <div>
-              <Label>Horário (1h por partida)</Label>
-              <div className="grid grid-cols-3 gap-2 mt-1">
-                {selectedCourtSlots.map((s) => (
-                  <Button
-                    key={s.time}
-                    type="button"
-                    size="sm"
-                    variant={time === s.time ? "default" : "outline"}
-                    disabled={!s.free}
-                    onClick={() => setTime(s.time)}
-                  >
-                    {s.time}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
+  if (!userId) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <p className="text-sm text-muted-foreground">Carregando…</p>
         </div>
-        <DialogFooter>
-          <Button
-            disabled={!date || !time || !courtId || m.isPending}
-            onClick={() => m.mutate({ data: { challengeId, date, time, courtId } })}
-          >
-            Confirmar agendamento
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function nextSundays(count: number): string[] {
-  const out: string[] = [];
-  const d = new Date();
-  d.setHours(12, 0, 0, 0);
-  while (d.getDay() !== 0) d.setDate(d.getDate() + 1);
-  for (let i = 0; i < count; i++) {
-    out.push(d.toISOString().slice(0, 10));
-    d.setDate(d.getDate() + 7);
+      </AppLayout>
+    );
   }
-  return out;
-}
 
-function formatFullSunday(iso: string): string {
-  const d = new Date(iso + "T12:00:00");
-  return d.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <h3 className="font-semibold">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function ScoreRegistrationDialog({
-  challengeId,
-  challengerName,
-  challengedName,
-  onRegistered,
-}: {
-  challengeId: string;
-  challengerName: string;
-  challengedName: string;
-  onRegistered: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [scoreChallenger, setScoreChallenger] = useState<number>(0);
-  const [scoreChallenged, setScoreChallenged] = useState<number>(0);
-  const register = useServerFn(registerScore);
-  const qc = useQueryClient();
-
-  const m = useMutation({
-    mutationFn: register,
-    onSuccess: () => {
-      toast.success("Placar registrado com sucesso");
-      setOpen(false);
-      setScoreChallenger(0);
-      setScoreChallenged(0);
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-      onRegistered();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const players = myTeamFull?.members ?? [];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button size="sm">
-          <Check className="size-4 mr-1" />
-          Registrar placar
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Registrar placar</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 text-center">
-              <Label className="block mb-2">{challengerName}</Label>
-              <Input
-                type="number"
-                min="0"
-                value={scoreChallenger}
-                onChange={(e) => setScoreChallenger(parseInt(e.target.value) || 0)}
-                className="text-center text-2xl font-bold"
-              />
-            </div>
-            <span className="text-2xl font-bold">x</span>
-            <div className="flex-1 text-center">
-              <Label className="block mb-2">{challengedName}</Label>
-              <Input
-                type="number"
-                min="0"
-                value={scoreChallenged}
-                onChange={(e) => setScoreChallenged(parseInt(e.target.value) || 0)}
-                className="text-center text-2xl font-bold"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => m.mutate({ data: { challengeId, scoreChallenger, scoreChallenged } })}
-            >
-              Confirmar registro
-            </Button>
-          </DialogFooter>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ScoreConfirmationDialog({
-  challenge,
-  onConfirmed,
-  onDisputed,
-}: {
-  challenge: ChallengeRow;
-  onConfirmed: () => void;
-  onDisputed: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [scoreChallenger, setScoreChallenger] = useState<number>(challenge.score_challenger || 0);
-  const [scoreChallenged, setScoreChallenged] = useState<number>(challenge.score_challenged || 0);
-  const confirm = useServerFn(confirmScore);
-  const dispute = useServerFn(disputeScore);
-  const qc = useQueryClient();
-
-  const confirmM = useMutation({
-    mutationFn: confirm,
-    onSuccess: () => {
-      toast.success("Placar confirmado");
-      setOpen(false);
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-      onConfirmed();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  const disputeM = useMutation({
-    mutationFn: dispute,
-    onSuccess: () => {
-      toast.success("Disputa registrada - novo placar enviado para confirmação");
-      setOpen(false);
-      qc.invalidateQueries({ queryKey: ["my-challenges"] });
-      onDisputed();
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
-
-  return (
-    <div className="mt-3 space-y-3">
-      <div className="bg-muted/50 p-3 rounded-lg">
-        <p className="text-sm font-medium mb-2">Placar registrado:</p>
-        <div className="flex items-center justify-center gap-4 text-2xl font-bold">
-          <span>{challenge.score_challenger}</span>
-          <span>x</span>
-          <span>{challenge.score_challenged}</span>
-        </div>
-        {challenge.score_registered_by && (
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Registrado por: {challenge.score_registered_by}
+    <AppLayout>
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+        {/* Header */}
+        <div className="text-center space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-bold flex items-center justify-center gap-2">
+            <Trophy className="size-6 text-primary" /> Criar Desafio
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Desafie equipes do ranking e dispute posições.
           </p>
-        )}
-      </div>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>
-          <Button size="sm" variant="outline" className="w-full">
-            <Check className="size-4 mr-1" />
-            Confirmar ou disputar placar
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar placar</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex-1 text-center">
-                <Label className="block mb-2">{challenge.challenger.name}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={scoreChallenger}
-                  onChange={(e) => setScoreChallenger(parseInt(e.target.value) || 0)}
-                  className="text-center text-2xl font-bold"
-                />
+        </div>
+
+        {/* Stepper */}
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <div key={n} className="flex items-center gap-2 sm:gap-3">
+              <div
+                className={cn(
+                  "size-8 sm:size-9 rounded-full grid place-items-center text-sm font-bold border-2 transition-colors",
+                  step >= n
+                    ? "bg-primary text-primary-foreground border-primary shadow-glow"
+                    : "bg-card text-muted-foreground border-border",
+                )}
+              >
+                {n}
               </div>
-              <span className="text-2xl font-bold">x</span>
-              <div className="flex-1 text-center">
-                <Label className="block mb-2">{challenge.challenged.name}</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={scoreChallenged}
-                  onChange={(e) => setScoreChallenged(parseInt(e.target.value) || 0)}
-                  className="text-center text-2xl font-bold"
+              {n < 5 && (
+                <div
+                  className={cn(
+                    "h-0.5 w-4 sm:w-8 transition-colors",
+                    step > n ? "bg-primary" : "bg-border",
+                  )}
                 />
-              </div>
+              )}
             </div>
-            <DialogFooter className="flex gap-2">
-              <Button
-                variant="default"
-                onClick={() => confirmM.mutate({ data: { challengeId: challenge.id } })}
-                disabled={
-                  scoreChallenger !== challenge.score_challenger ||
-                  scoreChallenged !== challenge.score_challenged
-                }
-              >
-                <Check className="size-4 mr-1" />
-                Confirmar
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() =>
-                  disputeM.mutate({
-                    data: { challengeId: challenge.id, scoreChallenger, scoreChallenged },
-                  })
-                }
-                disabled={
-                  scoreChallenger === challenge.score_challenger &&
-                  scoreChallenged === challenge.score_challenged
-                }
-              >
-                <X className="size-4 mr-1" />
-                Disputar
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function statusLabel(s: string) {
-  switch (s) {
-    case "pending":
-      return { label: "Pendente", v: "secondary" as const };
-    case "awaiting_schedule":
-      return { label: "Aguardando agendamento", v: "outline" as const };
-    case "scheduled":
-      return { label: "Agendado", v: "default" as const };
-    case "reschedule_requested":
-      return { label: "Reagendamento solicitado", v: "outline" as const };
-    case "declined":
-      return { label: "Recusado", v: "destructive" as const };
-    case "completed":
-      return { label: "Concluído", v: "default" as const };
-    case "wo":
-      return { label: "W.O.", v: "destructive" as const };
-    case "awaiting_confirmation":
-      return { label: "Aguardando confirmação", v: "outline" as const };
-    default:
-      return { label: s, v: "secondary" as const };
-  }
-}
-
-function ChallengeHeader({ c }: { c: ChallengeRow }) {
-  const s = statusLabel(c.status);
-  return (
-    <div className="flex items-center justify-between gap-3">
-      <div>
-        <div className="font-semibold">
-          {c.scheduled_date
-            ? `Domingo ${formatSunday(c.scheduled_date)}${c.scheduled_time ? ` — ${c.scheduled_time.slice(0, 5)}` : ""}`
-            : "A agendar"}
+          ))}
         </div>
-        <div className="text-sm">
-          {c.challenger.name} {c.challenger.rank_position ? `(#${c.challenger.rank_position})` : ""}{" "}
-          vs {c.challenged.name}{" "}
-          {c.challenged.rank_position ? `(#${c.challenged.rank_position})` : ""}
-        </div>
-        {c.court && (
-          <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-            <MapPin className="size-3" />
-            {c.court.name}
-          </div>
+
+        {captainedTeams.length === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="font-semibold mb-1">Você ainda não é capitão de nenhuma equipe</p>
+            <p className="text-sm text-muted-foreground">
+              Crie uma equipe para começar a desafiar.
+            </p>
+          </Card>
+        ) : (
+          <>
+            {/* STEP 1 — My Team */}
+            {step === 1 && (
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Users className="size-5" />
+                  <h2 className="font-semibold">Minha Equipe</h2>
+                </div>
+
+                {captainedTeams.length > 1 && (
+                  <div>
+                    <label className="text-xs text-muted-foreground">Selecione a equipe</label>
+                    <Select value={myTeamId} onValueChange={setMyTeamId}>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Escolha a equipe" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {captainedTeams.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.name} — {t.category}
+                            {t.gender === "X" ? " misto" : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {myTeam && (
+                  <>
+                    <div className="rounded-xl border border-border/60 bg-secondary/30 p-4">
+                      <div className="font-bold text-lg">{myTeam.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Posição Atual:{" "}
+                        <span className="text-primary font-semibold">
+                          #{myTeam.rank_position ?? "—"}
+                        </span>{" "}
+                        | Nível:{" "}
+                        <span className="text-primary font-semibold">
+                          {levelFromRank(myTeam.rank_position)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {players.length === 0 && (
+                        <div className="col-span-full text-xs text-muted-foreground flex items-center gap-2">
+                          <UserPlus className="size-4" /> Sem atletas cadastrados.
+                        </div>
+                      )}
+                      {players.map((m, i) => (
+                        <div
+                          key={m.profile?.id ?? i}
+                          className="rounded-xl border border-border/60 bg-card p-3 text-center"
+                        >
+                          <Avatar className="size-12 mx-auto mb-2">
+                            <AvatarImage src={m.profile?.avatar_url ?? undefined} />
+                            <AvatarFallback>{initials(m.profile?.display_name)}</AvatarFallback>
+                          </Avatar>
+                          <div className="text-[10px] text-muted-foreground uppercase">
+                            Atleta {i + 1}
+                          </div>
+                          <div className="text-sm font-semibold truncate">
+                            {m.profile?.display_name ?? "—"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                <div className="flex justify-end">
+                  <Button onClick={() => setStep(2)} disabled={!myTeam}>
+                    Continuar para Adversários
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* STEP 2 — Opponent */}
+            {step === 2 && (
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <h2 className="font-semibold">Escolha seu Adversário</h2>
+                  <div className="relative">
+                    <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Buscar equipe"
+                      className="h-9 rounded-xl border border-border/70 bg-card pl-8 pr-3 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-xl border border-border/60">
+                  <table className="w-full text-sm">
+                    <thead className="bg-secondary/40 text-xs uppercase text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Posição</th>
+                        <th className="px-3 py-2 text-left">Equipe</th>
+                        <th className="px-3 py-2 text-left">Nível</th>
+                        <th className="px-3 py-2 text-right">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {candidates.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-3 py-6 text-center text-muted-foreground">
+                            Nenhuma equipe elegível (até 3 acima / 2 abaixo).
+                          </td>
+                        </tr>
+                      )}
+                      {candidates.map((t) => (
+                        <tr key={t.id} className="border-t border-border/40">
+                          <td className="px-3 py-2 font-semibold">#{t.rank_position}</td>
+                          <td className="px-3 py-2">{t.name}</td>
+                          <td className="px-3 py-2 text-muted-foreground">
+                            {levelFromRank(t.rank_position)}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            <Button
+                              size="sm"
+                              variant={opponentId === t.id ? "default" : "outline"}
+                              onClick={() => {
+                                setOpponentId(t.id);
+                                setStep(3);
+                              }}
+                            >
+                              {opponentId === t.id ? "Selecionado" : "Desafiar"}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-between">
+                  <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+                    <ArrowLeft className="size-4 mr-1" /> Voltar
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* STEP 3 — Date */}
+            {step === 3 && (
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <CalendarDays className="size-5" />
+                  <h2 className="font-semibold">Selecione a Data (Domingos)</h2>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {nextSundays.map((s) => (
+                    <button
+                      key={s.iso}
+                      type="button"
+                      onClick={() => {
+                        setDate(s.iso);
+                        setTime("");
+                        setCourtId("");
+                        setStep(4);
+                      }}
+                      className={cn(
+                        "rounded-xl border-2 p-3 text-center transition-colors",
+                        date === s.iso
+                          ? "border-primary bg-primary/10"
+                          : "border-border hover:border-primary/40",
+                      )}
+                    >
+                      <div className="text-xs text-muted-foreground">{s.month}</div>
+                      <div className="text-2xl font-bold">{s.day}</div>
+                      <div className="text-[10px] text-muted-foreground">DOM</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="flex justify-between">
+                  <Button variant="outline" size="sm" onClick={() => setStep(2)}>
+                    <ArrowLeft className="size-4 mr-1" /> Voltar
+                  </Button>
+                  <Button size="sm" disabled={!date} onClick={() => setStep(4)}>
+                    Próximo: Horário
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* STEP 4 — Time */}
+            {step === 4 && (
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <Clock className="size-5" />
+                  <h2 className="font-semibold">Horários Disponíveis</h2>
+                </div>
+                {availQ.isLoading ? (
+                  <p className="text-sm text-muted-foreground">Carregando horários…</p>
+                ) : availableTimes.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum horário livre neste domingo.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {availableTimes.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => {
+                          setTime(t);
+                          setCourtId("");
+                          setStep(5);
+                        }}
+                        className={cn(
+                          "rounded-xl border-2 py-3 font-semibold transition-colors",
+                          time === t
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:border-primary/40",
+                        )}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <Button variant="outline" size="sm" onClick={() => setStep(3)}>
+                    <ArrowLeft className="size-4 mr-1" /> Voltar
+                  </Button>
+                  <Button size="sm" disabled={!time} onClick={() => setStep(5)}>
+                    Próximo: Quadra
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* STEP 5 — Court */}
+            {step === 5 && (
+              <Card className="p-5 space-y-4">
+                <div className="flex items-center gap-2 text-primary">
+                  <MapPin className="size-5" />
+                  <h2 className="font-semibold">Escolha a Quadra</h2>
+                </div>
+                {availableCourts.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma quadra livre neste horário.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {availableCourts.map((c) => (
+                      <button
+                        key={c.court_id}
+                        type="button"
+                        onClick={() => setCourtId(c.court_id)}
+                        className={cn(
+                          "rounded-xl border-2 p-4 text-left transition-colors",
+                          courtId === c.court_id
+                            ? "border-primary bg-primary/10"
+                            : "border-border hover:border-primary/40",
+                        )}
+                      >
+                        <div className="font-bold">{c.court_name}</div>
+                        <div className="text-xs text-muted-foreground">Quadra {c.court_number}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <Button variant="outline" size="sm" onClick={() => setStep(4)}>
+                    <ArrowLeft className="size-4 mr-1" /> Voltar
+                  </Button>
+                </div>
+              </Card>
+            )}
+
+            {/* RESUMO — fixo abaixo */}
+            <Card className="p-5 space-y-4 border-primary/30">
+              <div className="flex items-center gap-2 text-primary">
+                <ClipboardList className="size-5" />
+                <h2 className="font-semibold">Resumo do Desafio</h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-4">
+                {/* CASA */}
+                <div className="text-center space-y-2">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Casa
+                  </div>
+                  <Avatar className="size-14 mx-auto">
+                    <AvatarFallback className="bg-primary/20 text-primary font-bold">
+                      {initials(myTeam?.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="font-semibold text-sm">{myTeam?.name ?? "—"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    #{myTeam?.rank_position ?? "—"}
+                  </div>
+                </div>
+
+                <div className="text-center font-bold text-muted-foreground">VS</div>
+
+                {/* VISITANTE */}
+                <div className="text-center space-y-2">
+                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    Visitante
+                  </div>
+                  <Avatar className="size-14 mx-auto">
+                    <AvatarFallback
+                      className={cn(
+                        "font-bold",
+                        opponent ? "bg-primary/20 text-primary" : "bg-secondary",
+                      )}
+                    >
+                      {opponent ? initials(opponent.name) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="font-semibold text-sm">{opponent?.name ?? "A definir"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {opponent?.rank_position ? `#${opponent.rank_position}` : "—"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <CalendarDays className="size-3.5" /> Data
+                  </div>
+                  <div className="font-semibold mt-1">
+                    {date
+                      ? new Date(date + "T12:00:00").toLocaleDateString("pt-BR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                      : "A definir"}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Clock className="size-3.5" /> Horário
+                  </div>
+                  <div className="font-semibold mt-1">{time || "A definir"}</div>
+                </div>
+                <div className="rounded-lg bg-secondary/30 p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="size-3.5" /> Quadra
+                  </div>
+                  <div className="font-semibold mt-1">
+                    {selectedCourt?.court_name ?? "A definir"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  className="flex-1"
+                  variant="beach"
+                  disabled={!canSubmit}
+                  onClick={handleSubmit}
+                >
+                  {sendM.isPending ? "Enviando…" : "Enviar Desafio"}
+                </Button>
+                <Button variant="outline" onClick={reset}>
+                  Cancelar
+                </Button>
+              </div>
+            </Card>
+          </>
         )}
       </div>
-      <Badge variant={s.v}>{s.label}</Badge>
-    </div>
+    </AppLayout>
   );
 }
