@@ -146,8 +146,8 @@ function RankingPage() {
             </div>
           </section>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
-            <div className="lg:col-span-8 min-w-0">
+          <div className="space-y-6">
+            <div className="min-w-0">
               <TabsContent value="ind" className="mt-0">
                 <RankingTable
                   rows={individualQ.data ?? []}
@@ -171,10 +171,11 @@ function RankingPage() {
               </TabsContent>
             </div>
 
-            <aside className="lg:col-span-4 min-w-0">
+            <section className="min-w-0">
               <RankingSidebar analytics={analytics} />
-            </aside>
+            </section>
           </div>
+
         </div>
       </Tabs>
     </AppLayout>
