@@ -38,21 +38,41 @@ import { useMyProfile } from "@/hooks/use-auth";
 import { requiredTeamMemberCount } from "@/lib/team-format";
 
 
-type CatKey = "dupla" | "quarteto" | "dupla_mista" | "quarteto_misto";
-const CATEGORIES: Array<{ key: CatKey; label: string; category: "dupla" | "quarteto"; gender?: "X" }> = [
-  { key: "dupla", label: "Dupla", category: "dupla" },
-  { key: "quarteto", label: "Quarteto", category: "quarteto" },
+type CatKey =
+  | "dupla_masc"
+  | "dupla_fem"
+  | "dupla_mista"
+  | "quarteto_masc"
+  | "quarteto_fem"
+  | "quarteto_misto";
+const CATEGORIES: Array<{
+  key: CatKey;
+  label: string;
+  category: "dupla" | "quarteto";
+  gender: "M" | "F" | "X";
+}> = [
+  { key: "dupla_masc", label: "Dupla Masculina", category: "dupla", gender: "M" },
+  { key: "dupla_fem", label: "Dupla Feminina", category: "dupla", gender: "F" },
   { key: "dupla_mista", label: "Dupla Mista", category: "dupla", gender: "X" },
+  { key: "quarteto_masc", label: "Quarteto Masculino", category: "quarteto", gender: "M" },
+  { key: "quarteto_fem", label: "Quarteto Feminino", category: "quarteto", gender: "F" },
   { key: "quarteto_misto", label: "Quarteto Misto", category: "quarteto", gender: "X" },
 ];
 
 function teamCatKey(t: { category: string; gender?: string | null }): CatKey {
-  if (t.category === "dupla") return t.gender === "X" ? "dupla_mista" : "dupla";
-  return t.gender === "X" ? "quarteto_misto" : "quarteto";
+  if (t.category === "dupla") {
+    if (t.gender === "X") return "dupla_mista";
+    if (t.gender === "F") return "dupla_fem";
+    return "dupla_masc";
+  }
+  if (t.gender === "X") return "quarteto_misto";
+  if (t.gender === "F") return "quarteto_fem";
+  return "quarteto_masc";
 }
 function catLabel(t: { category: string; gender?: string | null }): string {
   return CATEGORIES.find((c) => c.key === teamCatKey(t))?.label ?? t.category;
 }
+
 
 export const Route = createFileRoute("/_authenticated/desafios/")({
   head: () => ({
