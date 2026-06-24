@@ -129,8 +129,6 @@ export function MyProfileEditDialog({
         form.mao_dominante &&
         form.genero;
 
-      const selectedArena = (arenasQ.data ?? []).find((a) => a.id === form.arena_id);
-
       const payload = {
         apelido: form.apelido.trim() || null,
         bio: form.bio.trim() || null,
@@ -143,7 +141,6 @@ export function MyProfileEditDialog({
         mao_dominante: form.mao_dominante || null,
         altura: normalizeAltura(form.altura),
         genero: form.genero || null,
-        arena_id: form.arena_id || null,
         status: isProfileComplete ? "completo" : undefined,
       };
 
@@ -161,7 +158,6 @@ export function MyProfileEditDialog({
           ? {
               ...prev,
               ...payload,
-              arena_name: selectedArena?.name ?? null,
             }
           : prev,
       );
