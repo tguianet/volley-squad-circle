@@ -180,18 +180,26 @@ function NewMatchPage() {
         return;
       }
 
+      const typeEntry = TYPES.find((t) => t.v === matchType);
+      const category = (typeEntry?.category ?? "dupla") as MatchType;
+      const genderLabel = typeEntry?.l ?? "";
+      const composedNotes = [genderLabel ? `[${genderLabel}]` : "", notes.trim()]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+
       const insertRow: Database["public"]["Tables"]["matches"]["Insert"] = {
         creator_id: u.user.id,
         arena_id: arenaId,
         court_number: courtNumber,
         title: title.trim(),
         modality: modality as MatchModality,
-        match_type: matchType as MatchType,
+        match_type: category,
         date,
         start_time: startTime,
         end_time: endTime,
         max_players: maxPlayers,
-        notes: notes.trim() || null,
+        notes: composedNotes || null,
         status: "open" satisfies MatchStatus,
       };
 
