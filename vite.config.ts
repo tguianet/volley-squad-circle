@@ -12,11 +12,4 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  vite: {
-    resolve: {
-      alias: {
-        "#tanstack-start-plugin-adapters": `${process.cwd()}/node_modules/@tanstack/start-client-core/dist/esm/fake-entries/plugin-adapters.js`,
-      },
-    },
-  },
 });
