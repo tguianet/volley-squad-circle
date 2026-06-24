@@ -117,8 +117,15 @@ function DesafiosPage() {
     (t) => t.captain_id === userId,
   );
 
+  const myProfileQ = useMyProfile();
+  const myProfile = myProfileQ.data as
+    | { id: string; display_name: string | null; avatar_url: string | null }
+    | null
+    | undefined;
+
   // Wizard state
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5>(1);
+  const [categoryKey, setCategoryKey] = useState<CatKey | "">("");
   const [myTeamId, setMyTeamId] = useState<string>("");
   const [opponentId, setOpponentId] = useState<string>("");
   const [date, setDate] = useState<string>("");
@@ -126,9 +133,16 @@ function DesafiosPage() {
   const [courtId, setCourtId] = useState<string>("");
   const [search, setSearch] = useState("");
 
+  const teamsInCategory = useMemo(() => {
+    if (!categoryKey) return captainedTeams;
+    return captainedTeams.filter((t) => teamCatKey(t) === categoryKey);
+  }, [captainedTeams, categoryKey]);
+
   useEffect(() => {
-    if (!myTeamId && captainedTeams[0]) setMyTeamId(captainedTeams[0].id);
-  }, [captainedTeams, myTeamId]);
+    if (teamsInCategory[0] && !teamsInCategory.find((t) => t.id === myTeamId)) {
+      setMyTeamId(teamsInCategory[0].id);
+    }
+  }, [teamsInCategory, myTeamId]);
 
   const myTeam = useMemo(
     () =>
