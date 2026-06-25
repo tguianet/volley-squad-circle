@@ -506,103 +506,6 @@ export type Database = {
           },
         ]
       }
-      tournament_registrations: {
-        Row: {
-          id: string
-          registered_at: string
-          status: string
-          team_id: string | null
-          tournament_id: string
-          user_id: string
-        }
-        Insert: {
-          id?: string
-          registered_at?: string
-          status?: string
-          team_id?: string | null
-          tournament_id: string
-          user_id: string
-        }
-        Update: {
-          id?: string
-          registered_at?: string
-          status?: string
-          team_id?: string | null
-          tournament_id?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournament_registrations_tournament_id_fkey"
-            columns: ["tournament_id"]
-            isOneToOne: false
-            referencedRelation: "tournaments"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tournaments: {
-        Row: {
-          arena_id: string | null
-          category_label: string
-          created_at: string
-          created_by: string | null
-          entry_fee_cents: number
-          event_date: string
-          format: Database["public"]["Enums"]["tournament_format"]
-          id: string
-          image_url: string | null
-          is_featured: boolean
-          max_teams: number
-          start_time: string
-          status: Database["public"]["Enums"]["tournament_status"]
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          arena_id?: string | null
-          category_label: string
-          created_at?: string
-          created_by?: string | null
-          entry_fee_cents?: number
-          event_date: string
-          format?: Database["public"]["Enums"]["tournament_format"]
-          id?: string
-          image_url?: string | null
-          is_featured?: boolean
-          max_teams?: number
-          start_time: string
-          status?: Database["public"]["Enums"]["tournament_status"]
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          arena_id?: string | null
-          category_label?: string
-          created_at?: string
-          created_by?: string | null
-          entry_fee_cents?: number
-          event_date?: string
-          format?: Database["public"]["Enums"]["tournament_format"]
-          id?: string
-          image_url?: string | null
-          is_featured?: boolean
-          max_teams?: number
-          start_time?: string
-          status?: Database["public"]["Enums"]["tournament_status"]
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tournaments_arena_id_fkey"
-            columns: ["arena_id"]
-            isOneToOne: false
-            referencedRelation: "arenas"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       monthly_penalties: {
         Row: {
           challenge_id: string | null
@@ -1508,15 +1411,6 @@ export type Database = {
       penalty_reason: "no_challenge_month" | "declined" | "walkover"
       team_category: "dupla" | "quarteto"
       team_gender: "M" | "F" | "X"
-      tournament_format: "ready_teams" | "team_draw"
-      tournament_status:
-        | "draft"
-        | "open"
-        | "featured"
-        | "last_spots"
-        | "coming_soon"
-        | "closed"
-        | "finished"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1664,16 +1558,6 @@ export const Constants = {
       penalty_reason: ["no_challenge_month", "declined", "walkover"],
       team_category: ["dupla", "quarteto"],
       team_gender: ["M", "F", "X"],
-      tournament_format: ["ready_teams", "team_draw"],
-      tournament_status: [
-        "draft",
-        "open",
-        "featured",
-        "last_spots",
-        "coming_soon",
-        "closed",
-        "finished",
-      ],
     },
   },
 } as const
