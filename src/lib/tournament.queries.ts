@@ -143,3 +143,28 @@ export async function fetchMyTournaments(userId: string): Promise<MyTournamentEn
     })
     .filter((x): x is MyTournamentEntry => x !== null);
 }
+
+export type CreateTournamentInput = {
+  title: string;
+  category_label: string;
+  arena_id: string | null;
+  event_date: string;
+  start_time: string;
+  entry_fee_cents: number;
+  max_teams: number;
+  format: TournamentListItem["format"];
+  status: TournamentListItem["status"];
+  is_featured: boolean;
+  image_url: string | null;
+  created_by: string;
+};
+
+export async function createTournament(input: CreateTournamentInput): Promise<string> {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .insert(input)
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id as string;
+}
