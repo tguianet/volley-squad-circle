@@ -56,7 +56,7 @@ export function getTournamentBadge(
   }
   const ratio = max > 0 ? enrolled / max : 0;
   if (status === "last_spots" || ratio >= 0.85) {
-    return { label: "Últimas Vagas", className: "bg-foreground/70 text-background" };
+    return { label: "Últimas Vagas", className: "bg-foreground/75 text-background" };
   }
   if (status === "closed" || status === "finished") {
     return { label: "Encerrado", className: "bg-muted text-muted-foreground" };

@@ -1,13 +1,19 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Medal } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchIndividualRankingRows } from "@/lib/ranking.queries";
 import { fetchMyTournaments, type MyTournamentEntry } from "@/lib/tournament.queries";
 import { formatTournamentDateTime } from "@/lib/tournament.types";
 import { cn } from "@/lib/utils";
 
-function MyTournamentItem({ entry, variant }: { entry: MyTournamentEntry; variant: "upcoming" | "past" }) {
+function MyTournamentItem({
+  entry,
+  variant,
+}: {
+  entry: MyTournamentEntry;
+  variant: "upcoming" | "past";
+}) {
   const today = new Date().toISOString().slice(0, 10);
   const isPast = entry.event_date < today || entry.status === "finished";
 
@@ -17,12 +23,17 @@ function MyTournamentItem({ entry, variant }: { entry: MyTournamentEntry; varian
   return (
     <div
       className={cn(
-        "p-4 rounded-xl bg-secondary/40 border border-border/40",
+        "p-4 rounded-xl bg-secondary/60 border border-border/30",
         variant === "past" && "opacity-70",
       )}
     >
       <div className="flex justify-between items-start gap-2 mb-2">
-        <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+        <span
+          className={cn(
+            "text-[10px] font-bold uppercase tracking-wide",
+            variant === "upcoming" ? "text-primary" : "text-muted-foreground",
+          )}
+        >
           {variant === "upcoming" ? "Próximo jogo" : "Concluído"}
         </span>
         {variant === "upcoming" ? (
@@ -35,10 +46,22 @@ function MyTournamentItem({ entry, variant }: { entry: MyTournamentEntry; varian
           </span>
         )}
       </div>
-      <p className="font-semibold text-sm mb-1">{entry.title}</p>
-      <p className="text-xs text-muted-foreground">
-        {entry.arena_name ?? "Arena PlayBeach"}
-      </p>
+      <p className="font-bold text-sm mb-1">{entry.title}</p>
+      <p className="text-xs text-muted-foreground">{entry.arena_name ?? "Arena PlayBeach"}</p>
+    </div>
+  );
+}
+
+function EmptyMyTournaments({ loggedIn }: { loggedIn: boolean }) {
+  return (
+    <div className="space-y-4">
+      <div className="p-4 rounded-xl border border-dashed border-border/50 bg-secondary/30 text-center">
+        <p className="text-xs text-muted-foreground">
+          {loggedIn
+            ? "Você ainda não está inscrito em nenhum torneio."
+            : "Faça login para ver suas inscrições."}
+        </p>
+      </div>
     </div>
   );
 }
@@ -61,53 +84,62 @@ export function TournamentsSidebar({ userId }: TournamentsSidebarProps) {
 
   const topPlayers = (rankingQ.data ?? []).slice(0, 3);
   const myTournaments = myQ.data ?? [];
+  const upcoming = myTournaments.filter((e) => {
+    const today = new Date().toISOString().slice(0, 10);
+    return e.event_date >= today && e.status !== "finished";
+  });
+  const past = myTournaments.filter((e) => {
+    const today = new Date().toISOString().slice(0, 10);
+    return e.event_date < today || e.status === "finished";
+  });
 
   return (
     <aside className="w-full xl:w-80 space-y-6 shrink-0">
-      <section className="rounded-3xl border border-border/50 bg-card p-5 sm:p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-display text-lg tracking-wide">Meus torneios</h2>
+      <section className="rounded-[24px] border border-border/40 bg-card p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-bold text-lg text-foreground">Meus Torneios</h2>
           <Link to="/torneios" className="text-primary text-xs font-bold hover:underline">
             Ver tudo
           </Link>
         </div>
-        {!userId ? (
-          <p className="text-xs text-muted-foreground">Faça login para ver suas inscrições.</p>
-        ) : myQ.isLoading ? (
+        {myQ.isLoading ? (
           <p className="text-xs text-muted-foreground">Carregando…</p>
         ) : myTournaments.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            Você ainda não está inscrito em nenhum torneio.
-          </p>
+          <EmptyMyTournaments loggedIn={!!userId} />
         ) : (
-          <div className="space-y-3">
-            {myTournaments.map((entry) => (
+          <div className="space-y-4">
+            {upcoming.slice(0, 1).map((entry) => (
               <MyTournamentItem key={entry.id} entry={entry} variant="upcoming" />
+            ))}
+            {past.slice(0, 1).map((entry) => (
+              <MyTournamentItem key={`past-${entry.id}`} entry={entry} variant="past" />
             ))}
           </div>
         )}
       </section>
 
-      <section className="rounded-3xl border border-border/50 bg-card p-5 sm:p-6 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-display text-lg tracking-wide">Ranking da arena</h2>
-          <Medal className="size-5 text-primary" />
+      <section className="rounded-[24px] border border-border/40 bg-card p-6 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="font-bold text-lg text-foreground">Ranking da Arena</h2>
+          <BarChart3 className="size-5 text-primary" />
         </div>
         {rankingQ.isLoading ? (
           <p className="text-xs text-muted-foreground">Carregando…</p>
         ) : topPlayers.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Ranking ainda vazio.</p>
+          <div className="p-4 rounded-xl border border-dashed border-border/50 bg-secondary/30 text-center">
+            <p className="text-xs text-muted-foreground">Ranking ainda vazio.</p>
+          </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-4">
             {topPlayers.map((player) => (
               <div
                 key={player.id}
-                className="flex items-center gap-3 p-2 rounded-xl hover:bg-secondary/40 transition-colors group cursor-default"
+                className="flex items-center gap-4 group p-2 rounded-xl hover:bg-secondary/50 transition-all cursor-default"
               >
-                <div className="w-8 font-display text-xl text-primary/30 group-hover:text-primary transition-colors italic leading-none">
+                <div className="w-8 font-display text-2xl text-primary/30 group-hover:text-primary transition-colors italic leading-none">
                   {String(player.position).padStart(2, "0")}
                 </div>
-                <div className="size-10 rounded-full bg-secondary overflow-hidden shrink-0 border border-border/50">
+                <div className="size-10 rounded-full bg-muted overflow-hidden shrink-0 border border-border/40">
                   {player.players[0]?.avatar_url ? (
                     <img
                       src={player.players[0].avatar_url}
@@ -119,21 +151,21 @@ export function TournamentsSidebar({ userId }: TournamentsSidebarProps) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm truncate">{player.name}</p>
+                  <p className="font-bold text-sm truncate">{player.name}</p>
                   <p className="text-[10px] text-muted-foreground uppercase font-medium truncate">
-                    {player.points} pts · {player.categoryLabel}
+                    {player.points.toLocaleString("pt-BR")} pts · {player.categoryLabel}
                   </p>
                 </div>
               </div>
             ))}
           </div>
         )}
-        <Link to="/ranking" className="block mt-5">
+        <Link to="/ranking" className="block mt-6">
           <Button
             variant="outline"
-            className="w-full h-9 rounded-xl text-xs font-bold border-primary/20 text-primary hover:bg-primary/5"
+            className="w-full h-auto py-2 rounded-xl text-xs font-bold border-2 border-primary/20 text-primary hover:bg-primary/5"
           >
-            Ver ranking completo
+            Ver Ranking Completo
           </Button>
         </Link>
       </section>
