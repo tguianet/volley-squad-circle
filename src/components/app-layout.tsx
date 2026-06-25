@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useIsStaff } from "@/hooks/use-auth";
+import { ChallengeInviteHost } from "@/components/challenges/challenge-invite-host";
 
 const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
@@ -44,6 +45,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
     : sideExtra;
 
   return (
+    <ChallengeInviteHost>
     <div className="min-h-screen flex w-full">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex flex-col w-[260px] border-r border-border/70 bg-card sticky top-0 h-screen p-4 gap-1">
@@ -156,5 +158,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </nav>
       </div>
     </div>
+    </ChallengeInviteHost>
   );
 }

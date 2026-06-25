@@ -487,58 +487,156 @@ export const respondToChallenge = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const { data: challenge, error: fetchErr } = await context.supabase
+      .from("challenges")
+      .select(
+        `
+        id, status, challenged_team_id, challenger_team_id,
+        scheduled_date, scheduled_time, court_id, arena_id, duration_minutes,
+        challenger:teams!challenges_challenger_team_id_fkey(id, name, captain_id),
+        challenged:teams!challenges_challenged_team_id_fkey(id, name, captain_id),
+        court:courts(id, number, name),
+        arena:arenas(name, city)
+      `,
+      )
+      .eq("id", data.challengeId)
+      .maybeSingle();
+
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!challenge) throw new Error("Desafio não encontrado.");
+    if (challenge.status !== "pending") {
+      throw new Error("Este desafio não está mais pendente.");
+    }
+
+    const challengedTeam = challenge.challenged as {
+      id: string;
+      name: string;
+      captain_id: string;
+    } | null;
+    if (!challengedTeam) throw new Error("Time desafiado não encontrado.");
+
+    const isChallengedCaptain = isUserTeamCaptain(challengedTeam, context.userId);
+    const isAdmin = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    const adminOk = isAdmin.data === true;
+
+    if (!isChallengedCaptain && !adminOk) {
+      throw new Error("Somente o capitão pode aceitar ou recusar este desafio.");
+    }
+
+    if (data.action === "accept") {
+      if (!challenge.scheduled_date || !challenge.scheduled_time) {
+        throw new Error("Desafio sem data ou horário definido.");
+      }
+
+      const slotStart = new Date(
+        `${challenge.scheduled_date}T${challenge.scheduled_time.slice(0, 5)}:00`,
+      );
+      if (Number.isNaN(slotStart.getTime()) || slotStart.getTime() < Date.now()) {
+        throw new Error("Não é possível aceitar um desafio expirado.");
+      }
+
+      if (challenge.court_id) {
+        const { data: busy, error: busyErr } = await context.supabase
+          .from("challenges")
+          .select("id")
+          .eq("scheduled_date", challenge.scheduled_date)
+          .eq("scheduled_time", challenge.scheduled_time)
+          .eq("court_id", challenge.court_id)
+          .neq("id", data.challengeId)
+          .in("status", ["pending", "scheduled", "awaiting_schedule", "reschedule_requested"]);
+        if (busyErr) throw new Error(busyErr.message);
+        if (busy && busy.length > 0) {
+          throw new Error("Esta quadra não está mais disponível neste horário.");
+        }
+      }
+    }
+
     const next =
       data.action === "accept"
         ? "scheduled"
         : data.action === "decline"
           ? "declined"
           : "reschedule_requested";
-    const { error } = await context.supabase
+
+    const { data: updated, error } = await context.supabase
       .from("challenges")
       .update({
         status: next,
         responded_at: new Date().toISOString(),
         reschedule_reason: data.action === "reschedule" ? (data.reason ?? null) : null,
       })
-      .eq("id", data.challengeId);
+      .eq("id", data.challengeId)
+      .eq("status", "pending")
+      .select("id")
+      .maybeSingle();
     if (error) throw new Error(error.message);
+    if (!updated) throw new Error("Este desafio não está mais pendente.");
+
+    const dt = challenge.scheduled_date
+      ? new Date(challenge.scheduled_date + "T12:00:00").toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        })
+      : "";
+    const timeLabel = challenge.scheduled_time?.slice(0, 5) ?? "";
+    const courtName =
+      (challenge.court as { name?: string; number?: number } | null)?.name ??
+      `Quadra ${(challenge.court as { number?: number } | null)?.number ?? ""}`;
+    const arenaName = (challenge.arena as { name?: string } | null)?.name ?? "Arena";
+    const challengerName =
+      (challenge.challenger as { name?: string } | null)?.name ?? "Time desafiante";
+    const challengedName = challengedTeam.name;
+
+    async function notifyTeamMembers(teamId: string, title: string, body: string) {
+      const { data: members } = await context.supabase
+        .from("team_members")
+        .select("profile_id")
+        .eq("team_id", teamId);
+      const { data: teamRow } = await context.supabase
+        .from("teams")
+        .select("captain_id")
+        .eq("id", teamId)
+        .maybeSingle();
+
+      const userIds = new Set<string>();
+      for (const m of members ?? []) userIds.add(m.profile_id);
+      if (teamRow?.captain_id) userIds.add(teamRow.captain_id);
+
+      if (userIds.size === 0) return;
+
+      await context.supabase.from("notifications").insert(
+        [...userIds].map((user_id) => ({
+          user_id,
+          kind: data.action === "accept" ? "challenge_accepted" : "challenge_declined",
+          title,
+          body,
+          link_url: "/desafios",
+        })),
+      );
+    }
 
     if (data.action === "accept") {
-      const { data: ch } = await context.supabase
-        .from("challenges")
-        .select(
-          `
-          challenger_team_id, scheduled_date, scheduled_time,
-          challenged:teams!challenges_challenged_team_id_fkey(name),
-          court:courts(number, name)
-        `,
-        )
-        .eq("id", data.challengeId)
-        .single();
-      if (ch) {
-        const { data: capt } = await context.supabase
-          .from("teams")
-          .select("captain_id")
-          .eq("id", ch.challenger_team_id)
-          .single();
-        if (capt) {
-          const dt = ch.scheduled_date
-            ? new Date(ch.scheduled_date + "T12:00:00").toLocaleDateString("pt-BR", {
-                day: "2-digit",
-                month: "2-digit",
-              })
-            : "";
-          const courtName = ch.court?.name ?? `Quadra ${ch.court?.number ?? ""}`;
-          await context.supabase.from("notifications").insert({
-            user_id: capt.captain_id,
-            kind: "challenge_accepted",
-            title: "Desafio aceito e agendado",
-            body: `${ch.challenged?.name ?? "A equipe"} aceitou. Domingo ${dt} às ${ch.scheduled_time ?? ""} — ${courtName}.`,
-            link_url: "/desafios",
-          });
-        }
-      }
+      await notifyTeamMembers(
+        challenge.challenger_team_id,
+        "Desafio aceito",
+        `${challengedName} aceitou o desafio. ${dt} às ${timeLabel} — ${courtName}, ${arenaName}.`,
+      );
+      await notifyTeamMembers(
+        challenge.challenged_team_id,
+        "Desafio aceito",
+        `Desafio confirmado contra ${challengerName}. ${dt} às ${timeLabel} — ${courtName}, ${arenaName}.`,
+      );
+    } else if (data.action === "decline") {
+      await notifyTeamMembers(
+        challenge.challenger_team_id,
+        "Desafio recusado",
+        `${challengedName} recusou o desafio de ${challengerName}.`,
+      );
     }
+
     return { ok: true, status: next };
   });
 
