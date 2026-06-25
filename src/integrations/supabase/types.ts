@@ -1025,6 +1025,20 @@ export type Database = {
     Functions: {
       apply_monthly_penalties: { Args: { _month: string }; Returns: number }
       apply_previous_month_penalties: { Args: never; Returns: number }
+      can_challenge_by_rank: {
+        Args: { my_position: number; opponent_position: number }
+        Returns: boolean
+      }
+      check_court_availability: {
+        Args: {
+          p_arena_id?: string
+          p_court_number?: number
+          p_end_time: string
+          p_match_date: string
+          p_start_time: string
+        }
+        Returns: boolean
+      }
       confirm_challenge_score: {
         Args: { _challenge_id: string }
         Returns: {
@@ -1071,6 +1085,17 @@ export type Database = {
       follow_profile: { Args: { p_profile_id: string }; Returns: Json }
       generate_current_month_availability: { Args: never; Returns: number }
       generate_month_availability: { Args: { _month: string }; Returns: number }
+      get_available_sundays: {
+        Args: { p_arena_id?: string }
+        Returns: {
+          free_slots_count: number
+          match_date: string
+        }[]
+      }
+      get_player_ranking_details: {
+        Args: { p_profile_id: string }
+        Returns: Json
+      }
       get_profile_follow_status: {
         Args: { p_profile_id: string }
         Returns: Json
@@ -1105,6 +1130,7 @@ export type Database = {
           sunday_date: string
         }[]
       }
+      get_team_ranking_details: { Args: { p_team_id: string }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1115,6 +1141,10 @@ export type Database = {
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_team_captain: {
         Args: { _team_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_team_ranking_complete: {
+        Args: { p_category: string; p_member_count: number }
         Returns: boolean
       }
       list_followed_profiles_feed: {
