@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as H2hRouteImport } from './routes/h2h'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as SplatRouteImport } from './routes/$'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TorneiosIndexRouteImport } from './routes/torneios.index'
@@ -52,11 +51,6 @@ const H2hRoute = H2hRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SplatRoute = SplatRouteImport.update({
-  id: '/$',
-  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -196,7 +190,6 @@ const ApiPublicHooksMonthlyRolloverRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/$': typeof SplatRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
   '/notificacoes': typeof NotificacoesRoute
@@ -226,7 +219,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/$': typeof SplatRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
   '/notificacoes': typeof NotificacoesRoute
@@ -257,7 +249,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
-  '/$': typeof SplatRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
   '/notificacoes': typeof NotificacoesRoute
@@ -289,7 +280,6 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/$'
     | '/auth'
     | '/h2h'
     | '/notificacoes'
@@ -319,7 +309,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/$'
     | '/auth'
     | '/h2h'
     | '/notificacoes'
@@ -349,7 +338,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
-    | '/$'
     | '/auth'
     | '/h2h'
     | '/notificacoes'
@@ -381,7 +369,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
-  SplatRoute: typeof SplatRoute
   AuthRoute: typeof AuthRoute
   H2hRoute: typeof H2hRoute
   NotificacoesRoute: typeof NotificacoesRoute
@@ -420,13 +407,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$': {
-      id: '/$'
-      path: '/$'
-      fullPath: '/$'
-      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -653,7 +633,6 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
-  SplatRoute: SplatRoute,
   AuthRoute: AuthRoute,
   H2hRoute: H2hRoute,
   NotificacoesRoute: NotificacoesRoute,
