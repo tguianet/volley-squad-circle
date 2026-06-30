@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as Char91indexChar93RouteImport } from './routes/[index]'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as H2hRouteImport } from './routes/h2h'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -38,6 +39,11 @@ import { Route as AuthenticatedAdminBannersRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminAuditoriaRouteImport } from './routes/_authenticated/admin/auditoria'
 import { Route as ApiPublicHooksMonthlyRolloverRouteImport } from './routes/api/public/hooks/monthly-rollover'
 
+const Char91indexChar93Route = Char91indexChar93RouteImport.update({
+  id: '/index',
+  path: '/index',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NotificacoesRoute = NotificacoesRouteImport.update({
   id: '/notificacoes',
   path: '/notificacoes',
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/index': typeof Char91indexChar93Route
   '/notificacoes': typeof NotificacoesRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
@@ -221,6 +228,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/index': typeof Char91indexChar93Route
   '/notificacoes': typeof NotificacoesRoute
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/h2h': typeof H2hRoute
+  '/index': typeof Char91indexChar93Route
   '/notificacoes': typeof NotificacoesRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
@@ -282,6 +291,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/index'
     | '/notificacoes'
     | '/admin'
     | '/arenas/$id'
@@ -311,6 +321,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/h2h'
+    | '/index'
     | '/notificacoes'
     | '/arenas/$id'
     | '/partidas/nova'
@@ -340,6 +351,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/h2h'
+    | '/index'
     | '/notificacoes'
     | '/_authenticated/admin'
     | '/arenas/$id'
@@ -371,6 +383,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   H2hRoute: typeof H2hRoute
+  Char91indexChar93Route: typeof Char91indexChar93Route
   NotificacoesRoute: typeof NotificacoesRoute
   ArenasIdRoute: typeof ArenasIdRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
@@ -388,6 +401,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/index': {
+      id: '/index'
+      path: '/index'
+      fullPath: '/index'
+      preLoaderRoute: typeof Char91indexChar93RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/notificacoes': {
       id: '/notificacoes'
       path: '/notificacoes'
@@ -635,6 +655,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   H2hRoute: H2hRoute,
+  Char91indexChar93Route: Char91indexChar93Route,
   NotificacoesRoute: NotificacoesRoute,
   ArenasIdRoute: ArenasIdRoute,
   PartidasNovaRoute: PartidasNovaRoute,
