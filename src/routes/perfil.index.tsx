@@ -56,7 +56,13 @@ import type { PublicProfileAboutData } from "@/components/profile/public-profile
 import { getErrorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/perfil/")({
+  ssr: false,
   head: () => ({ meta: [{ title: "Perfil — PlayBeach" }] }),
+  beforeLoad: async () => {
+    const { redirect } = await import("@tanstack/react-router");
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) throw redirect({ to: "/auth" });
+  },
   component: ProfilePage,
 });
 
