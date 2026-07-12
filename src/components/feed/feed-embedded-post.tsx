@@ -17,6 +17,7 @@ export function FeedEmbeddedPost({ post }: FeedEmbeddedPostProps) {
   const { data: avatarUrl } = useAvatarUrl(post.author?.avatar_url);
   const profileLink = post.author
     ? profileRoute({
+        id: post.author.id,
         username: post.author.username,
         apelido: post.author.apelido,
       })

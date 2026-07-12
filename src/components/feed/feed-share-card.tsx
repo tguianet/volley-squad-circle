@@ -47,6 +47,7 @@ export function FeedShareCard({ share, userId, feedQueryKey }: FeedShareCardProp
   const { data: sharerAvatarUrl } = useAvatarUrl(share.sharer?.avatar_url);
   const sharerProfileLink = share.sharer
     ? profileRoute({
+        id: share.sharer.id,
         username: share.sharer.username,
         apelido: share.sharer.apelido,
       })
