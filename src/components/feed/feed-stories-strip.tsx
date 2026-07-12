@@ -192,10 +192,10 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
         </button>
 
         {myStories.map((s) => (
-          <StoryTile key={s.id} story={s} />
+          <StoryTile key={s.id} story={s} onOpen={(story, img) => setViewer({ story, img })} />
         ))}
         {otherStories.map((s) => (
-          <StoryTile key={s.id} story={s} />
+          <StoryTile key={s.id} story={s} onOpen={(story, img) => setViewer({ story, img })} />
         ))}
 
         {stories.length === 0 && !storiesQ.isLoading ? (
