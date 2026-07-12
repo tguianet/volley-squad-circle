@@ -364,8 +364,8 @@ function TeamBuilder({
   });
   const received: ReceivedInvite[] = receivedQ.data ?? [];
 
-  const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+
   const defaultFormat = getTeamFormats(currentGender)[0];
   const [format, setFormat] = useState(defaultFormat);
   const [selected, setSelected] = useState<string[]>([]);
