@@ -248,9 +248,12 @@ function TeamBuilder({
   currentGender?: string | null;
 }) {
   const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
 
   const rosterQ = useQuery<RosterPlayer[]>({
     queryKey: ["roster-players"],
+    enabled: open,
+    staleTime: 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
@@ -261,6 +264,7 @@ function TeamBuilder({
       return (data ?? []) as RosterPlayer[];
     },
   });
+
   const others: RosterPlayer[] = rosterQ.data ?? [];
   const getPlayer = (id: string): RosterPlayer | undefined => others.find((p) => p.id === id);
 
