@@ -33,7 +33,13 @@ type StoryRow = {
   } | null;
 };
 
-function StoryTile({ story }: { story: StoryRow }) {
+function StoryTile({
+  story,
+  onOpen,
+}: {
+  story: StoryRow;
+  onOpen: (story: StoryRow, signedImg: string | null) => void;
+}) {
   const { data: signedImg } = useQuery({
     queryKey: ["story-img", story.image_url],
     staleTime: 1000 * 60 * 30,
@@ -51,9 +57,7 @@ function StoryTile({ story }: { story: StoryRow }) {
     <button
       type="button"
       className="flex flex-col items-center gap-1.5 shrink-0 group"
-      onClick={() => {
-        if (signedImg) window.open(signedImg, "_blank");
-      }}
+      onClick={() => onOpen(story, signedImg ?? null)}
     >
       <div className="size-[72px] rounded-full p-[3px] gradient-beach shadow-glow overflow-hidden">
         {signedImg ? (
