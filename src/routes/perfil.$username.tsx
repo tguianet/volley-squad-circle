@@ -94,6 +94,17 @@ function PublicProfilePage() {
       });
       if (error) throw error;
       const row = rows?.[0] as PublicProfile | undefined;
+      if (!row && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(handle)) {
+        const { data: byId, error: idError } = await supabase
+          .from("profiles")
+          .select(
+            "id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, status, pontos, vitorias, derrotas",
+          )
+          .eq("id", handle)
+          .maybeSingle();
+        if (idError) throw idError;
+        if (byId) return byId as PublicProfile;
+      }
       if (!row) throw new Error("Perfil não encontrado");
       return row;
     },

@@ -940,6 +940,17 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const username = normalizeProfileHandle(data.username);
+    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username)) {
+      const { data: profile, error: idError } = await supabase
+        .from("profiles")
+        .select(
+          "id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, status, pontos, vitorias, derrotas",
+        )
+        .eq("id", username)
+        .maybeSingle();
+      if (idError) throw new Error(idError.message);
+      if (profile) return profile;
+    }
     const { data: rows, error } = await supabase.rpc("get_public_profile_by_username", {
       p_username: username,
     });
