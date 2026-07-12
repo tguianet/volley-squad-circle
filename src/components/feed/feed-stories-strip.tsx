@@ -266,6 +266,36 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!viewer} onOpenChange={(open) => !open && setViewer(null)}>
+        <DialogContent className="max-w-lg p-0 overflow-hidden bg-black border-0">
+          <DialogHeader className="sr-only">
+            <DialogTitle>
+              Story de {viewer?.story.profile?.apelido ?? viewer?.story.profile?.display_name ?? "jogador"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative w-full aspect-[9/16] max-h-[80vh] bg-black flex items-center justify-center">
+            {viewer?.img ? (
+              <img src={viewer.img} alt="Story" className="w-full h-full object-contain" />
+            ) : (
+              <Loader2 className="size-8 animate-spin text-white" />
+            )}
+            <div className="absolute top-0 inset-x-0 p-3 flex items-center gap-2 bg-gradient-to-b from-black/60 to-transparent">
+              <div className="size-8 rounded-full p-[2px] gradient-beach">
+                <Avatar className="size-full ring-1 ring-black">
+                  <AvatarFallback className="text-xs">
+                    {(viewer?.story.profile?.apelido ?? viewer?.story.profile?.display_name ?? "?")[0]?.toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <span className="text-sm font-semibold text-white truncate">
+                {viewer?.story.profile?.apelido ?? viewer?.story.profile?.display_name ?? "Jogador"}
+              </span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
+
   );
 }
