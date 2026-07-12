@@ -87,6 +87,7 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [viewer, setViewer] = useState<{ story: StoryRow; img: string | null } | null>(null);
   const queryClient = useQueryClient();
 
   const storiesQ = useQuery({
