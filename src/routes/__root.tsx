@@ -120,9 +120,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/622c7845-9b28-4ed2-95ef-812b1dac2079/id-preview-ad969deb--4530c31a-2def-4af6-8dc7-9af4c2b90d46.lovable.app-1781102151168.png",
       },
+      { name: "theme-color", content: "#00A3AD" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "default" },
+      { name: "apple-mobile-web-app-title", content: "PlayBeach" },
+      { name: "application-name", content: "PlayBeach" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/pwa-192x192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/pwa-512x512.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
