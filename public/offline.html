@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sem conexão · PlayBeach</title>
+    <link rel="icon" href="/favicon.ico" />
+    <style>
+      :root { color-scheme: light; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: #FAF8F3;
+        color: #1a1c1c;
+        padding: 24px;
+      }
+      .card {
+        max-width: 420px;
+        text-align: center;
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 32px 24px;
+        box-shadow: 0 20px 48px -24px rgba(0, 105, 112, 0.25);
+      }
+      img { width: 96px; height: 96px; border-radius: 24px; }
+      h1 { font-family: "Bebas Neue", Impact, sans-serif; font-size: 28px; letter-spacing: 0.04em; margin: 16px 0 8px; text-transform: uppercase; }
+      p { color: #3d494a; line-height: 1.5; margin: 0 0 24px; }
+      button {
+        appearance: none; border: 0; cursor: pointer;
+        background: #00A3AD; color: #fff; font-weight: 700;
+        padding: 12px 24px; border-radius: 16px; font-size: 15px;
+      }
+      button:hover { background: #006970; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <img src="/pwa-192x192.png" alt="PlayBeach" />
+      <h1>Você está offline</h1>
+      <p>Não conseguimos conectar ao PlayBeach. Verifique sua internet e tente novamente.</p>
+      <button onclick="location.reload()">Tentar novamente</button>
+    </div>
+  </body>
+</html>
