@@ -122,7 +122,7 @@ async function fetchShares(
   const { data, error } = await query;
   if (error) throw error;
 
-  const rows = (data ?? []) as RawShareRow[];
+  const rows = (data ?? []) as unknown as RawShareRow[];
 
   const authorIds = rows.flatMap((r) => [r.shared_by_user_id, r.gallery_photos.user_id]);
   const authorMap = await attachAuthors(authorIds);
