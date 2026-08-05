@@ -17,21 +17,25 @@ galeria, perfis vinculados). PWA instalável no Android e no iPhone.
 
 ## Rodando localmente
 
+O gerenciador de pacotes do projeto é **npm** (o `package-lock.json` é a única
+fonte de verdade das versões instaladas).
+
 ```bash
-bun install
-bun run dev        # http://localhost:8080
+npm install
+npm run dev        # http://localhost:8080
 ```
 
 Scripts disponíveis:
 
 ```bash
-bun run test        # testes unitários (Vitest)
-bun run test:watch  # testes em modo watch
-bun run typecheck   # TypeScript sem emitir
-bun run lint        # ESLint
-bun run format      # Prettier
-bun run build       # build de produção
+npm run test        # testes unitários em modo watch (Vitest)
+npm run test:run    # testes unitários em execução única (usado no CI)
+npm run typecheck   # TypeScript sem emitir
+npm run lint        # ESLint
+npm run format      # Prettier
+npm run build       # build de produção
 ```
+
 
 ## Variáveis de ambiente
 
@@ -114,7 +118,7 @@ Vitest roda em ambiente Node e cobre as regras puras:
 ## CI
 
 `.github/workflows/ci.yml` roda em push para `main` e em pull requests:
-install → lint → typecheck → test → build. O build precisa dos secrets
+`npm ci` → `npm run lint` → `npm run typecheck` → `npm run test:run` → `npm run build`. O build precisa dos secrets
 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_PROJECT_ID`
 configurados no repositório.
 
