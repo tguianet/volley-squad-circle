@@ -62,18 +62,20 @@ await check("check_court_availability", async () => {
 
 await check("can_challenge_by_rank", async () => {
   const { error } = await supabase.rpc("can_challenge_by_rank", {
-    _my_pos: 10,
-    _opponent_pos: 8,
+    my_position: 10,
+    opponent_position: 8,
   });
   if (error) throw error;
 });
 
 await check("is_team_ranking_complete", async () => {
-  const { data: team } = await supabase.from("teams").select("id").limit(1).maybeSingle();
-  if (!team?.id) throw new Error("nenhum time para testar");
-  const { error } = await supabase.rpc("is_team_ranking_complete", { _team_id: team.id });
+  const { error } = await supabase.rpc("is_team_ranking_complete", {
+    p_category: "dupla",
+    p_member_count: 2,
+  });
   if (error) throw error;
 });
+
 
 await check("get_team_ranking_details", async () => {
   const { data: team } = await supabase.from("teams").select("id").limit(1).maybeSingle();
