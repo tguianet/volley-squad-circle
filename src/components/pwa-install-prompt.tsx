@@ -6,7 +6,7 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const DISMISS_KEY = "playbeach-pwa-install-dismissed";
+const SESSION_DISMISS_KEY = "playbeach-pwa-install-dismissed";
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
@@ -20,6 +20,14 @@ function isIOS(): boolean {
   return /iphone|ipad|ipod/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
 }
 
+function wasDismissedThisSession(): boolean {
+  try {
+    return window.sessionStorage.getItem(SESSION_DISMISS_KEY) === "dismissed";
+  } catch {
+    return false;
+  }
+}
+
 export function PwaInstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
@@ -28,7 +36,7 @@ export function PwaInstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isStandalone()) return;
-    if (window.localStorage.getItem(DISMISS_KEY)) return;
+    if (wasDismissedThisSession()) return;
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -38,9 +46,9 @@ export function PwaInstallPrompt() {
     window.addEventListener("beforeinstallprompt", handler);
 
     const installed = () => {
+      setDeferred(null);
       setVisible(false);
       setShowIOS(false);
-      window.localStorage.setItem(DISMISS_KEY, "installed");
     };
     window.addEventListener("appinstalled", installed);
 
@@ -64,23 +72,28 @@ export function PwaInstallPrompt() {
     setVisible(false);
     setShowIOS(false);
     try {
-      window.localStorage.setItem(DISMISS_KEY, "dismissed");
+      window.sessionStorage.setItem(SESSION_DISMISS_KEY, "dismissed");
     } catch {
-      // localStorage indisponível (modo privado) — sem impacto no fluxo
+      // sessionStorage indisponível (modo privado) — sem impacto no fluxo
     }
   };
 
   const install = async () => {
     if (!deferred) return;
+
     await deferred.prompt();
     const choice = await deferred.userChoice;
-    if (choice.outcome === "accepted") {
-      window.localStorage.setItem(DISMISS_KEY, "accepted");
-    } else {
-      window.localStorage.setItem(DISMISS_KEY, "dismissed");
-    }
+
     setDeferred(null);
     setVisible(false);
+
+    if (choice.outcome === "dismissed") {
+      try {
+        window.sessionStorage.setItem(SESSION_DISMISS_KEY, "dismissed");
+      } catch {
+        // sessionStorage indisponível (modo privado) — sem impacto no fluxo
+      }
+    }
   };
 
   if (!visible && !showIOS) return null;
