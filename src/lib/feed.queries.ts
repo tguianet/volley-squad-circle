@@ -173,11 +173,13 @@ export async function createPostShare(
   comment: string | null,
 ): Promise<void> {
   const trimmed = comment?.trim() ?? "";
-  const { error } = await untyped().from("post_shares").insert({
-    original_post_id: originalPostId,
-    shared_by_user_id: userId,
-    comment: trimmed.length > 0 ? trimmed : null,
-  });
+  const { error } = await untyped()
+    .from("post_shares")
+    .insert({
+      original_post_id: originalPostId,
+      shared_by_user_id: userId,
+      comment: trimmed.length > 0 ? trimmed : null,
+    });
   if (error) throw error;
 }
 
