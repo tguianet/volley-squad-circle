@@ -65,7 +65,10 @@ export function PwaInstallPrompt() {
     setShowIOS(false);
     try {
       window.localStorage.setItem(DISMISS_KEY, "dismissed");
-    } catch {}
+    } catch {
+      // localStorage indisponível (modo privado) — sem impacto no fluxo
+    }
+
   };
 
   const install = async () => {
