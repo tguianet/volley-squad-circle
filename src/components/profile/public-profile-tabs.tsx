@@ -8,7 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PublicProfileAbout, type PublicProfileAboutData } from "@/components/profile/public-profile-about";
+import {
+  PublicProfileAbout,
+  type PublicProfileAboutData,
+} from "@/components/profile/public-profile-about";
 import { PublicProfileStats } from "@/components/profile/public-profile-stats";
 import { PublicProfileConnectionsPanel } from "@/components/profile/public-profile-connections-panel";
 import { PublicProfileGallery } from "@/components/public-profile-gallery";
@@ -148,12 +151,7 @@ function PartidasPlaceholder({ profileName }: { profileName: string }) {
   );
 }
 
-function TudoOverview({
-  profile,
-  aboutData,
-  isOwnProfile,
-  currentUserId,
-}: PublicProfileTabsProps) {
+function TudoOverview({ profile, aboutData, isOwnProfile, currentUserId }: PublicProfileTabsProps) {
   return (
     <div className="grid lg:grid-cols-[minmax(260px,1fr)_minmax(0,1.65fr)] gap-4 items-start">
       <main className="order-1 lg:order-2 min-w-0">

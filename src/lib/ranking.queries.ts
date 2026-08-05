@@ -78,7 +78,9 @@ function memberDisplayName(p: {
   return p.apelido ?? p.display_name ?? p.username ?? "Jogador";
 }
 
-function formatArenaName(arena: { name: string; city: string | null } | null | undefined): string | null {
+function formatArenaName(
+  arena: { name: string; city: string | null } | null | undefined,
+): string | null {
   if (!arena?.name) return null;
   return arena.city ? `${arena.name} — ${arena.city}` : arena.name;
 }
@@ -210,9 +212,7 @@ function parseDetailsPayload(raw: unknown): RankingDetailsPayload {
   };
 }
 
-export async function fetchIndividualRankingRows(
-  gender: GenderFilter,
-): Promise<RankingTableRow[]> {
+export async function fetchIndividualRankingRows(gender: GenderFilter): Promise<RankingTableRow[]> {
   const { data, error } = await supabase
     .from("profiles")
     .select(
@@ -285,9 +285,7 @@ export async function fetchTeamRankingRows(
     });
   }
 
-  const completeTeams = teams.filter((t) =>
-    isTeamRankingComplete(category, counts[t.id] ?? 0),
-  );
+  const completeTeams = teams.filter((t) => isTeamRankingComplete(category, counts[t.id] ?? 0));
 
   const profileIds = new Set<string>();
   for (const team of completeTeams) {
@@ -306,7 +304,11 @@ export async function fetchTeamRankingRows(
       name: t.name,
       categoryLabel: genderLabel(t.gender),
       players: roster,
-      arenaLabel: resolveTeamArenaLabel(t, roster.map((p) => p.id), profileArenaMap),
+      arenaLabel: resolveTeamArenaLabel(
+        t,
+        roster.map((p) => p.id),
+        profileArenaMap,
+      ),
       games: t.wins + t.losses,
       points: t.points,
       kind: "team",
@@ -322,9 +324,7 @@ export async function fetchTeamRankingDetails(teamId: string): Promise<RankingDe
   return parseDetailsPayload(data);
 }
 
-export async function fetchPlayerRankingDetails(
-  profileId: string,
-): Promise<RankingDetailsPayload> {
+export async function fetchPlayerRankingDetails(profileId: string): Promise<RankingDetailsPayload> {
   const { data, error } = await (supabase.rpc as any)("get_player_ranking_details", {
     p_profile_id: profileId,
   });

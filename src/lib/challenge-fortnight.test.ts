@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getCurrentFortnightInfo,
-  getFortnightIndex,
-} from "@/lib/challenge-fortnight";
+import { getCurrentFortnightInfo, getFortnightIndex } from "@/lib/challenge-fortnight";
 
 describe("getFortnightIndex", () => {
   it("usa 1ª quinzena até o dia 15", () => {

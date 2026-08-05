@@ -9,7 +9,10 @@ export function profileHandle(
 }
 
 export function profileRoute(
-  profile: Pick<FollowedProfile, "username" | "apelido"> & { id?: string | null; profile_id?: string | null },
+  profile: Pick<FollowedProfile, "username" | "apelido"> & {
+    id?: string | null;
+    profile_id?: string | null;
+  },
 ): { to: "/perfil/$username"; params: { username: string } } | { to: "/perfil" } {
   const handle = profile.username ?? profile.apelido ?? profile.profile_id ?? profile.id;
   return handle

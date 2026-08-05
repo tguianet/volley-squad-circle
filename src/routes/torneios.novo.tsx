@@ -203,8 +203,8 @@ function NewTournamentPage() {
                 Criar torneio
               </h1>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-                Publique uma competição oficial da arena. As inscrições ficam disponíveis na listagem
-                assim que o torneio for salvo.
+                Publique uma competição oficial da arena. As inscrições ficam disponíveis na
+                listagem assim que o torneio for salvo.
               </p>
             </div>
           </Card>

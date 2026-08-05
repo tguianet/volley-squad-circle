@@ -1,6 +1,5 @@
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const key =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
 const endpoints = ["/pg/query", "/sql", "/database/query", "/rest/v1/rpc/exec"];
 for (const ep of endpoints) {

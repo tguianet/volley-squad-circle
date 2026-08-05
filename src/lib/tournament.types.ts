@@ -29,9 +29,7 @@ export type TournamentBadge = {
 
 export function formatTournamentFee(cents: number): string {
   if (cents <= 0) return "Grátis";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    cents / 100,
-  );
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
 export function formatTournamentDateTime(eventDate: string, startTime: string): string {
@@ -74,7 +72,12 @@ export function canRegisterTournament(
   alreadyRegistered: boolean,
 ): boolean {
   if (alreadyRegistered) return false;
-  if (status === "coming_soon" || status === "draft" || status === "closed" || status === "finished") {
+  if (
+    status === "coming_soon" ||
+    status === "draft" ||
+    status === "closed" ||
+    status === "finished"
+  ) {
     return false;
   }
   return enrolled < max;

@@ -153,9 +153,7 @@ function AgendaPage() {
                   {lbl.weekday.slice(0, 3)}
                 </div>
                 <div className="font-display text-2xl leading-none mt-1">{lbl.day}</div>
-                <div className="text-[11px] text-muted-foreground capitalize mt-1">
-                  {lbl.month}
-                </div>
+                <div className="text-[11px] text-muted-foreground capitalize mt-1">{lbl.month}</div>
               </button>
             );
           })}
@@ -163,7 +161,9 @@ function AgendaPage() {
 
         {/* Grid */}
         {isLoading ? (
-          <Card className="p-8 text-center text-sm text-muted-foreground">Carregando disponibilidade…</Card>
+          <Card className="p-8 text-center text-sm text-muted-foreground">
+            Carregando disponibilidade…
+          </Card>
         ) : grouped.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             Nenhuma quadra disponível para esta data.

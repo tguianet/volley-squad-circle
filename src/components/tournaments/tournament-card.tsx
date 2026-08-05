@@ -83,12 +83,7 @@ export function TournamentCard({ tournament, onRegister, registering }: Tourname
             <span className="text-xs font-bold text-muted-foreground uppercase tracking-wide">
               Vagas preenchidas
             </span>
-            <span
-              className={cn(
-                "text-xs font-bold",
-                almostFull ? "text-accent" : "text-primary",
-              )}
-            >
+            <span className={cn("text-xs font-bold", almostFull ? "text-accent" : "text-primary")}>
               {tournament.enrolled_count}/{tournament.max_teams}
             </span>
           </div>
@@ -96,7 +91,9 @@ export function TournamentCard({ tournament, onRegister, registering }: Tourname
             <div
               className={cn(
                 "h-full rounded-full transition-all",
-                almostFull ? "bg-accent shadow-[0_0_8px_rgba(253,129,0,0.4)]" : "bg-primary shadow-[0_0_8px_rgba(0,105,112,0.4)]",
+                almostFull
+                  ? "bg-accent shadow-[0_0_8px_rgba(253,129,0,0.4)]"
+                  : "bg-primary shadow-[0_0_8px_rgba(0,105,112,0.4)]",
               )}
               style={{ width: `${progress}%` }}
             />
@@ -113,11 +110,7 @@ export function TournamentCard({ tournament, onRegister, registering }: Tourname
             <ArrowRight className="size-[18px]" />
           </Button>
         ) : tournament.user_registered ? (
-          <Button
-            variant="secondary"
-            className="w-full h-auto py-4 rounded-xl font-bold"
-            disabled
-          >
+          <Button variant="secondary" className="w-full h-auto py-4 rounded-xl font-bold" disabled>
             Inscrição confirmada
           </Button>
         ) : (

@@ -263,10 +263,7 @@ export function MyProfileChallengesPanel() {
         seen.add(r.id);
         return HISTORY_STATUSES.has(r.status);
       })
-      .sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-      );
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }, [sent, received]);
 
   const handleAccept = (id: string) => {
@@ -394,9 +391,7 @@ export function MyProfileChallengesPanel() {
                 }
               />
             ) : (
-              sentActive.map((r) => (
-                <ChallengeCard key={r.id} row={r} direction="outgoing" />
-              ))
+              sentActive.map((r) => <ChallengeCard key={r.id} row={r} direction="outgoing" />)
             ))}
 
           {subTab === "historico" &&

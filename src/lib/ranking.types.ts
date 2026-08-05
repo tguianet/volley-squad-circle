@@ -83,10 +83,7 @@ export function buildRankingAnalytics(rows: RankingTableRow[]): RankingAnalytics
 
   const movers = withPosition
     .slice(1)
-    .sort(
-      (a, b) =>
-        b.row.games - a.row.games || b.row.points - a.row.points,
-    )
+    .sort((a, b) => b.row.games - a.row.games || b.row.points - a.row.points)
     .slice(0, 2)
     .map(({ row, position }) => ({
       position,

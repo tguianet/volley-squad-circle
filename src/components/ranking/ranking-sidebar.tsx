@@ -18,7 +18,6 @@ type RankingSidebarProps = {
 };
 
 export function RankingSidebar({ analytics, entriesLabel = "Atletas" }: RankingSidebarProps) {
-
   const fetchScheduled = useServerFn(listScheduledChallenges);
   const challengesQ = useQuery({
     queryKey: ["scheduled-challenges"],

@@ -703,7 +703,6 @@ export const listScheduledChallenges = createServerFn({ method: "GET" }).handler
   }));
 });
 
-
 // =====================================================================
 // COURTS & SCHEDULING
 // =====================================================================
@@ -940,7 +939,9 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const username = normalizeProfileHandle(data.username);
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username)) {
+    if (
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username)
+    ) {
       const { data: profile, error: idError } = await supabase
         .from("profiles")
         .select(
@@ -1043,9 +1044,12 @@ export const listMyFollowedProfiles = createServerFn({ method: "GET" })
 export const listFollowedProfilesFeed = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: rows, error } = await (context.supabase.rpc as any)("list_followed_profiles_feed", {
-      p_limit: 30,
-    });
+    const { data: rows, error } = await (context.supabase.rpc as any)(
+      "list_followed_profiles_feed",
+      {
+        p_limit: 30,
+      },
+    );
     if (error) throw new Error(error.message);
     return rows ?? [];
   });

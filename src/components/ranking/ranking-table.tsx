@@ -19,10 +19,7 @@ import {
   PointsCell,
   PositionBadge,
 } from "@/components/ranking/ranking-mobile-card";
-import {
-  fetchPlayerRankingDetails,
-  fetchTeamRankingDetails,
-} from "@/lib/ranking.queries";
+import { fetchPlayerRankingDetails, fetchTeamRankingDetails } from "@/lib/ranking.queries";
 import type { RankingTableRow } from "@/lib/ranking.types";
 import { cn } from "@/lib/utils";
 

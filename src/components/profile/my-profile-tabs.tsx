@@ -8,7 +8,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PublicProfileAbout, type PublicProfileAboutData } from "@/components/profile/public-profile-about";
+import {
+  PublicProfileAbout,
+  type PublicProfileAboutData,
+} from "@/components/profile/public-profile-about";
 import { PublicProfileStats } from "@/components/profile/public-profile-stats";
 import { PublicProfileConnectionsPanel } from "@/components/profile/public-profile-connections-panel";
 import { PublicProfileGallery } from "@/components/public-profile-gallery";

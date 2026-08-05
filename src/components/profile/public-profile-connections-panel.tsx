@@ -112,7 +112,6 @@ export function PublicProfileConnectionsPanel({
     queryFn: async () => {
       const rows = await fetchFollowers({ data: { profileId, limit: 12 } });
       return rows as unknown as PublicProfileConnection[];
-
     },
   });
 

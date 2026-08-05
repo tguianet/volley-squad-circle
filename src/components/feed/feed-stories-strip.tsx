@@ -51,8 +51,7 @@ function StoryTile({
     },
   });
   const { data: signedAvatar } = useAvatarUrl(story.profile?.avatar_url);
-  const name =
-    story.profile?.apelido ?? story.profile?.display_name ?? "Jogador";
+  const name = story.profile?.apelido ?? story.profile?.display_name ?? "Jogador";
   return (
     <button
       type="button"
@@ -199,10 +198,7 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
         ))}
 
         {stories.length === 0 && !storiesQ.isLoading ? (
-          <Link
-            to="/perfil"
-            className="flex flex-col items-center gap-1.5 shrink-0 opacity-70"
-          >
+          <Link to="/perfil" className="flex flex-col items-center gap-1.5 shrink-0 opacity-70">
             <div className="size-[72px] rounded-full border-2 border-dashed border-border/80 bg-secondary/50 flex items-center justify-center">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide text-center px-1">
                 Sem stories
@@ -237,12 +233,14 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
           </DialogHeader>
           {previewUrl ? (
             <div className="rounded-xl overflow-hidden bg-secondary/40">
-              <img src={previewUrl} alt="Pré-visualização" className="w-full max-h-[420px] object-contain" />
+              <img
+                src={previewUrl}
+                alt="Pré-visualização"
+                className="w-full max-h-[420px] object-contain"
+              />
             </div>
           ) : null}
-          <p className="text-xs text-muted-foreground">
-            Seu story fica visível por 24 horas.
-          </p>
+          <p className="text-xs text-muted-foreground">Seu story fica visível por 24 horas.</p>
           <DialogFooter>
             <Button
               variant="outline"
@@ -271,7 +269,8 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
         <DialogContent className="max-w-lg p-0 overflow-hidden bg-black border-0">
           <DialogHeader className="sr-only">
             <DialogTitle>
-              Story de {viewer?.story.profile?.apelido ?? viewer?.story.profile?.display_name ?? "jogador"}
+              Story de{" "}
+              {viewer?.story.profile?.apelido ?? viewer?.story.profile?.display_name ?? "jogador"}
             </DialogTitle>
           </DialogHeader>
           <div className="relative w-full aspect-[9/16] max-h-[80vh] bg-black flex items-center justify-center">
@@ -284,7 +283,9 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
               <div className="size-8 rounded-full p-[2px] gradient-beach">
                 <Avatar className="size-full ring-1 ring-black">
                   <AvatarFallback className="text-xs">
-                    {(viewer?.story.profile?.apelido ?? viewer?.story.profile?.display_name ?? "?")[0]?.toUpperCase()}
+                    {(viewer?.story.profile?.apelido ??
+                      viewer?.story.profile?.display_name ??
+                      "?")[0]?.toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               </div>
@@ -296,6 +297,5 @@ export function FeedStoriesStrip({ userId, displayName, avatarUrl }: FeedStories
         </DialogContent>
       </Dialog>
     </>
-
   );
 }

@@ -24,7 +24,9 @@ export function TournamentsToolbar({
           onClick={() => onTabChange("ready_teams")}
           className={cn(
             "relative py-2 px-1 text-sm font-bold transition-colors whitespace-nowrap",
-            tab === "ready_teams" ? "text-primary" : "text-muted-foreground/60 hover:text-foreground",
+            tab === "ready_teams"
+              ? "text-primary"
+              : "text-muted-foreground/60 hover:text-foreground",
           )}
         >
           Times Prontos

@@ -166,7 +166,6 @@ export async function fetchProfileFeed(
   return mergeFeedItems(posts, []);
 }
 
-
 export async function createPostShare(
   originalPostId: string,
   userId: string,
@@ -188,7 +187,6 @@ export async function deletePostShare(shareId: string, userId: string): Promise<
     .eq("id", shareId)
     .eq("shared_by_user_id", userId);
   if (error) throw error;
-
 }
 
 export async function fetchPostComments(postId: string): Promise<FeedComment[]> {

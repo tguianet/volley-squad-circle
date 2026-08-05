@@ -143,7 +143,11 @@ export function ChallengeSummaryPanel({
                 : "A definir"
             }
           />
-          <SummaryRow icon={<Clock className="size-4" />} label="Horário" value={time || "A definir"} />
+          <SummaryRow
+            icon={<Clock className="size-4" />}
+            label="Horário"
+            value={time || "A definir"}
+          />
           <SummaryRow
             icon={<MapPin className="size-4" />}
             label="Quadra"
@@ -177,22 +181,16 @@ export function ChallengeSummaryPanel({
   );
 }
 
-function SummaryRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
+function SummaryRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/40">
       <div className="size-10 rounded-lg bg-card flex items-center justify-center text-primary shadow-sm shrink-0">
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
         <p className="font-bold text-sm truncate capitalize">{value}</p>
       </div>
     </div>

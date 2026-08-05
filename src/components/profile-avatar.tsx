@@ -256,7 +256,13 @@ export const ProfileAvatar = forwardRef<ProfileAvatarHandle, ProfileAvatarProps>
           <div className="flex items-center gap-4">
             {avatarNode}
             <div className="flex flex-col gap-2">
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onFile}
+              />
               <Button
                 type="button"
                 size="sm"
@@ -290,7 +296,9 @@ export const ProfileAvatar = forwardRef<ProfileAvatarHandle, ProfileAvatarProps>
               <AlertTitle>Falha em: {diag.step}</AlertTitle>
               <AlertDescription className="text-xs">
                 {diag.message}
-                <div className="mt-1 opacity-70">Abra o console (F12) para ver detalhes técnicos.</div>
+                <div className="mt-1 opacity-70">
+                  Abra o console (F12) para ver detalhes técnicos.
+                </div>
               </AlertDescription>
             </Alert>
           )}

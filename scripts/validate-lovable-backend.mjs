@@ -5,8 +5,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const key =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !key) {
   console.error("❌ VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY não configurados.");
@@ -76,7 +75,6 @@ await check("is_team_ranking_complete", async () => {
   if (error) throw error;
 });
 
-
 await check("get_team_ranking_details", async () => {
   const { data: team } = await supabase.from("teams").select("id").limit(1).maybeSingle();
   if (!team?.id) throw new Error("nenhum time para testar");
@@ -97,7 +95,6 @@ await check("list_scheduled_challenges_public", async () => {
   const { error } = await supabase.rpc("list_scheduled_challenges_public");
   if (error) throw error;
 });
-
 
 const failed = results.filter((r) => !r.ok);
 console.log("\n---");

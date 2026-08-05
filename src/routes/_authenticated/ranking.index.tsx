@@ -6,10 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Mars, Trophy, Users, Venus } from "lucide-react";
 import { RankingTable } from "@/components/ranking/ranking-table";
 import { RankingSidebar } from "@/components/ranking/ranking-sidebar";
-import {
-  fetchIndividualRankingRows,
-  fetchTeamRankingRows,
-} from "@/lib/ranking.queries";
+import { fetchIndividualRankingRows, fetchTeamRankingRows } from "@/lib/ranking.queries";
 import { buildRankingAnalytics } from "@/lib/ranking.types";
 import { cn } from "@/lib/utils";
 
@@ -65,8 +62,7 @@ function RankingPage() {
 
   const teamQ = useQuery({
     queryKey: ["ranking-team-rows", tab, effectiveGender],
-    queryFn: () =>
-      fetchTeamRankingRows(tab === "dupla" ? "dupla" : "quarteto", effectiveGender),
+    queryFn: () => fetchTeamRankingRows(tab === "dupla" ? "dupla" : "quarteto", effectiveGender),
     enabled: tab === "dupla" || tab === "quarteto",
   });
 
@@ -175,9 +171,7 @@ function RankingPage() {
                 entriesLabel={tab === "ind" ? "Atletas" : tab === "dupla" ? "Duplas" : "Quartetos"}
               />
             </section>
-
           </div>
-
         </div>
       </Tabs>
     </AppLayout>

@@ -32,9 +32,7 @@ export function FeedPostList({ mode, profileId, queryKey }: FeedPostListProps) {
     queryKey,
     enabled: authChecked && (mode === "global" || !!profileId),
     queryFn: () =>
-      mode === "global"
-        ? fetchGlobalFeed(userId)
-        : fetchProfileFeed(profileId!, userId),
+      mode === "global" ? fetchGlobalFeed(userId) : fetchProfileFeed(profileId!, userId),
   });
 
   if (!authChecked || feedQ.isLoading) {

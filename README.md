@@ -6,14 +6,14 @@ galeria, perfis vinculados). PWA instalável no Android e no iPhone.
 
 ## Stack
 
-| Camada | Tecnologia |
-| --- | --- |
-| Framework | TanStack Start v1 (React 19, SSR) + Vite 7 |
-| Roteamento | TanStack Router (rotas por arquivo em `src/routes`) |
-| Dados | TanStack Query |
-| Estilo | Tailwind CSS v4 (`src/styles.css`) + shadcn/ui |
-| Backend | Postgres + Auth + Storage gerenciados (Supabase via Lovable Cloud) |
-| Testes | Vitest |
+| Camada     | Tecnologia                                                         |
+| ---------- | ------------------------------------------------------------------ |
+| Framework  | TanStack Start v1 (React 19, SSR) + Vite 7                         |
+| Roteamento | TanStack Router (rotas por arquivo em `src/routes`)                |
+| Dados      | TanStack Query                                                     |
+| Estilo     | Tailwind CSS v4 (`src/styles.css`) + shadcn/ui                     |
+| Backend    | Postgres + Auth + Storage gerenciados (Supabase via Lovable Cloud) |
+| Testes     | Vitest                                                             |
 
 ## Rodando localmente
 
@@ -37,12 +37,12 @@ bun run build       # build de produção
 
 O arquivo `.env` local contém apenas chaves **publicáveis** (seguras no cliente):
 
-| Variável | Uso |
-| --- | --- |
-| `VITE_SUPABASE_URL` | URL do backend, lida no browser |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | chave pública (anon), lida no browser |
-| `VITE_SUPABASE_PROJECT_ID` | id do projeto |
-| `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` | equivalentes lidos no servidor |
+| Variável                                    | Uso                                   |
+| ------------------------------------------- | ------------------------------------- |
+| `VITE_SUPABASE_URL`                         | URL do backend, lida no browser       |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`             | chave pública (anon), lida no browser |
+| `VITE_SUPABASE_PROJECT_ID`                  | id do projeto                         |
+| `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` | equivalentes lidos no servidor        |
 
 Regras:
 
@@ -122,12 +122,12 @@ configurados no repositório.
 
 Todos leem as variáveis do `.env`, então rode com `node --env-file=.env`:
 
-| Script | Para que serve |
-| --- | --- |
-| `scripts/validate-lovable-backend.mjs` | smoke test das RPCs e colunas críticas do backend |
-| `scripts/list-rpcs.mjs` | lista as RPCs expostas pela API (filtra ranking/quadra/desafio) |
-| `scripts/probe-sql-api.mjs` | verifica quais endpoints SQL a API expõe (diagnóstico) |
-| `scripts/apply-lovable-migration.mjs` | auxiliar de aplicação de migration |
+| Script                                 | Para que serve                                                  |
+| -------------------------------------- | --------------------------------------------------------------- |
+| `scripts/validate-lovable-backend.mjs` | smoke test das RPCs e colunas críticas do backend               |
+| `scripts/list-rpcs.mjs`                | lista as RPCs expostas pela API (filtra ranking/quadra/desafio) |
+| `scripts/probe-sql-api.mjs`            | verifica quais endpoints SQL a API expõe (diagnóstico)          |
+| `scripts/apply-lovable-migration.mjs`  | auxiliar de aplicação de migration                              |
 
 Exemplo:
 

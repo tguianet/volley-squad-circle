@@ -2,15 +2,7 @@ import { useRef } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  CalendarDays,
-  Clock,
-  Loader2,
-  MapPin,
-  Swords,
-  X,
-} from "lucide-react";
+import { AlertTriangle, CalendarDays, Clock, Loader2, MapPin, Swords, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -58,9 +50,7 @@ function TeamBadge({
       <div
         className={cn(
           "size-14 mx-auto mb-2 rounded-full border-2 grid place-items-center",
-          highlight
-            ? "bg-primary/10 border-primary/30"
-            : "bg-secondary border-border/50",
+          highlight ? "bg-primary/10 border-primary/30" : "bg-secondary border-border/50",
         )}
       >
         <Swords className={cn("size-6", highlight ? "text-primary" : "text-muted-foreground")} />
@@ -88,9 +78,7 @@ export function ChallengeInviteModal({
     mutationFn: respond,
     onSuccess: () => {
       toast.success(
-        lastActionRef.current === "accept"
-          ? "Desafio aceito com sucesso."
-          : "Desafio recusado.",
+        lastActionRef.current === "accept" ? "Desafio aceito com sucesso." : "Desafio recusado.",
       );
       lastActionRef.current = null;
       onResponded();
@@ -150,10 +138,7 @@ export function ChallengeInviteModal({
 
         <div className="p-6 space-y-5">
           <div className="flex items-center gap-3">
-            <TeamBadge
-              name={invite.challenger.name}
-              rank={invite.challenger.rank_position}
-            />
+            <TeamBadge name={invite.challenger.name} rank={invite.challenger.rank_position} />
             <div className="shrink-0 flex flex-col items-center">
               <span className="font-display text-2xl text-accent font-bold tracking-widest">
                 VS
@@ -167,17 +152,13 @@ export function ChallengeInviteModal({
           </div>
 
           <div className="rounded-xl border border-border/60 bg-secondary/40 p-4 space-y-2 text-sm">
-            <Row icon={CalendarDays} label="Data" value={formatInviteDate(invite.scheduled_date, null)} />
             <Row
-              icon={Clock}
-              label="Horário"
-              value={invite.scheduled_time?.slice(0, 5) ?? "—"}
+              icon={CalendarDays}
+              label="Data"
+              value={formatInviteDate(invite.scheduled_date, null)}
             />
-            <Row
-              icon={MapPin}
-              label="Quadra"
-              value={invite.court?.name ?? "—"}
-            />
+            <Row icon={Clock} label="Horário" value={invite.scheduled_time?.slice(0, 5) ?? "—"} />
+            <Row icon={MapPin} label="Quadra" value={invite.court?.name ?? "—"} />
             <Row
               icon={MapPin}
               label="Arena"
@@ -199,9 +180,7 @@ export function ChallengeInviteModal({
 
           <div className="flex gap-2 rounded-xl bg-amber-50 border border-amber-200/80 px-3 py-2.5 text-xs text-amber-900">
             <AlertTriangle className="size-4 shrink-0 mt-0.5" />
-            <p>
-              Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem iguais.
-            </p>
+            <p>Se o desafiante vencer, as posições serão trocadas. Os pontos permanecem iguais.</p>
           </div>
 
           {!isCaptain ? (

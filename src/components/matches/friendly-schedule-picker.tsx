@@ -122,10 +122,20 @@ export function FriendlySchedulePicker({
                 !arenaId && "opacity-50 cursor-not-allowed",
               )}
             >
-              <span className={cn("text-xs uppercase font-bold", date === s.iso ? "text-primary" : "text-muted-foreground")}>
+              <span
+                className={cn(
+                  "text-xs uppercase font-bold",
+                  date === s.iso ? "text-primary" : "text-muted-foreground",
+                )}
+              >
                 {s.month}
               </span>
-              <span className={cn("text-3xl font-display font-bold my-1", date === s.iso && "text-primary")}>
+              <span
+                className={cn(
+                  "text-3xl font-display font-bold my-1",
+                  date === s.iso && "text-primary",
+                )}
+              >
                 {s.day}
               </span>
               <span className="text-xs font-semibold text-accent">DOM</span>

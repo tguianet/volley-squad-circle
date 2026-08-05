@@ -54,8 +54,7 @@ export function RankingMobileCard({
           <ArenaLabel label={row.arenaLabel} />
           <div className="flex items-center gap-4 text-xs">
             <span>
-              <span className="text-muted-foreground">Jogos:</span>{" "}
-              <strong>{row.games}</strong>
+              <span className="text-muted-foreground">Jogos:</span> <strong>{row.games}</strong>
             </span>
             <span>
               <span className="text-muted-foreground">Pts:</span>{" "}
@@ -68,11 +67,7 @@ export function RankingMobileCard({
       </div>
       <Button variant="outline" size="sm" className="w-full" onClick={onToggle}>
         Mais detalhes
-        {expanded ? (
-          <ChevronUp className="size-4 ml-1" />
-        ) : (
-          <ChevronDown className="size-4 ml-1" />
-        )}
+        {expanded ? <ChevronUp className="size-4 ml-1" /> : <ChevronDown className="size-4 ml-1" />}
       </Button>
       {expanded ? (
         <div className="rounded-xl ranking-details-panel overflow-hidden">
@@ -152,8 +147,6 @@ export function PlayerChips({
     </>
   );
 }
-
-
 
 export function ArenaLabel({ label, dark }: { label: string; dark?: boolean }) {
   const isUndefined = label === RANKING_ARENA_UNDEFINED;

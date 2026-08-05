@@ -45,9 +45,7 @@ function TournamentsPage() {
 
   const dbUnavailable =
     tournamentsQ.isError &&
-    /tournaments|schema cache|relation|does not exist/i.test(
-      tournamentsQ.error?.message ?? "",
-    );
+    /tournaments|schema cache|relation|does not exist/i.test(tournamentsQ.error?.message ?? "");
 
   const registerM = useMutation({
     mutationFn: async (tournamentId: string) => {
@@ -95,10 +93,7 @@ function TournamentsPage() {
     <AppLayout>
       <div className="relative min-h-full tournament-page-bg">
         <div className="max-w-[1280px] mx-auto px-4 lg:px-10 py-6 lg:py-8">
-          <TournamentsHeader
-            activeCount={stats.active}
-            registrationCount={stats.registrations}
-          />
+          <TournamentsHeader activeCount={stats.active} registrationCount={stats.registrations} />
 
           <TournamentsToolbar
             tab={tab}

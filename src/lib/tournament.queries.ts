@@ -59,9 +59,7 @@ export async function fetchTournaments(userId?: string): Promise<TournamentListI
       image_url: row.image_url,
       enrolled_count: activeRegs.length,
       arena: row.arena,
-      user_registered: userId
-        ? activeRegs.some((r) => r.user_id === userId)
-        : false,
+      user_registered: userId ? activeRegs.some((r) => r.user_id === userId) : false,
     };
   });
 }
@@ -160,11 +158,7 @@ export type CreateTournamentInput = {
 };
 
 export async function createTournament(input: CreateTournamentInput): Promise<string> {
-  const { data, error } = await supabase
-    .from("tournaments")
-    .insert(input)
-    .select("id")
-    .single();
+  const { data, error } = await supabase.from("tournaments").insert(input).select("id").single();
   if (error) throw error;
   return data.id as string;
 }
