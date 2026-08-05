@@ -118,7 +118,7 @@ Vitest roda em ambiente Node e cobre as regras puras:
 ## CI
 
 `.github/workflows/ci.yml` roda em push para `main` e em pull requests:
-install → lint → typecheck → test → build. O build precisa dos secrets
+`npm ci` → `npm run lint` → `npm run typecheck` → `npm run test:run` → `npm run build`. O build precisa dos secrets
 `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY` e `VITE_SUPABASE_PROJECT_ID`
 configurados no repositório.
 
