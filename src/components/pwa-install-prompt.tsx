@@ -89,7 +89,7 @@ export function PwaInstallPrompt() {
     <div
       role="dialog"
       aria-label="Instalar PlayBeach"
-      className="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-md rounded-2xl border border-black/5 bg-white/95 p-3 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:left-auto"
+      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-md rounded-2xl border border-black/5 bg-white/95 p-3 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:left-auto"
     >
       <div className="flex items-start gap-3">
         <img src="/pwa-192x192.png" alt="" className="h-11 w-11 flex-none rounded-xl" />
