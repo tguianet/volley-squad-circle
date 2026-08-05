@@ -93,10 +93,11 @@ await check("get_player_ranking_details", async () => {
   if (error) throw error;
 });
 
-await check("trg_validate_challenge_insert (função existe)", async () => {
-  const { error } = await supabase.rpc("can_challenge_by_rank", { _my_pos: 1, _opponent_pos: 2 });
+await check("list_scheduled_challenges_public", async () => {
+  const { error } = await supabase.rpc("list_scheduled_challenges_public");
   if (error) throw error;
 });
+
 
 const failed = results.filter((r) => !r.ok);
 console.log("\n---");
