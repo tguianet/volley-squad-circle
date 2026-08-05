@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { supabase } from "@/integrations/supabase/client";
 import { isTeamRankingComplete } from "@/lib/team-format";
 import {
@@ -317,7 +318,7 @@ export async function fetchTeamRankingRows(
 }
 
 export async function fetchTeamRankingDetails(teamId: string): Promise<RankingDetailsPayload> {
-  const { data, error } = await (supabase.rpc as any)("get_team_ranking_details", {
+  const { data, error } = await untyped().rpc("get_team_ranking_details", {
     p_team_id: teamId,
   });
   if (error) throw error;
@@ -325,7 +326,7 @@ export async function fetchTeamRankingDetails(teamId: string): Promise<RankingDe
 }
 
 export async function fetchPlayerRankingDetails(profileId: string): Promise<RankingDetailsPayload> {
-  const { data, error } = await (supabase.rpc as any)("get_player_ranking_details", {
+  const { data, error } = await untyped().rpc("get_player_ranking_details", {
     p_profile_id: profileId,
   });
   if (error) throw error;

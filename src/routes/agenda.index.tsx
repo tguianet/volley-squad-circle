@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -57,7 +58,7 @@ function AgendaPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["court-availability", selectedDate],
     queryFn: async () => {
-      const { data, error } = await (supabase.rpc as any)("court_availability", {
+      const { data, error } = await untyped().rpc("court_availability", {
         _date: selectedDate,
       });
       if (error) throw error;

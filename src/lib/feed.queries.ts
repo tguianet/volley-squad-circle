@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { supabase } from "@/integrations/supabase/client";
 import type { FeedAuthor, FeedComment, FeedItem, FeedPost, FeedShare } from "@/lib/feed.types";
 
@@ -91,7 +92,7 @@ async function fetchShares(
   currentUserId: string | null,
   filter?: { sharedByUserId?: string },
 ): Promise<FeedShare[]> {
-  let query = (supabase as any)
+  let query = untyped()
     .from("post_shares")
     .select(
       `
@@ -172,7 +173,7 @@ export async function createPostShare(
   comment: string | null,
 ): Promise<void> {
   const trimmed = comment?.trim() ?? "";
-  const { error } = await (supabase as any).from("post_shares").insert({
+  const { error } = await untyped().from("post_shares").insert({
     original_post_id: originalPostId,
     shared_by_user_id: userId,
     comment: trimmed.length > 0 ? trimmed : null,
@@ -181,7 +182,7 @@ export async function createPostShare(
 }
 
 export async function deletePostShare(shareId: string, userId: string): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await untyped()
     .from("post_shares")
     .delete()
     .eq("id", shareId)
