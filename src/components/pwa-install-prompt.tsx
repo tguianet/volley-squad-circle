@@ -68,7 +68,6 @@ export function PwaInstallPrompt() {
     } catch {
       // localStorage indisponível (modo privado) — sem impacto no fluxo
     }
-
   };
 
   const install = async () => {
