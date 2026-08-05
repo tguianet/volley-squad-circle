@@ -1,19 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { CalendarDays, Clock, Loader2, MapPin } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  formatDateBR,
-  formatTimeSlotLabel,
-  formatWeekdayBR,
-} from "@/lib/date-format";
+import { formatDateBR, formatTimeSlotLabel, formatWeekdayBR } from "@/lib/date-format";
 import {
   fetchAvailableCourts,
   fetchAvailableSundays,
@@ -51,7 +42,12 @@ type SundayPickerModalProps = {
   onSelect: (date: string) => void;
 };
 
-export function SundayPickerModal({ open, onOpenChange, arenaId, onSelect }: SundayPickerModalProps) {
+export function SundayPickerModal({
+  open,
+  onOpenChange,
+  arenaId,
+  onSelect,
+}: SundayPickerModalProps) {
   const sundaysQ = useQuery({
     queryKey: ["available-sundays", arenaId],
     queryFn: () => fetchAvailableSundays(arenaId),

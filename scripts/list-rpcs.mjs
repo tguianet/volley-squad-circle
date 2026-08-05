@@ -1,6 +1,5 @@
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const key =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 const res = await fetch(`${url}/rest/v1/`, {
   headers: { apikey: key, Authorization: `Bearer ${key}` },
 });

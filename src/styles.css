@@ -97,11 +97,7 @@
     var(--coastal-ocean) 0%,
     var(--coastal-ocean-light) 100%
   );
-  --gradient-sand: linear-gradient(
-    180deg,
-    oklch(0.97 0.025 85) 0%,
-    var(--coastal-sand) 100%
-  );
+  --gradient-sand: linear-gradient(180deg, oklch(0.97 0.025 85) 0%, var(--coastal-sand) 100%);
 
   --shadow-card: 0 8px 30px -12px oklch(0.35 0.06 240 / 0.18);
   --shadow-card-hover: 0 16px 40px -12px oklch(0.35 0.06 240 / 0.22);
@@ -303,21 +299,13 @@
 }
 
 .ranking-table-row-leader {
-  background: linear-gradient(
-    90deg,
-    oklch(0.68 0.17 45 / 0.12) 0%,
-    oklch(0.2 0.035 240) 45%
-  );
+  background: linear-gradient(90deg, oklch(0.68 0.17 45 / 0.12) 0%, oklch(0.2 0.035 240) 45%);
   border-left-color: var(--coastal-sunset);
   box-shadow: inset 4px 0 0 var(--coastal-sunset);
 }
 
 .ranking-table-row-leader:hover {
-  background: linear-gradient(
-    90deg,
-    oklch(0.68 0.17 45 / 0.18) 0%,
-    oklch(0.26 0.04 240) 50%
-  );
+  background: linear-gradient(90deg, oklch(0.68 0.17 45 / 0.18) 0%, oklch(0.26 0.04 240) 50%);
 }
 
 .ranking-details-panel {

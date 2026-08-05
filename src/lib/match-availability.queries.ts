@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AvailableSunday = {
@@ -17,7 +18,7 @@ export type AvailableCourt = {
 };
 
 export async function fetchAvailableSundays(arenaId: string): Promise<AvailableSunday[]> {
-  const { data, error } = await (supabase.rpc as any)("get_available_sundays", {
+  const { data, error } = await untyped().rpc("get_available_sundays", {
     p_arena_id: arenaId,
   });
   if (error) throw error;
@@ -28,7 +29,7 @@ export async function fetchAvailableTimeSlots(
   matchDate: string,
   arenaId: string,
 ): Promise<AvailableTimeSlot[]> {
-  const { data, error } = await (supabase.rpc as any)("get_available_time_slots", {
+  const { data, error } = await untyped().rpc("get_available_time_slots", {
     p_match_date: matchDate,
     p_arena_id: arenaId,
   });
@@ -42,7 +43,7 @@ export async function fetchAvailableCourts(
   endTime: string,
   arenaId: string,
 ): Promise<AvailableCourt[]> {
-  const { data, error } = await (supabase.rpc as any)("get_available_courts", {
+  const { data, error } = await untyped().rpc("get_available_courts", {
     p_match_date: matchDate,
     p_start_time: startTime,
     p_end_time: endTime,
@@ -59,7 +60,7 @@ export async function checkCourtAvailability(
   arenaId: string,
   courtNumber: number,
 ): Promise<boolean> {
-  const { data, error } = await (supabase.rpc as any)("check_court_availability", {
+  const { data, error } = await untyped().rpc("check_court_availability", {
     p_match_date: matchDate,
     p_start_time: startTime,
     p_end_time: endTime,

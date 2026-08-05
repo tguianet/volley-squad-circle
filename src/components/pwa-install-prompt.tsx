@@ -11,10 +11,7 @@ const DISMISS_KEY = "playbeach-pwa-install-dismissed";
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   const nav = window.navigator as Navigator & { standalone?: boolean };
-  return (
-    window.matchMedia?.("(display-mode: standalone)").matches ||
-    nav.standalone === true
-  );
+  return window.matchMedia?.("(display-mode: standalone)").matches || nav.standalone === true;
 }
 
 function isIOS(): boolean {
@@ -68,7 +65,9 @@ export function PwaInstallPrompt() {
     setShowIOS(false);
     try {
       window.localStorage.setItem(DISMISS_KEY, "dismissed");
-    } catch {}
+    } catch {
+      // localStorage indisponível (modo privado) — sem impacto no fluxo
+    }
   };
 
   const install = async () => {

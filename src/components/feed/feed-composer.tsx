@@ -69,10 +69,12 @@ export function FeedComposer({
         description: content || "",
       });
 
-
       if (insErr) {
         if (imagePath) {
-          await supabase.storage.from("gallery").remove([imagePath]).catch(() => {});
+          await supabase.storage
+            .from("gallery")
+            .remove([imagePath])
+            .catch(() => {});
         }
         throw insErr;
       }

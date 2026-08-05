@@ -80,9 +80,7 @@ export function FeedShareModal({
             disabled={!userId || shareMut.isPending}
             onClick={() => shareMut.mutate()}
           >
-            {shareMut.isPending ? (
-              <Loader2 className="size-4 animate-spin mr-1.5" />
-            ) : null}
+            {shareMut.isPending ? <Loader2 className="size-4 animate-spin mr-1.5" /> : null}
             Compartilhar no meu feed
           </Button>
         </DialogFooter>

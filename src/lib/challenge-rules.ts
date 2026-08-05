@@ -9,10 +9,7 @@ export function isUserTeamCaptain(
   return !!userId && team.captain_id === userId;
 }
 
-export function isTeamComplete(
-  category: "dupla" | "quarteto",
-  memberCount: number,
-): boolean {
+export function isTeamComplete(category: "dupla" | "quarteto", memberCount: number): boolean {
   return isTeamRankingComplete(category, memberCount);
 }
 

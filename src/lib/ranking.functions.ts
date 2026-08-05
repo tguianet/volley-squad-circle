@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
@@ -678,7 +679,7 @@ export const listMyChallenges = createServerFn({ method: "GET" })
 
 // Public — used in the public /ranking page; no auth required.
 export const listScheduledChallenges = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await (supabase.rpc as any)("list_scheduled_challenges_public");
+  const { data, error } = await untyped().rpc("list_scheduled_challenges_public");
   if (error) throw new Error(error.message);
   type Row = {
     id: string;
@@ -702,7 +703,6 @@ export const listScheduledChallenges = createServerFn({ method: "GET" }).handler
     arena: r.arena_id ? { id: r.arena_id, name: r.arena_name } : null,
   }));
 });
-
 
 // =====================================================================
 // COURTS & SCHEDULING
@@ -940,7 +940,9 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const username = normalizeProfileHandle(data.username);
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username)) {
+    if (
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username)
+    ) {
       const { data: profile, error: idError } = await supabase
         .from("profiles")
         .select(
@@ -1004,7 +1006,7 @@ export const followProfile = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await (context.supabase.rpc as any)("follow_profile", {
+    const { data: row, error } = await untyped(context.supabase).rpc("follow_profile", {
       p_profile_id: data.profileId,
     });
     if (error) throw new Error(error.message);
@@ -1023,7 +1025,7 @@ export const unfollowProfile = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await (context.supabase.rpc as any)("unfollow_profile", {
+    const { data: row, error } = await untyped(context.supabase).rpc("unfollow_profile", {
       p_profile_id: data.profileId,
     });
     if (error) throw new Error(error.message);
@@ -1035,7 +1037,7 @@ export const unfollowProfile = createServerFn({ method: "POST" })
 export const listMyFollowedProfiles = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await (context.supabase.rpc as any)("list_my_followed_profiles");
+    const { data, error } = await untyped(context.supabase).rpc("list_my_followed_profiles");
     if (error) throw new Error(error.message);
     return data ?? [];
   });
@@ -1043,9 +1045,12 @@ export const listMyFollowedProfiles = createServerFn({ method: "GET" })
 export const listFollowedProfilesFeed = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: rows, error } = await (context.supabase.rpc as any)("list_followed_profiles_feed", {
-      p_limit: 30,
-    });
+    const { data: rows, error } = await untyped(context.supabase).rpc(
+      "list_followed_profiles_feed",
+      {
+        p_limit: 30,
+      },
+    );
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
@@ -1060,7 +1065,7 @@ export const getProfileFollowStatus = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: row, error } = await (context.supabase.rpc as any)("get_profile_follow_status", {
+    const { data: row, error } = await untyped(context.supabase).rpc("get_profile_follow_status", {
       p_profile_id: data.profileId,
     });
     if (error) throw new Error(error.message);
@@ -1099,7 +1104,7 @@ export const listPublicProfileFollowers = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await (supabase.rpc as any)("list_public_profile_followers", {
+    const { data: rows, error } = await untyped().rpc("list_public_profile_followers", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 12,
     });

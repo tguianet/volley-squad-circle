@@ -36,7 +36,6 @@ async function fetchPhotos(userId: string): Promise<PhotoRow[]> {
   return (data as PhotoRow[]) ?? [];
 }
 
-
 export function ProfileGallery() {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
@@ -63,7 +62,6 @@ export function ProfileGallery() {
     queryFn: () => fetchPhotos(userId!),
     enabled: authChecked && !!userId,
   });
-
 
   useEffect(() => {
     if (!file) {

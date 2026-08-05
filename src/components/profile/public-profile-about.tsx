@@ -1,15 +1,6 @@
 import type { ReactNode } from "react";
 import { Card } from "@/components/ui/card";
-import {
-  MapPin,
-  Ruler,
-  Hand,
-  Instagram,
-  Trophy,
-  Target,
-  Phone,
-  Info,
-} from "lucide-react";
+import { MapPin, Ruler, Hand, Instagram, Trophy, Target, Phone, Info } from "lucide-react";
 
 type AboutRowProps = {
   icon: typeof MapPin;
@@ -60,13 +51,17 @@ export function PublicProfileAbout({ profile, compact }: PublicProfileAboutProps
   if (!hasContent) {
     return (
       <Card className={compact ? "p-4 shadow-card" : "p-5 shadow-card"}>
-        <p className="text-sm text-muted-foreground text-center py-6">Nenhuma informação disponível.</p>
+        <p className="text-sm text-muted-foreground text-center py-6">
+          Nenhuma informação disponível.
+        </p>
       </Card>
     );
   }
 
   return (
-    <Card className={compact ? "p-4 shadow-card border-border/60" : "p-5 shadow-card border-border/60"}>
+    <Card
+      className={compact ? "p-4 shadow-card border-border/60" : "p-5 shadow-card border-border/60"}
+    >
       {!compact ? (
         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/50">
           <Info className="size-5 text-primary" />

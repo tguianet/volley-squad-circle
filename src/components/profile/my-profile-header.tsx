@@ -16,13 +16,7 @@ import {
   MyProfileEditDialog,
   type MyProfileFormData,
 } from "@/components/profile/my-profile-edit-dialog";
-import {
-  Camera,
-  ImageIcon,
-  Pencil,
-  Settings,
-  Trash2,
-} from "lucide-react";
+import { Camera, ImageIcon, Pencil, Settings, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type MyProfileHeaderProps = {
@@ -150,12 +144,7 @@ export function MyProfileHeader({
           </div>
         </div>
 
-        <ProfileStatsBar
-          pontos={pontos}
-          vitorias={vitorias}
-          derrotas={derrotas}
-          className="mt-5"
-        />
+        <ProfileStatsBar pontos={pontos} vitorias={vitorias} derrotas={derrotas} className="mt-5" />
 
         {profile.bio ? (
           <p className="text-sm text-foreground/80 mt-4 leading-relaxed rounded-xl bg-secondary/40 border border-border/40 px-4 py-3">

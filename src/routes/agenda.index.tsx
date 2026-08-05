@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -57,7 +58,7 @@ function AgendaPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["court-availability", selectedDate],
     queryFn: async () => {
-      const { data, error } = await (supabase.rpc as any)("court_availability", {
+      const { data, error } = await untyped().rpc("court_availability", {
         _date: selectedDate,
       });
       if (error) throw error;
@@ -153,9 +154,7 @@ function AgendaPage() {
                   {lbl.weekday.slice(0, 3)}
                 </div>
                 <div className="font-display text-2xl leading-none mt-1">{lbl.day}</div>
-                <div className="text-[11px] text-muted-foreground capitalize mt-1">
-                  {lbl.month}
-                </div>
+                <div className="text-[11px] text-muted-foreground capitalize mt-1">{lbl.month}</div>
               </button>
             );
           })}
@@ -163,7 +162,9 @@ function AgendaPage() {
 
         {/* Grid */}
         {isLoading ? (
-          <Card className="p-8 text-center text-sm text-muted-foreground">Carregando disponibilidade…</Card>
+          <Card className="p-8 text-center text-sm text-muted-foreground">
+            Carregando disponibilidade…
+          </Card>
         ) : grouped.length === 0 ? (
           <Card className="p-8 text-center text-sm text-muted-foreground">
             Nenhuma quadra disponível para esta data.

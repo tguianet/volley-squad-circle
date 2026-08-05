@@ -211,11 +211,7 @@ export function FeedShareCard({ share, userId, feedQueryKey }: FeedShareCardProp
           </div>
 
           {showComments ? (
-            <FeedPostComments
-              postId={original.id}
-              userId={userId}
-              feedQueryKey={feedQueryKey}
-            />
+            <FeedPostComments postId={original.id} userId={userId} feedQueryKey={feedQueryKey} />
           ) : null}
         </div>
       </Card>

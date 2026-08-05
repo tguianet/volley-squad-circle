@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { supabase } from "@/integrations/supabase/client";
 import type { FeedAuthor, FeedComment, FeedItem, FeedPost, FeedShare } from "@/lib/feed.types";
 
@@ -91,7 +92,7 @@ async function fetchShares(
   currentUserId: string | null,
   filter?: { sharedByUserId?: string },
 ): Promise<FeedShare[]> {
-  let query = (supabase as any)
+  let query = untyped()
     .from("post_shares")
     .select(
       `
@@ -121,7 +122,7 @@ async function fetchShares(
   const { data, error } = await query;
   if (error) throw error;
 
-  const rows = (data ?? []) as RawShareRow[];
+  const rows = (data ?? []) as unknown as RawShareRow[];
 
   const authorIds = rows.flatMap((r) => [r.shared_by_user_id, r.gallery_photos.user_id]);
   const authorMap = await attachAuthors(authorIds);
@@ -166,29 +167,29 @@ export async function fetchProfileFeed(
   return mergeFeedItems(posts, []);
 }
 
-
 export async function createPostShare(
   originalPostId: string,
   userId: string,
   comment: string | null,
 ): Promise<void> {
   const trimmed = comment?.trim() ?? "";
-  const { error } = await (supabase as any).from("post_shares").insert({
-    original_post_id: originalPostId,
-    shared_by_user_id: userId,
-    comment: trimmed.length > 0 ? trimmed : null,
-  });
+  const { error } = await untyped()
+    .from("post_shares")
+    .insert({
+      original_post_id: originalPostId,
+      shared_by_user_id: userId,
+      comment: trimmed.length > 0 ? trimmed : null,
+    });
   if (error) throw error;
 }
 
 export async function deletePostShare(shareId: string, userId: string): Promise<void> {
-  const { error } = await (supabase as any)
+  const { error } = await untyped()
     .from("post_shares")
     .delete()
     .eq("id", shareId)
     .eq("shared_by_user_id", userId);
   if (error) throw error;
-
 }
 
 export async function fetchPostComments(postId: string): Promise<FeedComment[]> {

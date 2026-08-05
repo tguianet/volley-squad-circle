@@ -24,9 +24,7 @@ function StatBlock({
 }) {
   return (
     <div className="text-center p-3 rounded-xl bg-secondary/40 border border-border/40">
-      <div className={`coastal-stat ${accentClass ?? "text-foreground"}`}>
-        {value}
-      </div>
+      <div className={`coastal-stat ${accentClass ?? "text-foreground"}`}>{value}</div>
       <div className="text-[11px] text-muted-foreground mt-1 uppercase tracking-wide">{label}</div>
     </div>
   );
@@ -84,10 +82,7 @@ export function PublicProfileStats({
       </div>
 
       {!compact ? (
-        <Link
-          to="/ranking"
-          className="block text-center text-xs text-primary hover:underline mt-3"
-        >
+        <Link to="/ranking" className="block text-center text-xs text-primary hover:underline mt-3">
           Ver ranking completo
         </Link>
       ) : null}

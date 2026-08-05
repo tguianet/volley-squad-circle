@@ -186,7 +186,12 @@ export function MyProfileEditDialog({
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>Foto do perfil</Label>
-            <ProfileAvatar fallback={fallbackInitial} className="size-20" editable showActionButtons={false} />
+            <ProfileAvatar
+              fallback={fallbackInitial}
+              className="size-20"
+              editable
+              showActionButtons={false}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Nome</Label>
@@ -212,7 +217,10 @@ export function MyProfileEditDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Cidade</Label>
-              <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+              <Input
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Estado</Label>
@@ -302,9 +310,7 @@ export function MyProfileEditDialog({
               <Label>Arena principal</Label>
               <Select
                 value={form.arena_id || "__none__"}
-                onValueChange={(v) =>
-                  setForm({ ...form, arena_id: v === "__none__" ? "" : v })
-                }
+                onValueChange={(v) => setForm({ ...form, arena_id: v === "__none__" ? "" : v })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma arena" />

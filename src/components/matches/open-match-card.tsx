@@ -55,7 +55,7 @@ export function OpenMatchCard({ match, isIn, isFull, urgent, onJoin, onLeave }: 
   const extra = Math.max(0, confirmed.length - 2);
   const courtLabel = match.court_number
     ? `Quadra ${match.court_number}`
-    : match.arena?.name ?? "Arena";
+    : (match.arena?.name ?? "Arena");
 
   return (
     <article
@@ -84,7 +84,8 @@ export function OpenMatchCard({ match, isIn, isFull, urgent, onJoin, onLeave }: 
         <div className="min-w-0 pr-16">
           <h3 className="font-display text-xl font-bold truncate">{match.title}</h3>
           <p className="text-sm text-muted-foreground">
-            {MOD_LABEL[match.modality] ?? match.modality} · {TYPE_LABEL[match.match_type] ?? match.match_type}
+            {MOD_LABEL[match.modality] ?? match.modality} ·{" "}
+            {TYPE_LABEL[match.match_type] ?? match.match_type}
           </p>
         </div>
       </div>
@@ -116,7 +117,9 @@ export function OpenMatchCard({ match, isIn, isFull, urgent, onJoin, onLeave }: 
           {confirmed.slice(0, 2).map((p) => (
             <Avatar key={p.player_id} className="size-10 border-2 border-card">
               <AvatarImage src={p.profile?.avatar_url ?? undefined} />
-              <AvatarFallback className="text-xs">{initials(p.profile?.display_name)}</AvatarFallback>
+              <AvatarFallback className="text-xs">
+                {initials(p.profile?.display_name)}
+              </AvatarFallback>
             </Avatar>
           ))}
           {extra > 0 ? (

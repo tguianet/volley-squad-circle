@@ -26,7 +26,7 @@ function resolveBannerSrc(
   bannerUrl: string | null | undefined,
   signedUrl: string | null | undefined,
 ): string | null {
-  if (!bannerUrl || !isStoragePath(bannerUrl) && !/^https?:\/\//i.test(bannerUrl)) return null;
+  if (!bannerUrl || (!isStoragePath(bannerUrl) && !/^https?:\/\//i.test(bannerUrl))) return null;
   if (/^https?:\/\//i.test(bannerUrl)) return bannerUrl;
   return signedUrl ?? null;
 }

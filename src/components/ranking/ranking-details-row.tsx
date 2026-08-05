@@ -58,9 +58,7 @@ export function RankingDetailsPanel({ details, isLoading }: RankingDetailsPanelP
           />
           <Stat
             label="Atualizado"
-            value={
-              summary.last_updated ? formatDateBR(summary.last_updated.slice(0, 10)) : "—"
-            }
+            value={summary.last_updated ? formatDateBR(summary.last_updated.slice(0, 10)) : "—"}
           />
         </div>
       ) : null}
@@ -136,15 +134,7 @@ export function RankingDetailsRow({
   );
 }
 
-function Stat({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent?: string;
-}) {
+function Stat({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
     <div className="rounded-lg bg-secondary/30 border border-border/50 px-3 py-2">
       <div className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</div>

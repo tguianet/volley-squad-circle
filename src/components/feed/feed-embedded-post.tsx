@@ -30,7 +30,9 @@ export function FeedEmbeddedPost({ post }: FeedEmbeddedPostProps) {
           <Link {...profileLink} className="shrink-0">
             <Avatar className="size-8 ring-1 ring-border/60">
               {avatarUrl ? <AvatarImage src={avatarUrl} alt={name} /> : null}
-              <AvatarFallback className="text-[10px]">{name.slice(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarFallback className="text-[10px]">
+                {name.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
           </Link>
           <div className="min-w-0 flex-1">

@@ -12,7 +12,9 @@ export function TournamentsEmptyState({ title, description }: TournamentsEmptySt
         <Trophy className="size-7 text-white" />
       </div>
       <p className="font-display text-2xl tracking-wide mb-2">{title}</p>
-      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">{description}</p>
+      <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+        {description}
+      </p>
     </div>
   );
 }

@@ -50,7 +50,6 @@ import {
 import { ChallengeStepIndicator } from "@/components/challenges/challenge-step-indicator";
 import { ChallengeSummaryPanel } from "@/components/challenges/challenge-summary-panel";
 
-
 type CatKey =
   | "dupla_masc"
   | "dupla_fem"
@@ -86,7 +85,6 @@ function catLabel(t: { category: string; gender?: string | null }): string {
   return CATEGORIES.find((c) => c.key === teamCatKey(t))?.label ?? t.category;
 }
 
-
 export const Route = createFileRoute("/_authenticated/desafios/")({
   head: () => ({
     meta: [{ title: "Criar Desafio | PLAYBEACH" }],
@@ -102,7 +100,9 @@ type TeamLite = {
   rank_position: number | null;
   captain_id: string;
   points?: number | null;
-  members?: Array<{ profile: { id: string; display_name: string | null; avatar_url: string | null } | null }>;
+  members?: Array<{
+    profile: { id: string; display_name: string | null; avatar_url: string | null } | null;
+  }>;
 };
 
 type CourtSlot = {
@@ -112,7 +112,6 @@ type CourtSlot = {
   slot_time: string;
   is_free: boolean;
 };
-
 
 const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -245,14 +244,10 @@ function DesafiosPage() {
 
   const myTeamMemberCount = myTeamFull?.members?.length ?? myTeam?.members?.length ?? 0;
   const myTeamIsComplete =
-    !!myTeam &&
-    isTeamComplete(myTeam.category as "dupla" | "quarteto", myTeamMemberCount);
+    !!myTeam && isTeamComplete(myTeam.category as "dupla" | "quarteto", myTeamMemberCount);
 
   const canProceedWithChallenge =
-    !!myTeam &&
-    isCaptainOfSelected &&
-    myTeamIsComplete &&
-    myTeam.rank_position != null;
+    !!myTeam && isCaptainOfSelected && myTeamIsComplete && myTeam.rank_position != null;
 
   type Candidate = TeamLite & { eligibility: "top5" | "above" | "below" };
 
@@ -280,7 +275,6 @@ function DesafiosPage() {
       .filter((t) => (search ? t.name.toLowerCase().includes(search.toLowerCase()) : true))
       .sort((a, b) => (a.rank_position ?? 0) - (b.rank_position ?? 0));
   }, [teamsQ.data, myTeam, search, canProceedWithChallenge]);
-
 
   const opponent = useMemo(
     () => (teamsQ.data as TeamLite[] | undefined)?.find((t) => t.id === opponentId),
@@ -497,7 +491,9 @@ function DesafiosPage() {
                     <section className="challenge-panel p-5 sm:p-6 space-y-5">
                       <div className="flex items-center gap-2 text-primary">
                         <Users className="size-5" />
-                        <h2 className="font-display text-xl font-bold tracking-wide">Minha Equipe</h2>
+                        <h2 className="font-display text-xl font-bold tracking-wide">
+                          Minha Equipe
+                        </h2>
                       </div>
 
                       <div>
@@ -576,7 +572,9 @@ function DesafiosPage() {
                               </div>
                               <p className="text-sm text-muted-foreground mt-1">
                                 Posição atual:{" "}
-                                <span className="font-bold text-accent">#{myTeam.rank_position ?? "—"}</span>
+                                <span className="font-bold text-accent">
+                                  #{myTeam.rank_position ?? "—"}
+                                </span>
                                 <span className="mx-2">·</span>
                                 Nível:{" "}
                                 <span className="font-bold text-primary">
@@ -638,7 +636,9 @@ function DesafiosPage() {
                         </p>
                       )}
                       {!categoryKey && (
-                        <p className="text-sm text-muted-foreground">Escolha uma categoria acima.</p>
+                        <p className="text-sm text-muted-foreground">
+                          Escolha uma categoria acima.
+                        </p>
                       )}
 
                       {incompleteCaptainedInCategory.map((t) => (
@@ -654,7 +654,8 @@ function DesafiosPage() {
                               <p className="font-bold text-sm">{t.name}</p>
                               <p className="text-xs text-destructive font-medium">
                                 Time incompleto ({t.members?.length ?? 0}/
-                                {requiredTeamMemberCount(t.category as "dupla" | "quarteto")} membros)
+                                {requiredTeamMemberCount(t.category as "dupla" | "quarteto")}{" "}
+                                membros)
                               </p>
                             </div>
                           </div>
@@ -717,7 +718,9 @@ function DesafiosPage() {
                           <div className="p-5 sm:p-6 border-b border-border/50 bg-muted/30 space-y-4">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div>
-                                <h2 className="font-display text-xl font-bold">Escolha seu Adversário</h2>
+                                <h2 className="font-display text-xl font-bold">
+                                  Escolha seu Adversário
+                                </h2>
                                 {myTeam && (
                                   <p className="text-xs text-muted-foreground mt-1">
                                     {myTeam.name} · #{myTeam.rank_position ?? "—"}
@@ -1039,7 +1042,9 @@ function DesafiosPage() {
                                       </div>
                                     </div>
                                     <div className="p-3 flex justify-between items-center">
-                                      <p className="text-xs text-muted-foreground">Disponível neste horário</p>
+                                      <p className="text-xs text-muted-foreground">
+                                        Disponível neste horário
+                                      </p>
                                       {selected && <Check className="size-5 text-primary" />}
                                     </div>
                                   </button>

@@ -1,97 +1,97 @@
 ---
 name: Coastal Athletic
 colors:
-  surface: '#f9f9f9'
-  surface-dim: '#dadada'
-  surface-bright: '#f9f9f9'
-  surface-container-lowest: '#ffffff'
-  surface-container-low: '#f3f3f4'
-  surface-container: '#eeeeee'
-  surface-container-high: '#e8e8e8'
-  surface-container-highest: '#e2e2e2'
-  on-surface: '#1a1c1c'
-  on-surface-variant: '#3d494a'
-  inverse-surface: '#2f3131'
-  inverse-on-surface: '#f0f1f1'
-  outline: '#6d797b'
-  outline-variant: '#bcc9ca'
-  surface-tint: '#006970'
-  primary: '#006970'
-  on-primary: '#ffffff'
-  primary-container: '#00a3ad'
-  on-primary-container: '#003235'
-  inverse-primary: '#5dd8e2'
-  secondary: '#954a00'
-  on-secondary: '#ffffff'
-  secondary-container: '#fd8100'
-  on-secondary-container: '#5d2c00'
-  tertiary: '#5f5e5b'
-  on-tertiary: '#ffffff'
-  tertiary-container: '#95938f'
-  on-tertiary-container: '#2c2c29'
-  error: '#ba1a1a'
-  on-error: '#ffffff'
-  error-container: '#ffdad6'
-  on-error-container: '#93000a'
-  primary-fixed: '#7df4ff'
-  primary-fixed-dim: '#5dd8e2'
-  on-primary-fixed: '#002022'
-  on-primary-fixed-variant: '#004f54'
-  secondary-fixed: '#ffdcc6'
-  secondary-fixed-dim: '#ffb785'
-  on-secondary-fixed: '#301400'
-  on-secondary-fixed-variant: '#723700'
-  tertiary-fixed: '#e5e2dd'
-  tertiary-fixed-dim: '#c9c6c2'
-  on-tertiary-fixed: '#1c1c19'
-  on-tertiary-fixed-variant: '#474743'
-  background: '#f9f9f9'
-  on-background: '#1a1c1c'
-  surface-variant: '#e2e2e2'
+  surface: "#f9f9f9"
+  surface-dim: "#dadada"
+  surface-bright: "#f9f9f9"
+  surface-container-lowest: "#ffffff"
+  surface-container-low: "#f3f3f4"
+  surface-container: "#eeeeee"
+  surface-container-high: "#e8e8e8"
+  surface-container-highest: "#e2e2e2"
+  on-surface: "#1a1c1c"
+  on-surface-variant: "#3d494a"
+  inverse-surface: "#2f3131"
+  inverse-on-surface: "#f0f1f1"
+  outline: "#6d797b"
+  outline-variant: "#bcc9ca"
+  surface-tint: "#006970"
+  primary: "#006970"
+  on-primary: "#ffffff"
+  primary-container: "#00a3ad"
+  on-primary-container: "#003235"
+  inverse-primary: "#5dd8e2"
+  secondary: "#954a00"
+  on-secondary: "#ffffff"
+  secondary-container: "#fd8100"
+  on-secondary-container: "#5d2c00"
+  tertiary: "#5f5e5b"
+  on-tertiary: "#ffffff"
+  tertiary-container: "#95938f"
+  on-tertiary-container: "#2c2c29"
+  error: "#ba1a1a"
+  on-error: "#ffffff"
+  error-container: "#ffdad6"
+  on-error-container: "#93000a"
+  primary-fixed: "#7df4ff"
+  primary-fixed-dim: "#5dd8e2"
+  on-primary-fixed: "#002022"
+  on-primary-fixed-variant: "#004f54"
+  secondary-fixed: "#ffdcc6"
+  secondary-fixed-dim: "#ffb785"
+  on-secondary-fixed: "#301400"
+  on-secondary-fixed-variant: "#723700"
+  tertiary-fixed: "#e5e2dd"
+  tertiary-fixed-dim: "#c9c6c2"
+  on-tertiary-fixed: "#1c1c19"
+  on-tertiary-fixed-variant: "#474743"
+  background: "#f9f9f9"
+  on-background: "#1a1c1c"
+  surface-variant: "#e2e2e2"
 typography:
   headline-xl:
     fontFamily: Archivo Narrow
     fontSize: 48px
-    fontWeight: '700'
-    lineHeight: '1.1'
+    fontWeight: "700"
+    lineHeight: "1.1"
     letterSpacing: -0.02em
   headline-lg:
     fontFamily: Archivo Narrow
     fontSize: 32px
-    fontWeight: '700'
-    lineHeight: '1.2'
+    fontWeight: "700"
+    lineHeight: "1.2"
     letterSpacing: -0.01em
   headline-md:
     fontFamily: Archivo Narrow
     fontSize: 24px
-    fontWeight: '600'
-    lineHeight: '1.2'
+    fontWeight: "600"
+    lineHeight: "1.2"
   body-lg:
     fontFamily: Plus Jakarta Sans
     fontSize: 18px
-    fontWeight: '400'
-    lineHeight: '1.6'
+    fontWeight: "400"
+    lineHeight: "1.6"
   body-md:
     fontFamily: Plus Jakarta Sans
     fontSize: 16px
-    fontWeight: '400'
-    lineHeight: '1.5'
+    fontWeight: "400"
+    lineHeight: "1.5"
   body-sm:
     fontFamily: Plus Jakarta Sans
     fontSize: 14px
-    fontWeight: '500'
-    lineHeight: '1.4'
+    fontWeight: "500"
+    lineHeight: "1.4"
   label-bold:
     fontFamily: Plus Jakarta Sans
     fontSize: 14px
-    fontWeight: '700'
-    lineHeight: '1'
+    fontWeight: "700"
+    lineHeight: "1"
     letterSpacing: 0.05em
   label-sm:
     fontFamily: Plus Jakarta Sans
     fontSize: 12px
-    fontWeight: '600'
-    lineHeight: '1'
+    fontWeight: "600"
+    lineHeight: "1"
 rounded:
   sm: 0.25rem
   DEFAULT: 0.5rem
@@ -168,18 +168,22 @@ The shape language is extremely soft and approachable, using large corner radii 
 ## Components
 
 ### Buttons
+
 - **Primary:** Sporty Blue (#00A3AD) background, white text. Bold weight. High-contrast shadow on hover.
 - **Action (Orange):** Vibrant Orange (#FF8200) for booking confirmations or "Play Now."
 - **Secondary (Sand):** Sand (#F5F2ED) background with Sporty Blue text. No border.
 
 ### Cards
+
 - **Ranking Card:** White background, 24px radius, subtle Sporty Blue tinted shadow. Headline in Archivo Narrow.
 - **Booking Card:** Incorporates Glassmorphism for the "Time Slot" section to overlay the court imagery.
 
 ### Status Indicators
+
 - **Pending:** Vibrant Orange (#FF8200) text on a light sand/orange tinted pill background (10% opacity).
 - **Confirmed:** Sporty Blue (#00A3AD) background with white text.
 
 ### Inputs & Selection
+
 - **Inputs:** White background with a subtle Sand border (#F5F2ED). On focus, the border transitions to Sporty Blue with a soft outer glow.
 - **Lists:** Clean rows with 16px vertical padding, separated by 1px Sand dividers. High-quality icons should use Sporty Blue.

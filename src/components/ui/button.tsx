@@ -11,8 +11,7 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90",
         beach: "gradient-beach text-white border-0 shadow-glow hover:brightness-105",
-        destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
         outline:
           "border border-border/80 bg-card shadow-sm hover:bg-secondary/80 hover:border-primary/20",
         secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/70",

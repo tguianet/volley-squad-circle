@@ -82,9 +82,9 @@ function PublicProfilePage() {
     queryFn: async () => {
       const handle = normalizeProfileHandle(username);
       try {
-        const fromServer = (await getPublicProfileFn({ data: { username: handle } })) as
-          | PublicProfile
-          | null;
+        const fromServer = (await getPublicProfileFn({
+          data: { username: handle },
+        })) as PublicProfile | null;
         if (fromServer) return fromServer;
       } catch {
         // fallback client
@@ -94,7 +94,10 @@ function PublicProfilePage() {
       });
       if (error) throw error;
       const row = rows?.[0] as PublicProfile | undefined;
-      if (!row && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(handle)) {
+      if (
+        !row &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(handle)
+      ) {
         const { data: byId, error: idError } = await supabase
           .from("profiles")
           .select(

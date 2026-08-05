@@ -5,8 +5,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const key =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
 
 if (!url || !key) {
   console.error("❌ VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY não configurados.");
@@ -62,16 +61,17 @@ await check("check_court_availability", async () => {
 
 await check("can_challenge_by_rank", async () => {
   const { error } = await supabase.rpc("can_challenge_by_rank", {
-    _my_pos: 10,
-    _opponent_pos: 8,
+    my_position: 10,
+    opponent_position: 8,
   });
   if (error) throw error;
 });
 
 await check("is_team_ranking_complete", async () => {
-  const { data: team } = await supabase.from("teams").select("id").limit(1).maybeSingle();
-  if (!team?.id) throw new Error("nenhum time para testar");
-  const { error } = await supabase.rpc("is_team_ranking_complete", { _team_id: team.id });
+  const { error } = await supabase.rpc("is_team_ranking_complete", {
+    p_category: "dupla",
+    p_member_count: 2,
+  });
   if (error) throw error;
 });
 
@@ -91,8 +91,8 @@ await check("get_player_ranking_details", async () => {
   if (error) throw error;
 });
 
-await check("trg_validate_challenge_insert (função existe)", async () => {
-  const { error } = await supabase.rpc("can_challenge_by_rank", { _my_pos: 1, _opponent_pos: 2 });
+await check("list_scheduled_challenges_public", async () => {
+  const { error } = await supabase.rpc("list_scheduled_challenges_public");
   if (error) throw error;
 });
 

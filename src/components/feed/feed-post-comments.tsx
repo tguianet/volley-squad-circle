@@ -16,7 +16,11 @@ type FeedPostCommentsProps = {
   feedQueryKey: readonly unknown[];
 };
 
-function CommentAvatar({ author }: { author: { avatar_url: string | null; display_name: string | null } }) {
+function CommentAvatar({
+  author,
+}: {
+  author: { avatar_url: string | null; display_name: string | null };
+}) {
   const { data: url } = useAvatarUrl(author.avatar_url);
   const name = author.display_name ?? "?";
   return (
