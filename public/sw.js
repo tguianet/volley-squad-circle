@@ -2,7 +2,7 @@
 // Intentionally minimal: never caches HTML app shell, API responses,
 // auth, or Supabase traffic. Only precaches the offline page + icons.
 
-const VERSION = "pb-sw-v1";
+const VERSION = "pb-sw-v2";
 const OFFLINE_CACHE = `${VERSION}-offline`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
@@ -16,12 +16,7 @@ const PRECACHE = [
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches
-      .open(OFFLINE_CACHE)
-      .then((cache) => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting()),
-  );
+  event.waitUntil(caches.open(OFFLINE_CACHE).then((cache) => cache.addAll(PRECACHE)));
 });
 
 self.addEventListener("activate", (event) => {
