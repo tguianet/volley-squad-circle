@@ -431,7 +431,10 @@ function TeamBuilder({
   };
 
   const respondToReceived = async (inviteId: string, status: "accepted" | "declined") => {
-    const { error } = await supabase.from("team_invitations").update({ status }).eq("id", inviteId);
+    const { error } = await supabase.rpc("respond_to_team_invitation", {
+      p_invitation_id: inviteId,
+      p_status: status,
+    });
     if (error) return toast.error(error.message);
     toast.success(status === "accepted" ? "Convite aceito!" : "Convite recusado");
     qc.invalidateQueries({ queryKey: ["my-received-invites"] });
@@ -456,52 +459,14 @@ function TeamBuilder({
   };
 
   const leaveTeam = async (teamId: string, captainId: string) => {
-    const isCap = captainId === currentId;
-    if (isCap) {
-      const { data: others, error: oErr } = await supabase
-        .from("team_members")
-        .select("profile_id, joined_at")
-        .eq("team_id", teamId)
-        .neq("profile_id", currentId)
-        .order("joined_at", { ascending: true });
-      if (oErr) return toast.error(oErr.message);
+    const { data: result, error } = await supabase.rpc("leave_team", { p_team_id: teamId });
+    if (error) return toast.error(error.message);
 
-      if (!others || others.length === 0) {
-        await supabase.from("team_invitations").delete().eq("team_id", teamId);
-        await supabase.from("team_members").delete().eq("team_id", teamId);
-        const { error } = await supabase.from("teams").delete().eq("id", teamId);
-        if (error) return toast.error(error.message);
-        toast.success("Time removido porque não havia outros membros.");
-        refetchTeams();
-        return;
-      }
-
-      const newCaptainId = others[0].profile_id;
-      const { error: uErr } = await supabase
-        .from("teams")
-        .update({ captain_id: newCaptainId })
-        .eq("id", teamId);
-      if (uErr) return toast.error(uErr.message);
-
-      const { error: dErr } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("team_id", teamId)
-        .eq("profile_id", currentId);
-      if (dErr) return toast.error(dErr.message);
-
+    if (result === "deleted") toast.success("Time removido porque não havia outros membros.");
+    else if (captainId === currentId)
       toast.success("Você saiu do time. Um novo capitão foi definido.");
-      refetchTeams();
-    } else {
-      const { error } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("team_id", teamId)
-        .eq("profile_id", currentId);
-      if (error) return toast.error(error.message);
-      toast.success("Você saiu do time");
-      refetchTeams();
-    }
+    else toast.success("Você saiu do time");
+    refetchTeams();
   };
 
   const cancelInvite = async (inviteId: string) => {
