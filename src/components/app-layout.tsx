@@ -19,6 +19,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useIsStaff } from "@/hooks/use-auth";
 import { ChallengeInviteHost } from "@/components/challenges/challenge-invite-host";
+import { useQuery } from "@tanstack/react-query";
+
+async function fetchUnreadNotificationCount() {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return 0;
+
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("is_read", false);
+  if (error) throw error;
+  return count ?? 0;
+}
 
 const navItems = [
   { to: "/perfil", label: "Perfil", icon: User },
@@ -40,6 +56,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const isStaff = useIsStaff();
+  const unreadNotifications = useQuery({
+    queryKey: ["notifications-unread-count"],
+    queryFn: fetchUnreadNotificationCount,
+    refetchInterval: 30_000,
+  });
   const extra = isStaff
     ? [...sideExtra, { to: "/admin", label: "Admin", icon: Shield }]
     : sideExtra;
@@ -122,9 +143,15 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
             <Link
               to="/notificacoes"
-              className="size-9 rounded-full bg-secondary flex items-center justify-center"
+              className="relative size-9 rounded-full bg-secondary flex items-center justify-center"
+              aria-label={`${unreadNotifications.data ?? 0} notificações não lidas`}
             >
               <Bell className="size-4" />
+              {(unreadNotifications.data ?? 0) > 0 && (
+                <span className="absolute -right-1 -top-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold flex items-center justify-center">
+                  {(unreadNotifications.data ?? 0) > 99 ? "99+" : unreadNotifications.data}
+                </span>
+              )}
             </Link>
           </header>
 
