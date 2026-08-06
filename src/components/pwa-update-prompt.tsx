@@ -29,7 +29,7 @@ export function PwaUpdatePrompt() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[70] mx-auto max-w-md rounded-2xl border border-black/5 bg-white/95 p-3 shadow-2xl backdrop-blur sm:inset-x-auto sm:right-4 sm:bottom-4 sm:left-auto"
+      className="fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[70] mx-auto max-w-md rounded-2xl border border-black/5 bg-white/95 p-3 shadow-2xl backdrop-blur md:inset-x-auto md:right-4 md:bottom-4 md:left-auto"
     >
       <div className="flex items-start gap-3">
         <div className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-[#00A3AD]/10 text-[#00A3AD]">
