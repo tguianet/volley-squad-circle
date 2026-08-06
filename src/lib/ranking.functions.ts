@@ -757,10 +757,9 @@ export const reportWalkover = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
-      .from("challenges")
-      .update({ status: "wo" })
-      .eq("id", data.challengeId);
+    const { error } = await untyped(context.supabase).rpc("report_challenge_walkover", {
+      p_challenge_id: data.challengeId,
+    });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
