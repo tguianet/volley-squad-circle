@@ -10,12 +10,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { BadgeCheck, Loader2, Search, ShieldCheck, ShieldX, UserCheck, UserX } from "lucide-react";
 import { toast } from "sonner";
+import { useCurrentUser, useIsAdmin } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin/usuarios")({
   component: UsersPage,
 });
 
 function UsersPage() {
+  const isFullAdmin = useIsAdmin();
+  const { user: currentUser } = useCurrentUser();
   const [search, setSearch] = useState("");
   const fn = useServerFn(listUsers);
   const qc = useQueryClient();
@@ -73,6 +76,8 @@ function UsersPage() {
             {users!.map((u) => {
               const isAdmin = u.roles.includes("admin");
               const isMod = u.roles.includes("moderator");
+              const isStaff = isAdmin || isMod;
+              const canChangeFlags = isFullAdmin || (!isStaff && u.id !== currentUser?.id);
               return (
                 <li key={u.id} className="p-4 flex flex-wrap items-center gap-3">
                   <Avatar className="size-10">
@@ -96,26 +101,32 @@ function UsersPage() {
                     {u.is_suspended && <Badge variant="destructive">suspenso</Badge>}
                   </div>
                   <div className="flex flex-wrap gap-2 ml-auto">
-                    <Button
-                      size="sm"
-                      variant={isAdmin ? "secondary" : "outline"}
-                      onClick={() =>
-                        roleMut.mutate({ data: { userId: u.id, role: "admin", grant: !isAdmin } })
-                      }
-                    >
-                      <ShieldCheck className="size-3.5 mr-1" />
-                      {isAdmin ? "Remover admin" : "Tornar admin"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={isMod ? "secondary" : "outline"}
-                      onClick={() =>
-                        roleMut.mutate({ data: { userId: u.id, role: "moderator", grant: !isMod } })
-                      }
-                    >
-                      <ShieldX className="size-3.5 mr-1" />
-                      {isMod ? "Remover mod" : "Tornar mod"}
-                    </Button>
+                    {isFullAdmin && (
+                      <Button
+                        size="sm"
+                        variant={isAdmin ? "secondary" : "outline"}
+                        onClick={() =>
+                          roleMut.mutate({ data: { userId: u.id, role: "admin", grant: !isAdmin } })
+                        }
+                      >
+                        <ShieldCheck className="size-3.5 mr-1" />
+                        {isAdmin ? "Remover admin" : "Tornar admin"}
+                      </Button>
+                    )}
+                    {isFullAdmin && (
+                      <Button
+                        size="sm"
+                        variant={isMod ? "secondary" : "outline"}
+                        onClick={() =>
+                          roleMut.mutate({
+                            data: { userId: u.id, role: "moderator", grant: !isMod },
+                          })
+                        }
+                      >
+                        <ShieldX className="size-3.5 mr-1" />
+                        {isMod ? "Remover mod" : "Tornar mod"}
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="outline"
@@ -124,6 +135,7 @@ function UsersPage() {
                           data: { userId: u.id, field: "is_verified", value: !u.is_verified },
                         })
                       }
+                      disabled={!canChangeFlags}
                     >
                       <BadgeCheck className="size-3.5 mr-1" />
                       {u.is_verified ? "Tirar selo" : "Verificar"}
@@ -136,6 +148,7 @@ function UsersPage() {
                           data: { userId: u.id, field: "is_suspended", value: !u.is_suspended },
                         })
                       }
+                      disabled={!canChangeFlags}
                     >
                       {u.is_suspended ? (
                         <UserCheck className="size-3.5 mr-1" />

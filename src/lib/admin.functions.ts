@@ -177,6 +177,9 @@ export const setUserRole = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context, true);
+    if (!data.grant && data.role === "admin" && data.userId === context.userId) {
+      throw new Error("Você não pode remover sua própria permissão de administrador");
+    }
     if (data.grant) {
       const { error } = await context.supabase
         .from("user_roles")
@@ -208,7 +211,20 @@ export const setUserFlag = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context);
+    const actorRoles = await assertAdmin(context);
+    if (data.field === "is_suspended" && data.value && data.userId === context.userId) {
+      throw new Error("Você não pode suspender sua própria conta");
+    }
+    if (!actorRoles.includes("admin")) {
+      const { data: targetRoles, error: rolesError } = await context.supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.userId);
+      if (rolesError) throw new Error("Falha ao verificar as permissões do usuário");
+      if ((targetRoles ?? []).some((item) => item.role === "admin" || item.role === "moderator")) {
+        throw new Error("Moderadores não podem alterar contas da equipe administrativa");
+      }
+    }
     const patch =
       data.field === "is_verified" ? { is_verified: data.value } : { is_suspended: data.value };
     const { error } = await context.supabase.from("profiles").update(patch).eq("id", data.userId);
