@@ -12,6 +12,7 @@ import {
   disputeScore,
   listMyChallenges,
   registerScore,
+  requestAdminScoreReview,
   respondToChallenge,
 } from "@/lib/ranking.functions";
 import { getCurrentFortnightInfo } from "@/lib/challenge-fortnight";
@@ -30,6 +31,7 @@ import {
   Swords,
   X,
   Info,
+  MessageCircle,
 } from "lucide-react";
 
 type ChallengeRow = {
@@ -42,6 +44,8 @@ type ChallengeRow = {
   score_challenger: number | null;
   score_challenged: number | null;
   score_registered_by: string | null;
+  score_admin_review_requested_by: string | null;
+  score_admin_review_requested_at: string | null;
   challenger: { id: string; name: string; rank_position: number | null } | null;
   challenged: { id: string; name: string; rank_position: number | null } | null;
   arena: { id: string; name: string } | null;
@@ -95,6 +99,7 @@ function ChallengeCard({
   onRegisterScore,
   onConfirmScore,
   onRejectScore,
+  onRequestAdminReview,
   currentUserId,
   busy,
 }: {
@@ -105,6 +110,7 @@ function ChallengeCard({
   onRegisterScore?: (id: string, scoreChallenger: number, scoreChallenged: number) => void;
   onConfirmScore?: (id: string) => void;
   onRejectScore?: (id: string) => void;
+  onRequestAdminReview?: (id: string) => void;
   currentUserId?: string;
   busy?: boolean;
 }) {
@@ -284,9 +290,28 @@ function ChallengeCard({
               </div>
             </>
           ) : (
-            <p className="text-xs text-muted-foreground">
-              Placar enviado. Aguardando a confirmação do outro capitão.
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs text-muted-foreground">
+                Placar enviado. Aguardando a confirmação do outro capitão.
+              </p>
+              {isScoreAuthor && onRequestAdminReview ? (
+                row.score_admin_review_requested_at ? (
+                  <p className="text-xs font-medium text-amber-600">
+                    ADM avisado. Aguardando a análise do placar.
+                  </p>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    disabled={busy}
+                    onClick={() => onRequestAdminReview(row.id)}
+                  >
+                    <MessageCircle className="size-4 mr-1" /> Falar com ADM
+                  </Button>
+                )
+              ) : null}
+            </div>
           )}
         </div>
       ) : null}
@@ -345,6 +370,7 @@ export function MyProfileChallengesPanel() {
   const register = useServerFn(registerScore);
   const confirm = useServerFn(confirmScore);
   const reject = useServerFn(disputeScore);
+  const requestAdminReview = useServerFn(requestAdminScoreReview);
 
   const challengesQ = useQuery({
     queryKey: ["my-challenges"],
@@ -412,6 +438,18 @@ export function MyProfileChallengesPanel() {
     },
   });
 
+  const requestAdminM = useMutation({
+    mutationFn: requestAdminReview,
+    onSuccess: () => {
+      toast.success("ADM avisado. O placar será analisado.");
+      refreshChallenges();
+    },
+    onError: (e: Error) => {
+      toast.error(e.message);
+      setRespondingId(null);
+    },
+  });
+
   const sent = (challengesQ.data?.sent ?? []) as ChallengeRow[];
   const received = (challengesQ.data?.received ?? []) as ChallengeRow[];
 
@@ -452,8 +490,13 @@ export function MyProfileChallengesPanel() {
     setRespondingId(id);
     rejectM.mutate({ data: { challengeId: id } });
   };
+  const handleRequestAdminReview = (id: string) => {
+    setRespondingId(id);
+    requestAdminM.mutate({ data: { challengeId: id } });
+  };
 
-  const scoreMutationPending = registerM.isPending || confirmM.isPending || rejectM.isPending;
+  const scoreMutationPending =
+    registerM.isPending || confirmM.isPending || rejectM.isPending || requestAdminM.isPending;
   const busyId = respondM.isPending || scoreMutationPending ? respondingId : null;
 
   return (
@@ -548,6 +591,7 @@ export function MyProfileChallengesPanel() {
                   onRegisterScore={handleRegisterScore}
                   onConfirmScore={handleConfirmScore}
                   onRejectScore={handleRejectScore}
+                  onRequestAdminReview={handleRequestAdminReview}
                   currentUserId={user?.id}
                   busy={busyId === r.id}
                 />
@@ -580,6 +624,7 @@ export function MyProfileChallengesPanel() {
                   onRegisterScore={handleRegisterScore}
                   onConfirmScore={handleConfirmScore}
                   onRejectScore={handleRejectScore}
+                  onRequestAdminReview={handleRequestAdminReview}
                   currentUserId={user?.id}
                   busy={busyId === r.id}
                 />
