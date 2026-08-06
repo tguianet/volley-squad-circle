@@ -823,15 +823,7 @@ export const confirmScore = createServerFn({ method: "POST" })
 
 export const disputeScore = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
-    z
-      .object({
-        challengeId: z.string().uuid(),
-        scoreChallenger: z.number().int().min(0),
-        scoreChallenged: z.number().int().min(0),
-      })
-      .parse(d),
-  )
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase.rpc("reject_challenge_score", {
       _challenge_id: data.challengeId,
