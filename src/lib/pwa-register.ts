@@ -2,6 +2,7 @@
 // preview hosts. Supports ?sw=off kill switch.
 
 const SW_URL = "/sw.js";
+export const PWA_UPDATE_AVAILABLE_EVENT = "pwa:update-available";
 
 function isPreviewOrDev(): boolean {
   if (typeof window === "undefined") return true;
@@ -27,6 +28,10 @@ function isPreviewOrDev(): boolean {
   return false;
 }
 
+function notifyUpdateAvailable(): void {
+  window.dispatchEvent(new Event(PWA_UPDATE_AVAILABLE_EVENT));
+}
+
 async function unregisterMatching() {
   if (!("serviceWorker" in navigator)) return;
   const regs = await navigator.serviceWorker.getRegistrations();
@@ -38,6 +43,16 @@ async function unregisterMatching() {
       })
       .map((r) => r.unregister()),
   );
+}
+
+export async function applyPwaUpdate(): Promise<boolean> {
+  if (!("serviceWorker" in navigator)) return false;
+
+  const registration = await navigator.serviceWorker.getRegistration("/");
+  if (!registration?.waiting) return false;
+
+  registration.waiting.postMessage("SKIP_WAITING");
+  return true;
 }
 
 export function registerPwa() {
@@ -53,16 +68,20 @@ export function registerPwa() {
     navigator.serviceWorker
       .register(SW_URL, { scope: "/" })
       .then((registration) => {
-        // Auto-update: check on load and every hour.
         registration.update().catch(() => {});
         setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
 
+        if (registration.waiting && navigator.serviceWorker.controller) {
+          notifyUpdateAvailable();
+        }
+
         registration.addEventListener("updatefound", () => {
-          const nw = registration.installing;
-          if (!nw) return;
-          nw.addEventListener("statechange", () => {
-            if (nw.state === "installed" && navigator.serviceWorker.controller) {
-              nw.postMessage("SKIP_WAITING");
+          const nextWorker = registration.installing;
+          if (!nextWorker) return;
+
+          nextWorker.addEventListener("statechange", () => {
+            if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
+              notifyUpdateAvailable();
             }
           });
         });
