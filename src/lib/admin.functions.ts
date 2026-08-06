@@ -3,8 +3,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 import { z } from "zod";
+import { untyped } from "@/lib/supabase-untyped";
 
 type AdminContext = { supabase: SupabaseClient<Database>; userId: string };
+type PendingAdminScoreReview = {
+  id: string;
+  score_challenger: number;
+  score_challenged: number;
+  score_registered_at: string;
+  score_admin_review_requested_at: string;
+  challenger: { name: string } | null;
+  challenged: { name: string } | null;
+};
 
 async function assertAdmin(context: AdminContext, requireFullAdmin = false) {
   const { data, error } = await context.supabase
@@ -87,6 +97,37 @@ export const getAdminStats = createServerFn({ method: "GET" })
         .slice(0, 8),
       recentAudit: audit.data ?? [],
     };
+  });
+
+export const listPendingAdminScoreReviews = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context, true);
+    const { data, error } = await untyped(context.supabase)
+      .from("challenges")
+      .select(
+        `id, score_challenger, score_challenged, score_registered_at, score_admin_review_requested_at,
+         challenger:teams!challenges_challenger_team_id_fkey(name),
+         challenged:teams!challenges_challenged_team_id_fkey(name)`,
+      )
+      .eq("status", "awaiting_confirmation")
+      .not("score_admin_review_requested_at", "is", null)
+      .order("score_admin_review_requested_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as unknown as PendingAdminScoreReview[];
+  });
+
+export const adminConfirmChallengeScore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context, true);
+    const { error } = await untyped(context.supabase).rpc("confirm_challenge_score", {
+      _challenge_id: data.challengeId,
+    });
+    if (error) throw new Error(error.message);
+    await audit(context, "challenge.score.admin_confirm", "challenge", data.challengeId);
+    return { ok: true };
   });
 
 // ===== Users =====

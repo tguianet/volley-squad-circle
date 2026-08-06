@@ -171,6 +171,8 @@ export type Database = {
           score_challenger: number | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
@@ -195,6 +197,8 @@ export type Database = {
           score_challenger?: number | null
           score_confirmed_at?: string | null
           score_confirmed_by?: string | null
+          score_admin_review_requested_at?: string | null
+          score_admin_review_requested_by?: string | null
           score_registered_at?: string | null
           score_registered_by?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
@@ -219,6 +223,8 @@ export type Database = {
           score_challenger?: number | null
           score_confirmed_at?: string | null
           score_confirmed_by?: string | null
+          score_admin_review_requested_at?: string | null
+          score_admin_review_requested_by?: string | null
           score_registered_at?: string | null
           score_registered_by?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
