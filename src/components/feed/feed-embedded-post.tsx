@@ -63,7 +63,7 @@ export function FeedEmbeddedPost({ post }: FeedEmbeddedPostProps) {
       {post.image_url ? (
         <SignedGalleryImage
           path={post.image_url}
-          className="w-full max-h-80 object-cover bg-secondary"
+          className="block w-full h-auto object-contain bg-secondary"
         />
       ) : null}
     </div>

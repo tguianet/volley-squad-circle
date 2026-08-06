@@ -167,7 +167,7 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           {post.image_url ? (
             <SignedGalleryImage
               path={post.image_url}
-              className="w-full max-h-[70vh] object-cover rounded-2xl bg-secondary border border-border/40"
+              className="block w-full h-auto object-contain rounded-2xl bg-secondary border border-border/40"
             />
           ) : null}
 
