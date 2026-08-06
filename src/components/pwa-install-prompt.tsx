@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { Download, Share, X } from "lucide-react";
+import { Download, MoreVertical, Share, X } from "lucide-react";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
-
-const SESSION_DISMISS_KEY = "playbeach-pwa-install-dismissed";
 
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
@@ -16,31 +14,32 @@ function isStandalone(): boolean {
 
 function isIOS(): boolean {
   if (typeof window === "undefined") return false;
-  const ua = window.navigator.userAgent;
-  return /iphone|ipad|ipod/i.test(ua) && !/crios|fxios|edgios/i.test(ua);
-}
-
-function wasDismissedThisSession(): boolean {
-  try {
-    return window.sessionStorage.getItem(SESSION_DISMISS_KEY) === "dismissed";
-  } catch {
-    return false;
-  }
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
 
 export function PwaInstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
   const [showIOS, setShowIOS] = useState(false);
+  const [showManualInstall, setShowManualInstall] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isStandalone()) return;
-    if (wasDismissedThisSession()) return;
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferred(e as BeforeInstallPromptEvent);
+    const ios = isIOS();
+    const timer = window.setTimeout(() => {
+      if (ios) {
+        setShowIOS(true);
+      } else {
+        setVisible(true);
+      }
+    }, 1500);
+
+    const handler = (event: Event) => {
+      event.preventDefault();
+      setDeferred(event as BeforeInstallPromptEvent);
+      setShowManualInstall(false);
       setVisible(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
@@ -49,20 +48,12 @@ export function PwaInstallPrompt() {
       setDeferred(null);
       setVisible(false);
       setShowIOS(false);
+      setShowManualInstall(false);
     };
     window.addEventListener("appinstalled", installed);
 
-    // iOS: no beforeinstallprompt — show hint after a short delay.
-    if (isIOS()) {
-      const t = setTimeout(() => setShowIOS(true), 4000);
-      return () => {
-        clearTimeout(t);
-        window.removeEventListener("beforeinstallprompt", handler);
-        window.removeEventListener("appinstalled", installed);
-      };
-    }
-
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", handler);
       window.removeEventListener("appinstalled", installed);
     };
@@ -71,28 +62,21 @@ export function PwaInstallPrompt() {
   const dismiss = () => {
     setVisible(false);
     setShowIOS(false);
-    try {
-      window.sessionStorage.setItem(SESSION_DISMISS_KEY, "dismissed");
-    } catch {
-      // sessionStorage indisponível (modo privado) — sem impacto no fluxo
-    }
+    setShowManualInstall(false);
   };
 
   const install = async () => {
-    if (!deferred) return;
+    if (!deferred) {
+      setShowManualInstall(true);
+      return;
+    }
 
     await deferred.prompt();
     const choice = await deferred.userChoice;
-
     setDeferred(null);
-    setVisible(false);
 
     if (choice.outcome === "dismissed") {
-      try {
-        window.sessionStorage.setItem(SESSION_DISMISS_KEY, "dismissed");
-      } catch {
-        // sessionStorage indisponível (modo privado) — sem impacto no fluxo
-      }
+      setShowManualInstall(true);
     }
   };
 
@@ -107,18 +91,27 @@ export function PwaInstallPrompt() {
       <div className="flex items-start gap-3">
         <img src="/pwa-192x192.png" alt="" className="h-11 w-11 flex-none rounded-xl" />
         <div className="flex-1 text-sm">
-          {visible ? (
-            <>
-              <p className="font-semibold text-foreground">Instalar PlayBeach</p>
-              <p className="text-muted-foreground">Acesso rápido direto da tela inicial.</p>
-            </>
-          ) : (
+          {showIOS ? (
             <>
               <p className="font-semibold text-foreground">Adicione à tela de início</p>
               <p className="text-muted-foreground">
                 Toque em <Share className="mx-1 inline h-3.5 w-3.5" aria-label="Compartilhar" />
                 Compartilhar e depois em <strong>Adicionar à Tela de Início</strong>.
               </p>
+            </>
+          ) : showManualInstall ? (
+            <>
+              <p className="font-semibold text-foreground">Instale pelo menu do Chrome</p>
+              <p className="text-muted-foreground">
+                Toque em <MoreVertical className="mx-1 inline h-3.5 w-3.5" aria-label="Menu" />
+                depois em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>
+                .
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-foreground">Instalar PlayBeach</p>
+              <p className="text-muted-foreground">Acesso rápido direto da tela inicial.</p>
             </>
           )}
         </div>
@@ -131,7 +124,7 @@ export function PwaInstallPrompt() {
           <X className="h-4 w-4" />
         </button>
       </div>
-      {visible && (
+      {visible && !showManualInstall && (
         <button
           type="button"
           onClick={install}
