@@ -10,6 +10,7 @@ import { formatDateTimeBR } from "@/lib/date-format";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useIsAdmin } from "@/hooks/use-auth";
 import {
   LineChart,
   Line,
@@ -59,6 +60,7 @@ function Kpi({
 }
 
 function AdminDashboard() {
+  const isAdmin = useIsAdmin();
   const qc = useQueryClient();
   const fn = useServerFn(getAdminStats);
   const listScoreReviews = useServerFn(listPendingAdminScoreReviews);
@@ -67,6 +69,7 @@ function AdminDashboard() {
   const scoreReviews = useQuery({
     queryKey: ["admin-score-reviews"],
     queryFn: () => listScoreReviews(),
+    enabled: isAdmin,
   });
   const confirmScoreM = useMutation({
     mutationFn: confirmScore,
@@ -122,46 +125,50 @@ function AdminDashboard() {
         />
       </div>
 
-      <Card className="bg-slate-900/60 border-white/10 text-white p-5">
-        <div className="flex items-center justify-between gap-3 mb-3">
-          <div>
-            <div className="font-display text-lg">Placares aguardando ADM</div>
-            <p className="text-xs text-white/50">
-              Confirme somente depois de conferir o resultado.
-            </p>
+      {isAdmin && (
+        <Card className="bg-slate-900/60 border-white/10 text-white p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div>
+              <div className="font-display text-lg">Placares aguardando ADM</div>
+              <p className="text-xs text-white/50">
+                Confirme somente depois de conferir o resultado.
+              </p>
+            </div>
+            <span className="text-sm font-bold text-amber-400">
+              {scoreReviews.data?.length ?? 0}
+            </span>
           </div>
-          <span className="text-sm font-bold text-amber-400">{scoreReviews.data?.length ?? 0}</span>
-        </div>
-        {scoreReviews.isLoading ? (
-          <Loader2 className="size-5 animate-spin text-white/60" />
-        ) : scoreReviews.data?.length ? (
-          <div className="space-y-3">
-            {scoreReviews.data.map((review) => (
-              <div
-                key={review.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-white/10 p-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold">
-                    {review.challenger?.name ?? "Desafiante"} {review.score_challenger} ×{" "}
-                    {review.score_challenged} {review.challenged?.name ?? "Desafiado"}
-                  </p>
-                  <p className="text-xs text-white/50">Um capitão pediu a análise do ADM.</p>
-                </div>
-                <Button
-                  size="sm"
-                  disabled={confirmScoreM.isPending}
-                  onClick={() => confirmScoreM.mutate({ data: { challengeId: review.id } })}
+          {scoreReviews.isLoading ? (
+            <Loader2 className="size-5 animate-spin text-white/60" />
+          ) : scoreReviews.data?.length ? (
+            <div className="space-y-3">
+              {scoreReviews.data.map((review) => (
+                <div
+                  key={review.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-white/10 p-3"
                 >
-                  Confirmar placar
-                </Button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-white/50">Nenhum placar aguardando análise.</p>
-        )}
-      </Card>
+                  <div>
+                    <p className="text-sm font-semibold">
+                      {review.challenger?.name ?? "Desafiante"} {review.score_challenger} ×{" "}
+                      {review.score_challenged} {review.challenged?.name ?? "Desafiado"}
+                    </p>
+                    <p className="text-xs text-white/50">Um capitão pediu a análise do ADM.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={confirmScoreM.isPending}
+                    onClick={() => confirmScoreM.mutate({ data: { challengeId: review.id } })}
+                  >
+                    Confirmar placar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-white/50">Nenhum placar aguardando análise.</p>
+          )}
+        </Card>
+      )}
 
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="bg-slate-900/60 border-white/10 text-white p-5">
