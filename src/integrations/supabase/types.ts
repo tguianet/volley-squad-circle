@@ -1271,6 +1271,7 @@ export type Database = {
         Args: { p_category: string; p_member_count: number }
         Returns: boolean
       }
+      leave_team: { Args: { p_team_id: string }; Returns: string }
       list_followed_profiles_feed: {
         Args: { p_limit?: number }
         Returns: {
@@ -1314,6 +1315,10 @@ export type Database = {
           linked_user_username: string
           status: Database["public"]["Enums"]["link_status"]
         }[]
+      }
+      respond_to_team_invitation: {
+        Args: { p_invitation_id: string; p_status: string }
+        Returns: undefined
       }
       list_pending_link_requests: {
         Args: never
