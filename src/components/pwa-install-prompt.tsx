@@ -103,8 +103,9 @@ export function PwaInstallPrompt() {
             <>
               <p className="font-semibold text-foreground">Instale pelo menu do Chrome</p>
               <p className="text-muted-foreground">
-                Toque em <MoreVertical className="mx-1 inline h-3.5 w-3.5" aria-label="Menu" /> e depois em{" "}
-                <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.
+                Toque em <MoreVertical className="mx-1 inline h-3.5 w-3.5" aria-label="Menu" />
+                depois em <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>
+                .
               </p>
             </>
           ) : (
