@@ -15,6 +15,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerPwa } from "../lib/pwa-register";
 import { PwaInstallPrompt } from "../components/pwa-install-prompt";
+import { PwaUpdatePrompt } from "../components/pwa-update-prompt";
 
 function NotFoundComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -173,6 +174,7 @@ function RootComponent() {
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <PwaInstallPrompt />
+      <PwaUpdatePrompt />
     </QueryClientProvider>
   );
 }
