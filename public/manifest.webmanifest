@@ -1,6 +1,7 @@
 {
   "name": "PlayBeach",
   "short_name": "PlayBeach",
+  "id": "/",
   "description": "Ranking e rede social de vôlei de areia.",
   "start_url": "/",
   "scope": "/",
