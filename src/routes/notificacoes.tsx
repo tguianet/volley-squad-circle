@@ -33,6 +33,7 @@ type NotifRow = {
   kind: string | null;
   is_read: boolean;
   created_at: string;
+  link_url: string | null;
 };
 
 type PendingInvite = {
@@ -74,7 +75,7 @@ async function fetchNotifs(): Promise<NotifRow[]> {
   if (!user) return [];
   const { data, error } = await supabase
     .from("notifications")
-    .select("id, title, body, kind, is_read, created_at")
+    .select("id, title, body, kind, is_read, created_at, link_url")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -132,7 +133,11 @@ function timeAgo(iso: string) {
 
 function NotifPage() {
   const qc = useQueryClient();
-  const q = useQuery({ queryKey: ["notifications"], queryFn: fetchNotifs });
+  const q = useQuery({
+    queryKey: ["notifications"],
+    queryFn: fetchNotifs,
+    refetchInterval: 30_000,
+  });
   const invitesQ = useQuery({ queryKey: ["pending-invites"], queryFn: fetchPendingInvites });
   const items = q.data ?? [];
   const invites = invitesQ.data ?? [];
@@ -170,6 +175,25 @@ function NotifPage() {
       qc.invalidateQueries({ queryKey: ["my-profile-links"] });
     },
     onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao responder")),
+  });
+
+  const openNotification = useMutation({
+    mutationFn: async (notification: NotifRow) => {
+      if (!notification.is_read) {
+        const { error } = await supabase
+          .from("notifications")
+          .update({ is_read: true })
+          .eq("id", notification.id);
+        if (error) throw error;
+      }
+      return notification.link_url;
+    },
+    onSuccess: (linkUrl) => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["notifications-unread-count"] });
+      if (linkUrl?.startsWith("/")) window.location.assign(linkUrl);
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao abrir notificação")),
   });
 
   return (
@@ -280,7 +304,16 @@ function NotifPage() {
               return (
                 <div
                   key={n.id}
-                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"}`}
+                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"} ${n.link_url ? "cursor-pointer hover:bg-secondary/50" : ""}`}
+                  role={n.link_url ? "button" : undefined}
+                  tabIndex={n.link_url ? 0 : undefined}
+                  onClick={() => openNotification.mutate(n)}
+                  onKeyDown={(event) => {
+                    if (n.link_url && (event.key === "Enter" || event.key === " ")) {
+                      event.preventDefault();
+                      openNotification.mutate(n);
+                    }
+                  }}
                 >
                   <div className="size-10 rounded-full gradient-beach text-white flex items-center justify-center shrink-0">
                     <Icon className="size-4" />
