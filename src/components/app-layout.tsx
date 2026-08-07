@@ -12,14 +12,23 @@ import {
   CalendarDays,
   LogOut,
   Waves,
+  Menu,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "@tanstack/react-router";
 import { useIsStaff } from "@/hooks/use-auth";
 import { ChallengeInviteHost } from "@/components/challenges/challenge-invite-host";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 async function fetchUnreadNotificationCount() {
   const {
@@ -52,9 +61,13 @@ const sideExtra = [
   { to: "/notificacoes", label: "Notificações", icon: Bell },
 ];
 
+const mobileNavItems = navItems.slice(0, 4);
+const mobileMoreItems = navItems.slice(4);
+
 export function AppLayout({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
+  const [moreOpen, setMoreOpen] = useState(false);
   const isStaff = useIsStaff();
   const unreadNotifications = useQuery({
     queryKey: ["notifications-unread-count"],
@@ -64,10 +77,13 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const extra = isStaff
     ? [...sideExtra, { to: "/admin", label: "Admin", icon: Shield }]
     : sideExtra;
+  const mobileMoreActive = [...mobileMoreItems, ...extra].some((item) =>
+    pathname.startsWith(item.to),
+  );
 
   return (
     <ChallengeInviteHost>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-svh flex w-full">
         {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-[260px] border-r border-border/70 bg-card sticky top-0 h-screen p-4 gap-1">
           <Link
@@ -134,7 +150,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
         <div className="flex-1 flex flex-col min-w-0">
           {/* Mobile topbar */}
-          <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-14 border-b border-border/60 bg-card/90 backdrop-blur-md">
+          <header className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-border/60 bg-card/90 backdrop-blur-md">
             <Link to="/" className="flex items-center gap-2">
               <div className="size-8 rounded-lg overflow-hidden flex items-center justify-center bg-card">
                 <Waves className="size-5 text-primary" aria-hidden="true" />
@@ -155,18 +171,20 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
           </header>
 
-          <main className="flex-1 pb-24 md:pb-8">{children}</main>
+          <main className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pb-8">
+            {children}
+          </main>
 
           {/* Mobile bottom nav */}
           <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur-md pb-safe">
-            <div className="grid grid-cols-7">
-              {navItems.map((it) => {
+            <div className="grid grid-cols-5">
+              {mobileNavItems.map((it) => {
                 const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
                 return (
                   <Link
                     key={it.to}
                     to={it.to}
-                    className="flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium"
+                    className="flex min-h-16 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium"
                   >
                     <div
                       className={cn(
@@ -178,14 +196,83 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     >
                       <it.icon className="size-5" />
                     </div>
-                    <span className={active ? "text-foreground" : "text-muted-foreground"}>
+                    <span
+                      className={cn(
+                        "max-w-full truncate",
+                        active ? "text-foreground" : "text-muted-foreground",
+                      )}
+                    >
                       {it.label}
                     </span>
                   </Link>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className={cn(
+                  "flex min-h-16 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium",
+                  mobileMoreActive ? "text-foreground" : "text-muted-foreground",
+                )}
+                aria-label="Abrir mais opções"
+              >
+                <span
+                  className={cn(
+                    "flex size-9 items-center justify-center rounded-xl",
+                    mobileMoreActive && "bg-primary text-primary-foreground shadow-sm scale-105",
+                  )}
+                >
+                  <Menu className="size-5" />
+                </span>
+                <span>Mais</span>
+              </button>
             </div>
           </nav>
+
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+            <SheetContent
+              side="bottom"
+              className="max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-[calc(1.5rem+env(safe-area-inset-bottom))]"
+            >
+              <SheetHeader className="text-left">
+                <SheetTitle>Mais opções</SheetTitle>
+                <SheetDescription>Acesse as outras áreas do PlayBeach.</SheetDescription>
+              </SheetHeader>
+              <nav className="mt-5 grid grid-cols-2 gap-3">
+                {[...mobileMoreItems, ...extra].map((it) => {
+                  const active = pathname.startsWith(it.to);
+                  return (
+                    <SheetClose asChild key={it.to}>
+                      <Link
+                        to={it.to}
+                        className={cn(
+                          "flex min-h-14 items-center gap-3 rounded-2xl border p-3 text-sm font-semibold",
+                          active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border/60 bg-card text-foreground",
+                        )}
+                      >
+                        <it.icon className="size-5 shrink-0" />
+                        <span>{it.label}</span>
+                      </Link>
+                    </SheetClose>
+                  );
+                })}
+              </nav>
+              <button
+                type="button"
+                onClick={async () => {
+                  setMoreOpen(false);
+                  await supabase.auth.signOut();
+                  navigate({ to: "/auth" });
+                }}
+                className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border border-destructive/30 text-sm font-semibold text-destructive"
+              >
+                <LogOut className="size-4" />
+                Sair da conta
+              </button>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </ChallengeInviteHost>

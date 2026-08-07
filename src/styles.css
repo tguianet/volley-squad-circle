@@ -137,6 +137,16 @@
       radial-gradient(at 100% 0%, oklch(0.62 0.13 200 / 0.06) 0, transparent 40%),
       radial-gradient(at 50% 100%, oklch(0.94 0.04 82 / 0.5) 0, transparent 55%);
     background-attachment: fixed;
+    overflow-x: hidden;
+    min-width: 320px;
+  }
+
+  @media (max-width: 767px) {
+    input,
+    textarea,
+    select {
+      font-size: 16px;
+    }
   }
   h1,
   h2,
