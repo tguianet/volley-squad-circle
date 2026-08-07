@@ -91,6 +91,52 @@ export async function registerForTournament(tournamentId: string) {
   if (error) throw error;
 }
 
+export async function cancelTournamentRegistration(tournamentId: string) {
+  const { error } = await supabase.rpc("cancel_tournament_registration", {
+    p_tournament_id: tournamentId,
+  });
+  if (error) throw error;
+}
+
+export async function fetchTournamentById(
+  tournamentId: string,
+  userId?: string,
+): Promise<TournamentListItem | null> {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .select(
+      `
+      id, title, category_label, event_date, start_time, entry_fee_cents, max_teams,
+      format, status, is_featured, image_url,
+      arena:arena_id(name, city),
+      registrations:tournament_registrations(user_id, status)
+    `,
+    )
+    .eq("id", tournamentId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  const row = data as TournamentRow;
+  const activeRegs = (row.registrations ?? []).filter((r) => r.status === "confirmed");
+  return {
+    id: row.id,
+    title: row.title,
+    category_label: row.category_label,
+    event_date: row.event_date,
+    start_time: row.start_time,
+    entry_fee_cents: row.entry_fee_cents,
+    max_teams: row.max_teams,
+    format: row.format,
+    status: row.status,
+    is_featured: row.is_featured,
+    image_url: row.image_url,
+    enrolled_count: activeRegs.length,
+    arena: row.arena,
+    user_registered: userId ? activeRegs.some((r) => r.user_id === userId) : false,
+  };
+}
+
 export type MyTournamentEntry = {
   id: string;
   title: string;
