@@ -84,11 +84,9 @@ export async function fetchTournamentStats(): Promise<{ active: number; registra
   return { active: ids.length, registrations: count ?? 0 };
 }
 
-export async function registerForTournament(tournamentId: string, userId: string) {
-  const { error } = await supabase.from("tournament_registrations").insert({
-    tournament_id: tournamentId,
-    user_id: userId,
-    status: "confirmed",
+export async function registerForTournament(tournamentId: string) {
+  const { error } = await supabase.rpc("register_for_tournament", {
+    p_tournament_id: tournamentId,
   });
   if (error) throw error;
 }
