@@ -47,6 +47,8 @@ export function SignedGalleryImage({ path, className, alt = "" }: SignedGalleryI
     <img
       src={data}
       alt={alt}
+      loading="lazy"
+      decoding="async"
       className={className}
       onError={(e) => {
         e.currentTarget.style.display = "none";
