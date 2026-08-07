@@ -12,6 +12,7 @@ import {
   Check,
   X,
   Link as LinkIcon,
+  Trash2,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -183,10 +184,9 @@ function NotifPage() {
   const openNotification = useMutation({
     mutationFn: async (notification: NotifRow) => {
       if (!notification.is_read) {
-        const { error } = await supabase
-          .from("notifications")
-          .update({ is_read: true })
-          .eq("id", notification.id);
+        const { error } = await supabase.rpc("mark_notification_read", {
+          p_notification_id: notification.id,
+        });
         if (error) throw error;
       }
       return notification.link_url;
@@ -199,6 +199,33 @@ function NotifPage() {
     onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao abrir notificação")),
   });
 
+  const markAllRead = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("mark_all_notifications_read");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["notifications-unread-count"] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao marcar notificações")),
+  });
+
+  const deleteNotification = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.rpc("delete_own_notification", {
+        p_notification_id: id,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Notificação excluída");
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: ["notifications-unread-count"] });
+    },
+    onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao excluir notificação")),
+  });
+
   return (
     <AppLayout>
       <div className="max-w-2xl mx-auto px-4 py-6">
@@ -206,7 +233,19 @@ function NotifPage() {
           <Bell className="size-6 text-primary" />
           <h1 className="text-3xl">Notificações</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-6">Tudo que rolou na sua areia.</p>
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <p className="text-sm text-muted-foreground">Tudo que rolou na sua areia.</p>
+          {items.some((item) => !item.is_read) ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={markAllRead.isPending}
+              onClick={() => markAllRead.mutate()}
+            >
+              <Check className="size-4 mr-1" /> Marcar todas como lidas
+            </Button>
+          ) : null}
+        </div>
 
         {invites.length > 0 && (
           <div className="space-y-3 mb-4">
@@ -326,6 +365,20 @@ function NotifPage() {
                     {n.body && <div className="text-xs text-muted-foreground">{n.body}</div>}
                     <div className="text-xs text-muted-foreground">{timeAgo(n.created_at)}</div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
+                    disabled={deleteNotification.isPending}
+                    aria-label="Excluir notificação"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      deleteNotification.mutate(n.id);
+                    }}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
                 </div>
               );
             })}

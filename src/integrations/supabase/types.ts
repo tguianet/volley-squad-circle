@@ -1271,6 +1271,10 @@ export type Database = {
         Args: { p_category: string; p_member_count: number }
         Returns: boolean
       }
+      delete_own_notification: {
+        Args: { p_notification_id: string }
+        Returns: undefined
+      }
       leave_team: { Args: { p_team_id: string }; Returns: string }
       list_followed_profiles_feed: {
         Args: { p_limit?: number }
@@ -1300,6 +1304,11 @@ export type Database = {
           profile_id: string
           username: string
         }[]
+      }
+      mark_all_notifications_read: { Args: never; Returns: undefined }
+      mark_notification_read: {
+        Args: { p_notification_id: string }
+        Returns: undefined
       }
       list_my_profile_links: {
         Args: never
