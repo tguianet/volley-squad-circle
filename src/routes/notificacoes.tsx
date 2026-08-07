@@ -153,7 +153,10 @@ function NotifPage() {
 
   const respond = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "accepted" | "declined" }) => {
-      const { error } = await supabase.from("team_invitations").update({ status }).eq("id", id);
+      const { error } = await supabase.rpc("respond_to_team_invitation", {
+        p_invitation_id: id,
+        p_status: status,
+      });
       if (error) throw error;
     },
     onSuccess: (_d, v) => {
