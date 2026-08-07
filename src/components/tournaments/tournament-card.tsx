@@ -41,7 +41,9 @@ export function TournamentCard({ tournament, onRegister, registering }: Tourname
       <div className="h-48 relative overflow-hidden">
         <img
           src={tournament.image_url ?? DEFAULT_IMAGE}
-          alt=""
+          alt={`Torneio ${tournament.title}`}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
         />
         <span
@@ -87,7 +89,14 @@ export function TournamentCard({ tournament, onRegister, registering }: Tourname
               {tournament.enrolled_count}/{tournament.max_teams}
             </span>
           </div>
-          <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+          <div
+            className="w-full h-2 bg-secondary rounded-full overflow-hidden"
+            role="progressbar"
+            aria-label="Vagas preenchidas"
+            aria-valuemin={0}
+            aria-valuemax={tournament.max_teams}
+            aria-valuenow={tournament.enrolled_count}
+          >
             <div
               className={cn(
                 "h-full rounded-full transition-all",

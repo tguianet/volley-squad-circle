@@ -72,7 +72,10 @@ export function AppLayout({ children }: { children: ReactNode }) {
   const unreadNotifications = useQuery({
     queryKey: ["notifications-unread-count"],
     queryFn: fetchUnreadNotificationCount,
-    refetchInterval: 30_000,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
   const extra = isStaff
     ? [...sideExtra, { to: "/admin", label: "Admin", icon: Shield }]
@@ -84,6 +87,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
   return (
     <ChallengeInviteHost>
       <div className="min-h-svh flex w-full">
+        <a
+          href="#conteudo-principal"
+          className="fixed left-3 top-3 z-[100] -translate-y-20 rounded-lg bg-foreground px-4 py-2 text-sm font-semibold text-background shadow-lg transition-transform focus:translate-y-0"
+        >
+          Pular para o conteúdo
+        </a>
         {/* Desktop sidebar */}
         <aside className="hidden md:flex flex-col w-[260px] border-r border-border/70 bg-card sticky top-0 h-screen p-4 gap-1">
           <Link
@@ -107,6 +116,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <Link
                   key={it.to}
                   to={it.to}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all border-l-[3px]",
                     active
@@ -171,7 +181,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
             </Link>
           </header>
 
-          <main className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pb-8">
+          <main
+            id="conteudo-principal"
+            tabIndex={-1}
+            className="flex-1 pb-[calc(5.25rem+env(safe-area-inset-bottom))] md:pb-8 focus:outline-none"
+          >
             {children}
           </main>
 
@@ -184,6 +198,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                   <Link
                     key={it.to}
                     to={it.to}
+                    aria-current={active ? "page" : undefined}
                     className="flex min-h-16 flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[10px] font-medium"
                   >
                     <div
@@ -245,6 +260,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
                     <SheetClose asChild key={it.to}>
                       <Link
                         to={it.to}
+                        aria-current={active ? "page" : undefined}
                         className={cn(
                           "flex min-h-14 items-center gap-3 rounded-2xl border p-3 text-sm font-semibold",
                           active

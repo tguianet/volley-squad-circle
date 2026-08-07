@@ -55,6 +55,8 @@ function ArenasPage() {
                   {a.cover_url && (
                     <img
                       src={a.cover_url}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                       alt={a.name}
                     />
