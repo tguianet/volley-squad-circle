@@ -6,6 +6,26 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
+const INSTALL_PROMPT_DISMISSED_AT = "playbeach:pwa-install-dismissed-at";
+const INSTALL_PROMPT_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000;
+
+function wasRecentlyDismissed(): boolean {
+  try {
+    const dismissedAt = Number(window.localStorage.getItem(INSTALL_PROMPT_DISMISSED_AT));
+    return Number.isFinite(dismissedAt) && Date.now() - dismissedAt < INSTALL_PROMPT_COOLDOWN_MS;
+  } catch {
+    return false;
+  }
+}
+
+function rememberDismissal(): void {
+  try {
+    window.localStorage.setItem(INSTALL_PROMPT_DISMISSED_AT, String(Date.now()));
+  } catch {
+    // Installation remains available when storage is blocked.
+  }
+}
+
 function isStandalone(): boolean {
   if (typeof window === "undefined") return false;
   const nav = window.navigator as Navigator & { standalone?: boolean };
@@ -14,7 +34,10 @@ function isStandalone(): boolean {
 
 function isIOS(): boolean {
   if (typeof window === "undefined") return false;
-  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+  return (
+    /iphone|ipad|ipod/i.test(window.navigator.userAgent) ||
+    (window.navigator.platform === "MacIntel" && window.navigator.maxTouchPoints > 1)
+  );
 }
 
 export function PwaInstallPrompt() {
@@ -26,15 +49,10 @@ export function PwaInstallPrompt() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isStandalone()) return;
+    if (wasRecentlyDismissed()) return;
 
     const ios = isIOS();
-    const timer = window.setTimeout(() => {
-      if (ios) {
-        setShowIOS(true);
-      } else {
-        setVisible(true);
-      }
-    }, 1500);
+    const timer = ios ? window.setTimeout(() => setShowIOS(true), 1500) : undefined;
 
     const handler = (event: Event) => {
       event.preventDefault();
@@ -45,6 +63,11 @@ export function PwaInstallPrompt() {
     window.addEventListener("beforeinstallprompt", handler);
 
     const installed = () => {
+      try {
+        window.localStorage.removeItem(INSTALL_PROMPT_DISMISSED_AT);
+      } catch {
+        // Nothing else is required after installation.
+      }
       setDeferred(null);
       setVisible(false);
       setShowIOS(false);
@@ -53,13 +76,14 @@ export function PwaInstallPrompt() {
     window.addEventListener("appinstalled", installed);
 
     return () => {
-      window.clearTimeout(timer);
+      if (timer !== undefined) window.clearTimeout(timer);
       window.removeEventListener("beforeinstallprompt", handler);
       window.removeEventListener("appinstalled", installed);
     };
   }, []);
 
   const dismiss = () => {
+    rememberDismissal();
     setVisible(false);
     setShowIOS(false);
     setShowManualInstall(false);
@@ -76,6 +100,7 @@ export function PwaInstallPrompt() {
     setDeferred(null);
 
     if (choice.outcome === "dismissed") {
+      rememberDismissal();
       setShowManualInstall(true);
     }
   };
