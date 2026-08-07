@@ -1387,6 +1387,10 @@ export type Database = {
         Returns: undefined
       }
       recompute_team_gender: { Args: { _team_id: string }; Returns: undefined }
+      register_for_tournament: {
+        Args: { p_tournament_id: string }
+        Returns: string
+      }
       register_challenge_score: {
         Args: {
           _challenge_id: string

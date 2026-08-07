@@ -51,7 +51,7 @@ function TournamentsPage() {
     mutationFn: async (tournamentId: string) => {
       if (!user) throw new Error("Faça login para se inscrever.");
       setRegisteringId(tournamentId);
-      await registerForTournament(tournamentId, user.id);
+      await registerForTournament(tournamentId);
     },
     onSuccess: () => {
       toast.success("Inscrição confirmada!");
