@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { createTournament } from "@/lib/tournament.queries";
 import type { TournamentFormat, TournamentStatus } from "@/lib/tournament.types";
-import { useCurrentUser } from "@/hooks/use-auth";
+import { useCurrentUser, useMyRoles } from "@/hooks/use-auth";
 import { getErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -58,6 +58,8 @@ function parseFeeToCents(value: string): number {
 function NewTournamentPage() {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useCurrentUser();
+  const rolesQ = useMyRoles();
+  const isStaff = rolesQ.data?.some((role) => role === "admin" || role === "moderator") ?? false;
   const [title, setTitle] = useState("");
   const [categoryLabel, setCategoryLabel] = useState("");
   const [arenaId, setArenaId] = useState("");
@@ -161,7 +163,7 @@ function NewTournamentPage() {
     }
   }
 
-  if (authLoading) {
+  if (authLoading || (user && rolesQ.isLoading)) {
     return (
       <AppLayout>
         <p className="text-center text-sm text-muted-foreground py-20">Carregando…</p>
@@ -176,6 +178,22 @@ function NewTournamentPage() {
           <p className="text-muted-foreground">Faça login para publicar um torneio interno.</p>
           <Button asChild>
             <Link to="/auth">Entrar</Link>
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!isStaff) {
+    return (
+      <AppLayout>
+        <div className="max-w-md mx-auto px-4 py-16 text-center space-y-4">
+          <p className="font-display text-xl">Acesso restrito</p>
+          <p className="text-sm text-muted-foreground">
+            Somente administradores e moderadores podem publicar torneios oficiais.
+          </p>
+          <Button asChild variant="outline">
+            <Link to="/torneios">Voltar aos torneios</Link>
           </Button>
         </div>
       </AppLayout>
