@@ -64,9 +64,9 @@ export function registerPwa() {
     return;
   }
 
-  window.addEventListener("load", () => {
+  const startRegistration = () => {
     navigator.serviceWorker
-      .register(SW_URL, { scope: "/" })
+      .register(SW_URL, { scope: "/", updateViaCache: "none" })
       .then((registration) => {
         registration.update().catch(() => {});
         setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000);
@@ -94,5 +94,13 @@ export function registerPwa() {
       refreshing = true;
       window.location.reload();
     });
-  });
+  };
+
+  // Hydration may finish after the load event, especially on iOS. In that
+  // case, waiting for another load event would leave the PWA unregistered.
+  if (document.readyState === "complete") {
+    startRegistration();
+  } else {
+    window.addEventListener("load", startRegistration, { once: true });
+  }
 }

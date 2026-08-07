@@ -2,7 +2,7 @@
 // Intentionally minimal: never caches HTML app shell, API responses,
 // auth, or Supabase traffic. Only precaches the offline page + icons.
 
-const VERSION = "pb-sw-v2";
+const VERSION = "pb-sw-v3";
 const OFFLINE_CACHE = `${VERSION}-offline`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [
