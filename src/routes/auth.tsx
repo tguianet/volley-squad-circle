@@ -103,7 +103,7 @@ function Auth() {
   };
 
   return (
-    <div className="min-h-screen grid md:grid-cols-2">
+    <div className="min-h-svh grid md:grid-cols-2">
       <div className="hidden md:flex relative overflow-hidden gradient-ocean p-12 flex-col justify-between text-white">
         <div className="flex items-center gap-3">
           <div className="size-12 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center">
@@ -129,8 +129,8 @@ function Auth() {
         <div className="absolute -bottom-20 -right-20 size-80 rounded-full bg-accent/40 blur-3xl" />
       </div>
 
-      <div className="flex items-center justify-center p-6">
-        <Card className="w-full max-w-md p-8 shadow-card">
+      <div className="flex items-center justify-center p-4 sm:p-6">
+        <Card className="w-full max-w-md p-5 shadow-card sm:p-8">
           <div className="md:hidden flex items-center gap-2 mb-6">
             <div className="size-10 rounded-xl gradient-beach flex items-center justify-center">
               <Waves className="size-5 text-white" />
