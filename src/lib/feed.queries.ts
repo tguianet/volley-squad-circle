@@ -169,18 +169,34 @@ export async function fetchProfileFeed(
 
 export async function createPostShare(
   originalPostId: string,
-  userId: string,
   comment: string | null,
 ): Promise<void> {
   const trimmed = comment?.trim() ?? "";
-  const { error } = await untyped()
-    .from("post_shares")
-    .insert({
-      original_post_id: originalPostId,
-      shared_by_user_id: userId,
-      comment: trimmed.length > 0 ? trimmed : null,
-    });
+  const { error } = await supabase.rpc("share_gallery_post", {
+    p_original_post_id: originalPostId,
+    p_comment: trimmed.length > 0 ? trimmed : undefined,
+  });
   if (error) throw error;
+}
+
+export async function togglePostLike(postId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("toggle_gallery_like", {
+    p_photo_id: postId,
+  });
+  if (error) throw error;
+  return data === true;
+}
+
+export async function addPostComment(postId: string, content: string): Promise<string> {
+  const { data, error } = await supabase.rpc("add_gallery_comment", {
+    p_photo_id: postId,
+    p_content: content,
+  });
+  if (error) throw error;
+  if (typeof data !== "string") {
+    throw new Error("Não foi possível salvar o comentário.");
+  }
+  return data;
 }
 
 export async function deletePostShare(shareId: string, userId: string): Promise<void> {

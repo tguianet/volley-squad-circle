@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/components/avatar-thumb";
 import { cn, getErrorMessage } from "@/lib/utils";
-import { authorDisplayName, authorHandle } from "@/lib/feed.queries";
+import { authorDisplayName, authorHandle, togglePostLike } from "@/lib/feed.queries";
 import { profileRoute } from "@/lib/profile-follow.utils";
 import { formatRelativeTimeBR } from "@/lib/date-format";
 import type { FeedPost } from "@/lib/feed.types";
@@ -46,21 +46,9 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
     : { to: "/perfil" as const };
 
   const likeMut = useMutation({
-    mutationFn: async (liked: boolean) => {
+    mutationFn: async () => {
       if (!userId) throw new Error("Entre para curtir");
-      if (liked) {
-        const { error } = await supabase
-          .from("gallery_likes")
-          .delete()
-          .eq("photo_id", post.id)
-          .eq("user_id", userId);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("gallery_likes")
-          .insert({ photo_id: post.id, user_id: userId });
-        if (error) throw error;
-      }
+      return togglePostLike(post.id);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: feedQueryKey }),
     onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao curtir")),
@@ -75,7 +63,11 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           .remove([post.image_url])
           .catch(() => {});
       }
-      const { error } = await supabase.from("gallery_photos").delete().eq("id", post.id);
+      const { error } = await supabase
+        .from("gallery_photos")
+        .delete()
+        .eq("id", post.id)
+        .eq("user_id", userId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -193,8 +185,8 @@ export function FeedPostCard({ post, userId, feedQueryKey, compact }: FeedPostCa
           <div className="flex items-center gap-0.5 pt-2 border-t border-border/50 -mx-1">
             <button
               type="button"
-              onClick={() => likeMut.mutate(post.liked_by_me)}
-              disabled={likeMut.isPending}
+              onClick={() => likeMut.mutate()}
+              disabled={likeMut.isPending || !userId}
               className={cn(
                 "flex-1 inline-flex items-center justify-center gap-1.5 text-sm font-semibold rounded-xl py-2.5 transition",
                 post.liked_by_me

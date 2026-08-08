@@ -37,7 +37,7 @@ export function FeedShareModal({
     mutationFn: async () => {
       if (!userId) throw new Error("Faça login para compartilhar");
       if (!post) throw new Error("Publicação indisponível");
-      await createPostShare(post.id, userId, comment);
+      await createPostShare(post.id, comment);
     },
     onSuccess: () => {
       toast.success("Compartilhado no seu feed!");

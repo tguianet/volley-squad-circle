@@ -562,6 +562,7 @@ export type Database = {
           body: string | null
           created_at: string
           created_by: string | null
+          event_key: string | null
           id: string
           is_read: boolean
           kind: string
@@ -573,6 +574,7 @@ export type Database = {
           body?: string | null
           created_at?: string
           created_by?: string | null
+          event_key?: string | null
           id?: string
           is_read?: boolean
           kind?: string
@@ -584,6 +586,7 @@ export type Database = {
           body?: string | null
           created_at?: string
           created_by?: string | null
+          event_key?: string | null
           id?: string
           is_read?: boolean
           kind?: string
@@ -1149,6 +1152,10 @@ export type Database = {
     Functions: {
       apply_monthly_penalties: { Args: { _month: string }; Returns: number }
       apply_previous_month_penalties: { Args: never; Returns: number }
+      add_gallery_comment: {
+        Args: { p_content: string; p_photo_id: string }
+        Returns: string
+      }
       can_challenge_by_rank: {
         Args: { my_position: number; opponent_position: number }
         Returns: boolean
@@ -1540,10 +1547,15 @@ export type Database = {
           whatsapp: string
         }[]
       }
+      share_gallery_post: {
+        Args: { p_comment?: string; p_original_post_id: string }
+        Returns: string
+      }
       send_profile_link_request: {
         Args: { p_target_id: string }
         Returns: Json
       }
+      toggle_gallery_like: { Args: { p_photo_id: string }; Returns: boolean }
       unfollow_profile: { Args: { p_profile_id: string }; Returns: Json }
     }
     Enums: {

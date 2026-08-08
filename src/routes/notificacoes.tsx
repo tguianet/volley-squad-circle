@@ -19,6 +19,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
+import { isSafeNotificationLink } from "@/lib/feed-validation";
 import { respondToProfileLinkRequest, listPendingLinkRequests } from "@/lib/ranking.functions";
 import type { LucideIcon } from "lucide-react";
 
@@ -137,7 +138,9 @@ function NotifPage() {
   const q = useQuery({
     queryKey: ["notifications"],
     queryFn: fetchNotifs,
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+    refetchIntervalInBackground: false,
   });
   const invitesQ = useQuery({ queryKey: ["pending-invites"], queryFn: fetchPendingInvites });
   const items = q.data ?? [];
@@ -194,7 +197,11 @@ function NotifPage() {
     onSuccess: (linkUrl) => {
       qc.invalidateQueries({ queryKey: ["notifications"] });
       qc.invalidateQueries({ queryKey: ["notifications-unread-count"] });
-      if (linkUrl?.startsWith("/")) window.location.assign(linkUrl);
+      if (linkUrl && isSafeNotificationLink(linkUrl)) {
+        window.location.assign(linkUrl);
+      } else if (linkUrl) {
+        toast.error("Link da notificação inválido.");
+      }
     },
     onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao abrir notificação")),
   });
@@ -343,15 +350,18 @@ function NotifPage() {
           <Card className="shadow-card divide-y">
             {items.map((n) => {
               const Icon = iconMap[n.kind ?? ""] ?? Bell;
+              const hasSafeLink = Boolean(n.link_url && isSafeNotificationLink(n.link_url));
               return (
                 <div
                   key={n.id}
-                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"} ${n.link_url ? "cursor-pointer hover:bg-secondary/50" : ""}`}
-                  role={n.link_url ? "button" : undefined}
-                  tabIndex={n.link_url ? 0 : undefined}
-                  onClick={() => openNotification.mutate(n)}
+                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"} ${hasSafeLink ? "cursor-pointer hover:bg-secondary/50" : ""}`}
+                  role={hasSafeLink ? "button" : undefined}
+                  tabIndex={hasSafeLink ? 0 : undefined}
+                  onClick={() => {
+                    if (hasSafeLink) openNotification.mutate(n);
+                  }}
                   onKeyDown={(event) => {
-                    if (n.link_url && (event.key === "Enter" || event.key === " ")) {
+                    if (hasSafeLink && (event.key === "Enter" || event.key === " ")) {
                       event.preventDefault();
                       openNotification.mutate(n);
                     }

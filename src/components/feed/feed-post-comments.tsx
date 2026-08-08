@@ -6,8 +6,8 @@ import { Loader2, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl } from "@/components/avatar-thumb";
-import { authorDisplayName } from "@/lib/feed.queries";
-import { fetchPostComments } from "@/lib/feed.queries";
+import { authorDisplayName, addPostComment, fetchPostComments } from "@/lib/feed.queries";
+import { isValidCommentContent } from "@/lib/feed-validation";
 import { formatRelativeTimeBR } from "@/lib/date-format";
 
 type FeedPostCommentsProps = {
@@ -43,12 +43,10 @@ export function FeedPostComments({ postId, userId, feedQueryKey }: FeedPostComme
   const addMut = useMutation({
     mutationFn: async () => {
       if (!userId) throw new Error("Entre para comentar");
-      const content = text.trim();
-      if (!content) return;
-      const { error } = await supabase
-        .from("gallery_comments")
-        .insert({ photo_id: postId, user_id: userId, content });
-      if (error) throw error;
+      if (!isValidCommentContent(text)) {
+        throw new Error("Escreva um comentário válido.");
+      }
+      await addPostComment(postId, text.trim());
     },
     onSuccess: () => {
       setText("");
@@ -60,7 +58,12 @@ export function FeedPostComments({ postId, userId, feedQueryKey }: FeedPostComme
 
   const delMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("gallery_comments").delete().eq("id", id);
+      if (!userId) throw new Error("Sem permissão");
+      const { error } = await supabase
+        .from("gallery_comments")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", userId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,6 +104,7 @@ export function FeedPostComments({ postId, userId, feedQueryKey }: FeedPostComme
                       <button
                         type="button"
                         onClick={() => delMut.mutate(c.id)}
+                        disabled={delMut.isPending}
                         className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition shrink-0"
                         aria-label="Remover comentário"
                       >
