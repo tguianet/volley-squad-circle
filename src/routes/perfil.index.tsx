@@ -402,22 +402,13 @@ function TeamBuilder({
     setSubmitting(true);
     try {
       const { category, gender } = categoryGenderFromFormat(format);
-      const { data: team, error: tErr } = await supabase
-        .from("teams")
-        .insert({ name: name.trim(), category, gender, captain_id: currentId })
-        .select("id")
-        .single();
-      if (tErr) throw tErr;
-
-      await supabase.from("team_members").insert({ team_id: team.id, profile_id: currentId });
-
-      const rows = selected.map((pid) => ({
-        team_id: team.id,
-        inviter_id: currentId,
-        invitee_id: pid,
-      }));
-      const { error: iErr } = await supabase.from("team_invitations").insert(rows);
-      if (iErr) throw iErr;
+      const { error } = await supabase.rpc("create_team_with_invites", {
+        p_name: name.trim(),
+        p_category: category,
+        p_gender: gender,
+        p_invitee_ids: selected,
+      });
+      if (error) throw error;
 
       toast.success(`Convites enviados para ${selected.length} jogador(es)`);
       setOpen(false);

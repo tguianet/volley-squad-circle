@@ -1255,6 +1255,15 @@ export type Database = {
         }[]
       }
       get_team_ranking_details: { Args: { p_team_id: string }; Returns: Json }
+      create_team_with_invites: {
+        Args: {
+          p_category: Database["public"]["Enums"]["team_category"]
+          p_gender: Database["public"]["Enums"]["team_gender"]
+          p_invitee_ids: string[]
+          p_name: string
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
