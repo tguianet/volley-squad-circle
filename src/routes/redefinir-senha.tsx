@@ -17,15 +17,25 @@ function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [checking, setChecking] = useState(true);
-  const [hasSession, setHasSession] = useState(false);
+  const [hasRecoverySession, setHasRecoverySession] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const recoveryMarker = new URLSearchParams(window.location.hash.slice(1)).get("type");
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY" && session) {
+        setHasRecoverySession(true);
+        setChecking(false);
+      }
+    });
+
     supabase.auth.getSession().then(({ data }) => {
-      setHasSession(Boolean(data.session));
+      setHasRecoverySession(Boolean(data.session) && recoveryMarker === "recovery");
       setChecking(false);
     });
+
+    return () => subscription.subscription.unsubscribe();
   }, []);
 
   const submit = async (event: React.FormEvent) => {
@@ -62,7 +72,7 @@ function ResetPassword() {
 
         {checking ? (
           <Loader2 className="size-6 animate-spin mt-8 mx-auto" />
-        ) : !hasSession ? (
+        ) : !hasRecoverySession ? (
           <div className="mt-5 space-y-4">
             <p className="text-sm text-muted-foreground">
               Este link expirou ou já foi usado. Solicite outro link na tela de entrada.

@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { registerPwa } from "../lib/pwa-register";
 import { PwaInstallPrompt } from "../components/pwa-install-prompt";
 import { PwaUpdatePrompt } from "../components/pwa-update-prompt";
+import { AccountAccessGuard } from "../components/account-access-guard";
 
 function NotFoundComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -174,6 +175,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AccountAccessGuard />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <PwaInstallPrompt />

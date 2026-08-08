@@ -97,6 +97,8 @@ function Auth() {
       }
       if (result.redirected) return;
       navigate({ to: "/" });
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, "Falha no login com Google"));
     } finally {
       setGoogleLoading(false);
     }
