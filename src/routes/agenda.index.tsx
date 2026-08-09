@@ -157,7 +157,7 @@ function AgendaPage() {
               </div>
               <div className="mt-3 h-2 w-full rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-accent transition-all duration-500"
+                  className="h-full rounded-full bg-foreground transition-all duration-500"
                   style={{ width: `${occupancy}%` }}
                 />
               </div>
