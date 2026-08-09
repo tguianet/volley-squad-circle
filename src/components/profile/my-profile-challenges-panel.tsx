@@ -450,8 +450,9 @@ export function MyProfileChallengesPanel() {
     },
   });
 
-  const sent = (challengesQ.data?.sent ?? []) as ChallengeRow[];
-  const received = (challengesQ.data?.received ?? []) as ChallengeRow[];
+  const challengesData = challengesQ.data as { sent?: unknown[]; received?: unknown[] } | undefined;
+  const sent = (challengesData?.sent ?? []) as ChallengeRow[];
+  const received = (challengesData?.received ?? []) as ChallengeRow[];
 
   const toAccept = useMemo(() => received.filter((r) => ACTIVE_INCOMING.has(r.status)), [received]);
   const sentActive = useMemo(() => sent.filter((r) => ACTIVE_OUTGOING.has(r.status)), [sent]);
