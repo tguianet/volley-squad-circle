@@ -652,7 +652,7 @@ export const listMyChallenges = createServerFn({ method: "GET" })
     const ids = (teams ?? []).map((t) => t.id);
     if (ids.length === 0) return { sent: [], received: [] };
 
-    const { data: rows, error } = await context.supabase
+    const { data: rawRows, error } = await untyped(context.supabase)
       .from("challenges")
       .select(
         `
@@ -667,11 +667,12 @@ export const listMyChallenges = createServerFn({ method: "GET" })
       )
       .or(`challenger_team_id.in.(${ids.join(",")}),challenged_team_id.in.(${ids.join(",")})`)
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
+    if (error) throw new Error((error as { message: string }).message);
 
+    const rows = (rawRows ?? []) as Array<Record<string, unknown>>;
     const sent: typeof rows = [];
     const received: typeof rows = [];
-    for (const r of rows ?? []) {
+    for (const r of rows) {
       if (ids.includes((r.challenger as { id: string }).id)) sent.push(r);
       else received.push(r);
     }
