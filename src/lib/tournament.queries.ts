@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { supabase } from "@/integrations/supabase/client";
 import type { TournamentListItem } from "@/lib/tournament.types";
 
@@ -85,14 +86,14 @@ export async function fetchTournamentStats(): Promise<{ active: number; registra
 }
 
 export async function registerForTournament(tournamentId: string) {
-  const { error } = await supabase.rpc("register_for_tournament", {
+  const { error } = await untyped().rpc("register_for_tournament", {
     p_tournament_id: tournamentId,
   });
   if (error) throw error;
 }
 
 export async function cancelTournamentRegistration(tournamentId: string) {
-  const { error } = await supabase.rpc("cancel_tournament_registration", {
+  const { error } = await untyped().rpc("cancel_tournament_registration", {
     p_tournament_id: tournamentId,
   });
   if (error) throw error;
