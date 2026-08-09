@@ -171,8 +171,6 @@ export type Database = {
           score_challenger: number | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
-          score_admin_review_requested_at: string | null
-          score_admin_review_requested_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
@@ -197,8 +195,6 @@ export type Database = {
           score_challenger?: number | null
           score_confirmed_at?: string | null
           score_confirmed_by?: string | null
-          score_admin_review_requested_at?: string | null
-          score_admin_review_requested_by?: string | null
           score_registered_at?: string | null
           score_registered_by?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
@@ -223,8 +219,6 @@ export type Database = {
           score_challenger?: number | null
           score_confirmed_at?: string | null
           score_confirmed_by?: string | null
-          score_admin_review_requested_at?: string | null
-          score_admin_review_requested_by?: string | null
           score_registered_at?: string | null
           score_registered_by?: string | null
           status?: Database["public"]["Enums"]["challenge_status"]
@@ -1255,15 +1249,6 @@ export type Database = {
         }[]
       }
       get_team_ranking_details: { Args: { p_team_id: string }; Returns: Json }
-      create_team_with_invites: {
-        Args: {
-          p_category: Database["public"]["Enums"]["team_category"]
-          p_gender: Database["public"]["Enums"]["team_gender"]
-          p_invitee_ids: string[]
-          p_name: string
-        }
-        Returns: string
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1280,11 +1265,6 @@ export type Database = {
         Args: { p_category: string; p_member_count: number }
         Returns: boolean
       }
-      delete_own_notification: {
-        Args: { p_notification_id: string }
-        Returns: undefined
-      }
-      leave_team: { Args: { p_team_id: string }; Returns: string }
       list_followed_profiles_feed: {
         Args: { p_limit?: number }
         Returns: {
@@ -1314,11 +1294,6 @@ export type Database = {
           username: string
         }[]
       }
-      mark_all_notifications_read: { Args: never; Returns: undefined }
-      mark_notification_read: {
-        Args: { p_notification_id: string }
-        Returns: undefined
-      }
       list_my_profile_links: {
         Args: never
         Returns: {
@@ -1333,10 +1308,6 @@ export type Database = {
           linked_user_username: string
           status: Database["public"]["Enums"]["link_status"]
         }[]
-      }
-      respond_to_team_invitation: {
-        Args: { p_invitation_id: string; p_status: string }
-        Returns: undefined
       }
       list_pending_link_requests: {
         Args: never
@@ -1405,14 +1376,6 @@ export type Database = {
         Returns: undefined
       }
       recompute_team_gender: { Args: { _team_id: string }; Returns: undefined }
-      cancel_tournament_registration: {
-        Args: { p_tournament_id: string }
-        Returns: undefined
-      }
-      register_for_tournament: {
-        Args: { p_tournament_id: string }
-        Returns: string
-      }
       register_challenge_score: {
         Args: {
           _challenge_id: string
