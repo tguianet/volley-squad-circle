@@ -669,7 +669,8 @@ export const listMyChallenges = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (error) throw new Error((error as { message: string }).message);
 
-    const rows = (rawRows ?? []) as Array<Record<string, unknown>>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rows = (rawRows ?? []) as Array<Record<string, any>>;
     const sent: typeof rows = [];
     const received: typeof rows = [];
     for (const r of rows) {
