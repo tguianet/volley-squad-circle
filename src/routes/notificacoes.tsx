@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { createFileRoute } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
@@ -154,7 +155,7 @@ function NotifPage() {
 
   const respond = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "accepted" | "declined" }) => {
-      const { error } = await supabase.rpc("respond_to_team_invitation", {
+      const { error } = await untyped().rpc("respond_to_team_invitation", {
         p_invitation_id: id,
         p_status: status,
       });
@@ -184,7 +185,7 @@ function NotifPage() {
   const openNotification = useMutation({
     mutationFn: async (notification: NotifRow) => {
       if (!notification.is_read) {
-        const { error } = await supabase.rpc("mark_notification_read", {
+        const { error } = await untyped().rpc("mark_notification_read", {
           p_notification_id: notification.id,
         });
         if (error) throw error;
@@ -201,7 +202,7 @@ function NotifPage() {
 
   const markAllRead = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.rpc("mark_all_notifications_read");
+      const { error } = await untyped().rpc("mark_all_notifications_read");
       if (error) throw error;
     },
     onSuccess: () => {
@@ -213,7 +214,7 @@ function NotifPage() {
 
   const deleteNotification = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.rpc("delete_own_notification", {
+      const { error } = await untyped().rpc("delete_own_notification", {
         p_notification_id: id,
       });
       if (error) throw error;

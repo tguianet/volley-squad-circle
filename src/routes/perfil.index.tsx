@@ -1,3 +1,4 @@
+import { untyped } from "@/lib/supabase-untyped";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { AppLayout } from "@/components/app-layout";
 import { Card } from "@/components/ui/card";
@@ -402,7 +403,7 @@ function TeamBuilder({
     setSubmitting(true);
     try {
       const { category, gender } = categoryGenderFromFormat(format);
-      const { error } = await supabase.rpc("create_team_with_invites", {
+      const { error } = await untyped().rpc("create_team_with_invites", {
         p_name: name.trim(),
         p_category: category,
         p_gender: gender,
@@ -422,7 +423,7 @@ function TeamBuilder({
   };
 
   const respondToReceived = async (inviteId: string, status: "accepted" | "declined") => {
-    const { error } = await supabase.rpc("respond_to_team_invitation", {
+    const { error } = await untyped().rpc("respond_to_team_invitation", {
       p_invitation_id: inviteId,
       p_status: status,
     });
@@ -450,7 +451,7 @@ function TeamBuilder({
   };
 
   const leaveTeam = async (teamId: string, captainId: string) => {
-    const { data: result, error } = await supabase.rpc("leave_team", { p_team_id: teamId });
+    const { data: result, error } = await untyped().rpc("leave_team", { p_team_id: teamId });
     if (error) return toast.error(error.message);
 
     if (result === "deleted") toast.success("Time removido porque não havia outros membros.");

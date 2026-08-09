@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
  * estão defasados. Ao regenerar os tipos, prefira remover a chamada a
  * `untyped()` e usar o cliente tipado direto.
  */
-export function untyped(client: unknown = supabase): SupabaseClient {
-  return client as SupabaseClient;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function untyped(client: unknown = supabase): SupabaseClient<any, any, any> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return client as SupabaseClient<any, any, any>;
 }
