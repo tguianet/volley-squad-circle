@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppLayout } from "@/components/app-layout";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -176,14 +176,14 @@ function DesafiosPage() {
 
   const memberOnlyTeams = allMyTeams.filter((t) => !isUserTeamCaptain(t, userId));
 
-  const isTeamSelectable = (t: TeamLite) => {
+  const isTeamSelectable = useCallback((t: TeamLite) => {
     const memberCount = t.members?.length ?? 0;
     return (
       isUserTeamCaptain(t, userId) &&
       isTeamComplete(t.category as "dupla" | "quarteto", memberCount) &&
       t.rank_position != null
     );
-  };
+  }, [userId]);
 
   const selectableCaptainedTeams = captainedTeams.filter(isTeamSelectable);
 
@@ -217,7 +217,7 @@ function DesafiosPage() {
     const incomplete = captainedTeams.filter((t) => !isTeamSelectable(t));
     if (!categoryKey) return incomplete;
     return incomplete.filter((t) => teamCatKey(t) === categoryKey);
-  }, [captainedTeams, categoryKey]);
+  }, [captainedTeams, categoryKey, isTeamSelectable]);
 
   useEffect(() => {
     if (teamsInCategory[0] && !teamsInCategory.find((t) => t.id === myTeamId)) {
@@ -304,7 +304,10 @@ function DesafiosPage() {
     enabled: !!date,
   });
 
-  const slots = (availQ.data as CourtSlot[] | undefined) ?? [];
+  const slots = useMemo(
+    () => (availQ.data as CourtSlot[] | undefined) ?? [],
+    [availQ.data],
+  );
 
   const availableTimes = useMemo(() => {
     const set = new Set<string>();

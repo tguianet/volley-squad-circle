@@ -451,8 +451,14 @@ export function MyProfileChallengesPanel() {
   });
 
   const challengesData = challengesQ.data as { sent?: unknown[]; received?: unknown[] } | undefined;
-  const sent = (challengesData?.sent ?? []) as ChallengeRow[];
-  const received = (challengesData?.received ?? []) as ChallengeRow[];
+  const sent = useMemo(
+    () => (challengesData?.sent ?? []) as ChallengeRow[],
+    [challengesData?.sent],
+  );
+  const received = useMemo(
+    () => (challengesData?.received ?? []) as ChallengeRow[],
+    [challengesData?.received],
+  );
 
   const toAccept = useMemo(() => received.filter((r) => ACTIVE_INCOMING.has(r.status)), [received]);
   const sentActive = useMemo(() => sent.filter((r) => ACTIVE_OUTGOING.has(r.status)), [sent]);
