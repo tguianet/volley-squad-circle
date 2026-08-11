@@ -33,6 +33,7 @@ import {
   Info,
   MessageCircle,
 } from "lucide-react";
+import { TeamAvailabilityPanel } from "@/components/challenges/team-availability-panel";
 
 type ChallengeRow = {
   id: string;
@@ -508,6 +509,7 @@ export function MyProfileChallengesPanel() {
 
   return (
     <div className="space-y-4">
+      <TeamAvailabilityPanel />
       <Card className="p-4 sm:p-5 border-primary/20 bg-primary/5 shadow-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">

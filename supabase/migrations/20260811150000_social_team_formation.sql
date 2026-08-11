@@ -1,12 +1,24 @@
 -- Teams are formed from public social profiles, one invitation at a time.
 -- Incomplete teams stay inactive and therefore cannot enter the ranking or challenges.
 
-REVOKE EXECUTE ON FUNCTION public.create_team_with_invites(
-  text,
-  public.team_category,
-  public.team_gender,
-  uuid[]
-) FROM authenticated;
+-- Lovable Cloud installations may contain a different legacy signature (or no
+-- function at all). Resolve it dynamically so a fresh install and an existing
+-- project can both apply this migration safely.
+DO $$
+DECLARE
+  v_function regprocedure;
+BEGIN
+  FOR v_function IN
+    SELECT p.oid::regprocedure
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'create_team_with_invites'
+  LOOP
+    EXECUTE format('REVOKE EXECUTE ON FUNCTION %s FROM authenticated', v_function);
+  END LOOP;
+END;
+$$;
 
 CREATE OR REPLACE FUNCTION public.create_team_from_social_profile(
   p_name text,
