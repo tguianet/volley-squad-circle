@@ -97,10 +97,7 @@ function AgendaPage() {
     return Array.from(map.values()).sort((a, b) => a.court_number - b.court_number);
   }, [slots]);
 
-  const times = useMemo(
-    () => Array.from(new Set(slots.map((s) => s.slot_time))).sort(),
-    [slots],
-  );
+  const times = useMemo(() => Array.from(new Set(slots.map((s) => s.slot_time))).sort(), [slots]);
 
   const slotIndex = useMemo(() => {
     const map = new Map<string, CourtSlot>();
