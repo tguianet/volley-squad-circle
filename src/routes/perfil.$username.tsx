@@ -20,6 +20,7 @@ import { PublicProfileCover } from "@/components/public-profile-cover";
 import { PublicProfileTabs } from "@/components/profile/public-profile-tabs";
 import { getErrorMessage } from "@/lib/utils";
 import { normalizeProfileHandle } from "@/lib/media-url";
+import { SocialTeamInviteDialog } from "@/components/profile/social-team-invite-dialog";
 
 type PublicProfile = {
   id: string;
@@ -114,10 +115,17 @@ function PublicProfilePage() {
   });
 
   const { data: currentUser } = useQuery({
-    queryKey: ["current-user"],
+    queryKey: ["current-user-with-profile"],
     queryFn: async () => {
       const { data } = await supabase.auth.getUser();
-      return data.user;
+      if (!data.user) return null;
+      const { data: currentProfile, error } = await supabase
+        .from("profiles")
+        .select("genero")
+        .eq("id", data.user.id)
+        .maybeSingle();
+      if (error) throw error;
+      return { id: data.user.id, gender: currentProfile?.genero ?? null };
     },
   });
 
@@ -286,7 +294,20 @@ function PublicProfilePage() {
                     </div>
                   )}
                 </div>
-                <div className="flex sm:justify-end">{followButton}</div>
+                <div className="flex flex-wrap gap-2 sm:justify-end">
+                  {!isOwnProfile && currentUser ? (
+                    <SocialTeamInviteDialog
+                      currentUserId={currentUser.id}
+                      currentUserGender={currentUser.gender}
+                      invitee={{
+                        id: profile.id,
+                        displayName,
+                        gender: profile.genero,
+                      }}
+                    />
+                  ) : null}
+                  {followButton}
+                </div>
               </div>
             </div>
           </div>

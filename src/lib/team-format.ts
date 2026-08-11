@@ -16,9 +16,12 @@ export function formatFromCategory(category: string, gender: string): string {
   return "Dupla masculina";
 }
 
+export type TeamCategory = "dupla" | "quarteto";
+export type TeamGender = "M" | "F" | "X";
+
 export function categoryGenderFromFormat(format: string): {
-  category: "dupla" | "quarteto";
-  gender: "M" | "F" | "X";
+  category: TeamCategory;
+  gender: TeamGender;
 } {
   const isQuarteto = format.startsWith("Quarteto");
   const category = isQuarteto ? "quarteto" : "dupla";
