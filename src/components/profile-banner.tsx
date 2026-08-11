@@ -213,13 +213,13 @@ export const ProfileBanner = forwardRef<ProfileBannerHandle, ProfileBannerProps>
       setCropOpen(true);
     };
 
-    const openPicker = () => {
+    const openPicker = useCallback(() => {
       if (!userId) {
         toast.error("Faça login para alterar a capa");
         return;
       }
       fileRef.current?.click();
-    };
+    }, [userId]);
 
     const isLoading = uploadMut.isPending || removeMut.isPending;
     const hasBanner = Boolean(bannerQ.data);
@@ -231,7 +231,7 @@ export const ProfileBanner = forwardRef<ProfileBannerHandle, ProfileBannerProps>
         removeBanner: () => removeMut.mutate(),
         hasBanner,
       }),
-      [hasBanner, removeMut, userId],
+      [hasBanner, removeMut, openPicker],
     );
 
     return (

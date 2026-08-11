@@ -66,9 +66,11 @@ function RankingPage() {
     enabled: tab === "dupla" || tab === "quarteto",
   });
 
-  const activeRows = tab === "ind" ? (individualQ.data ?? []) : (teamQ.data ?? []);
   const isLoading = tab === "ind" ? individualQ.isLoading : teamQ.isLoading;
-  const analytics = useMemo(() => buildRankingAnalytics(activeRows), [activeRows]);
+  const analytics = useMemo(() => {
+    const activeRows = tab === "ind" ? (individualQ.data ?? []) : (teamQ.data ?? []);
+    return buildRankingAnalytics(activeRows);
+  }, [tab, individualQ.data, teamQ.data]);
 
   const emptyIndividual = "Ainda não há jogadores cadastrados no ranking.";
   const emptyTeams = "Nenhum time completo no ranking ainda.";

@@ -81,7 +81,7 @@ function AgendaPage() {
     },
   });
 
-  const slots = data ?? [];
+  const slots = useMemo(() => data ?? [], [data]);
 
   const courts = useMemo(() => {
     const map = new Map<string, { court_id: string; court_number: number; court_name: string }>();
