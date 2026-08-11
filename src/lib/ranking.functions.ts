@@ -10,6 +10,7 @@ import {
 } from "@/lib/challenge-rules";
 import { supabase } from "@/integrations/supabase/client";
 import { isMissingRpcError, normalizeProfileHandle } from "@/lib/media-url";
+import type { PublicProfileConnection } from "@/lib/profile-follow.types";
 
 // =====================================================================
 // ARENAS
@@ -1093,11 +1094,8 @@ export const listPublicProfileFollows = createServerFn({ method: "GET" })
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 9,
     });
-    if (error) {
-      if (isMissingRpcError(error.message)) return [];
-      throw new Error(error.message);
-    }
-    return rows ?? [];
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as PublicProfileConnection[];
   });
 
 export const listPublicProfileFollowers = createServerFn({ method: "GET" })
@@ -1110,15 +1108,12 @@ export const listPublicProfileFollowers = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data }) => {
-    const { data: rows, error } = await untyped().rpc("list_public_profile_followers", {
+    const { data: rows, error } = await supabase.rpc("list_public_profile_followers", {
       p_profile_id: data.profileId,
       p_limit: data.limit ?? 12,
     });
-    if (error) {
-      if (isMissingRpcError(error.message)) return [];
-      throw new Error(error.message);
-    }
-    return rows ?? [];
+    if (error) throw new Error(error.message);
+    return (rows ?? []) as PublicProfileConnection[];
   });
 
 export const listPublicProfileUpdates = createServerFn({ method: "GET" })

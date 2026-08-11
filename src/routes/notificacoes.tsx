@@ -20,7 +20,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getErrorMessage } from "@/lib/utils";
+import { isSafeNotificationLink } from "@/lib/notification-link";
 import { respondToProfileLinkRequest, listPendingLinkRequests } from "@/lib/ranking.functions";
+import { AsyncQueryState } from "@/components/ui/async-query-state";
 import type { LucideIcon } from "lucide-react";
 
 export const Route = createFileRoute("/notificacoes")({
@@ -195,7 +197,11 @@ function NotifPage() {
     onSuccess: (linkUrl) => {
       qc.invalidateQueries({ queryKey: ["notifications"] });
       qc.invalidateQueries({ queryKey: ["notifications-unread-count"] });
-      if (linkUrl?.startsWith("/")) window.location.assign(linkUrl);
+      if (linkUrl && isSafeNotificationLink(linkUrl)) {
+        window.location.assign(linkUrl);
+      } else if (linkUrl) {
+        toast.error("Link da notificação inválido.");
+      }
     },
     onError: (e: unknown) => toast.error(getErrorMessage(e, "Erro ao abrir notificação")),
   });
@@ -329,30 +335,52 @@ function NotifPage() {
           </div>
         )}
 
-        {q.isLoading && (
-          <Card className="p-6 text-center text-sm text-muted-foreground">Carregando…</Card>
-        )}
-        {!q.isLoading &&
-          items.length === 0 &&
-          invites.length === 0 &&
-          profileLinks.length === 0 && (
-            <Card className="p-6 text-center text-sm text-muted-foreground">
-              Nenhuma notificação por enquanto.
-            </Card>
-          )}
-        {items.length > 0 && (
+        {q.isError ? (
+          <Card className="p-6 mb-4">
+            <AsyncQueryState
+              isLoading={false}
+              isError
+              isEmpty={false}
+              emptyLabel=""
+              errorLabel="Não foi possível carregar as notificações."
+              onRetry={() => q.refetch()}
+              devContext="Notificações"
+              devError={q.error}
+            >
+              {null}
+            </AsyncQueryState>
+          </Card>
+        ) : null}
+
+        {!q.isError && q.isLoading ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground mb-4">Carregando…</Card>
+        ) : null}
+
+        {!q.isError &&
+        !q.isLoading &&
+        items.length === 0 &&
+        invites.length === 0 &&
+        profileLinks.length === 0 ? (
+          <Card className="p-6 text-center text-sm text-muted-foreground">
+            Nenhuma notificação por enquanto.
+          </Card>
+        ) : null}
+        {!q.isError && items.length > 0 ? (
           <Card className="shadow-card divide-y">
             {items.map((n) => {
               const Icon = iconMap[n.kind ?? ""] ?? Bell;
+              const hasSafeLink = Boolean(n.link_url && isSafeNotificationLink(n.link_url));
               return (
                 <div
                   key={n.id}
-                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"} ${n.link_url ? "cursor-pointer hover:bg-secondary/50" : ""}`}
-                  role={n.link_url ? "button" : undefined}
-                  tabIndex={n.link_url ? 0 : undefined}
-                  onClick={() => openNotification.mutate(n)}
+                  className={`p-4 flex items-center gap-3 ${n.is_read ? "" : "bg-primary/5"} ${hasSafeLink ? "cursor-pointer hover:bg-secondary/50" : ""}`}
+                  role={hasSafeLink ? "button" : undefined}
+                  tabIndex={hasSafeLink ? 0 : undefined}
+                  onClick={() => {
+                    if (hasSafeLink) openNotification.mutate(n);
+                  }}
                   onKeyDown={(event) => {
-                    if (n.link_url && (event.key === "Enter" || event.key === " ")) {
+                    if (hasSafeLink && (event.key === "Enter" || event.key === " ")) {
                       event.preventDefault();
                       openNotification.mutate(n);
                     }
@@ -384,7 +412,7 @@ function NotifPage() {
               );
             })}
           </Card>
-        )}
+        ) : null}
       </div>
     </AppLayout>
   );

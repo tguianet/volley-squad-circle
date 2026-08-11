@@ -4,11 +4,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { AsyncQueryState } from "@/components/ui/async-query-state";
 import { listPublicProfileFollows } from "@/lib/ranking.functions";
 import type { PublicProfileConnection } from "@/lib/profile-follow.types";
 import { profileRoute } from "@/lib/profile-follow.utils";
 import { useAvatarUrl } from "@/components/avatar-thumb";
-import { Loader2, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
 type PublicProfileConnectionsProps = {
   profileId: string;
@@ -43,41 +44,41 @@ function ConnectionAvatar({ connection }: { connection: PublicProfileConnection 
 export function PublicProfileConnections({ profileId }: PublicProfileConnectionsProps) {
   const fetchConnections = useServerFn(listPublicProfileFollows);
 
-  const { data: connections = [], isLoading } = useQuery({
+  const connectionsQ = useQuery({
     queryKey: ["public-profile-connections", profileId],
-    queryFn: async () => {
-      const rows = await fetchConnections({ data: { profileId, limit: 9 } });
-      return rows as PublicProfileConnection[];
-    },
+    queryFn: async () => fetchConnections({ data: { profileId, limit: 9 } }),
   });
+
+  const connections = connectionsQ.data ?? [];
 
   return (
     <Card className="p-5 shadow-card">
       <div className="flex items-center gap-2 mb-4">
         <Users className="size-5 text-primary" />
         <h2 className="font-semibold text-base">Conexões</h2>
-        {connections.length > 0 ? (
+        {!connectionsQ.isLoading && !connectionsQ.isError && connections.length > 0 ? (
           <Badge variant="secondary" className="text-[10px] ml-auto">
             {connections.length}
           </Badge>
         ) : null}
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : connections.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6">
-          Nenhuma conexão pública ainda.
-        </p>
-      ) : (
+      <AsyncQueryState
+        isLoading={connectionsQ.isLoading}
+        isError={connectionsQ.isError}
+        isEmpty={connections.length === 0}
+        emptyLabel="Nenhuma conexão pública ainda."
+        errorLabel="Não foi possível carregar quem este perfil segue."
+        onRetry={() => connectionsQ.refetch()}
+        devContext="Seguindo"
+        devError={connectionsQ.error}
+      >
         <div className="grid grid-cols-3 gap-1">
           {connections.map((c) => (
             <ConnectionAvatar key={c.profile_id} connection={c} />
           ))}
         </div>
-      )}
+      </AsyncQueryState>
     </Card>
   );
 }

@@ -1333,6 +1333,17 @@ export type Database = {
           username: string
         }[]
       }
+      list_public_profile_followers: {
+        Args: { p_limit?: number; p_profile_id: string }
+        Returns: {
+          apelido: string
+          avatar_url: string
+          category: string
+          display_name: string
+          profile_id: string
+          username: string
+        }[]
+      }
       list_public_profile_gallery: {
         Args: { p_limit?: number; p_profile_id: string }
         Returns: {

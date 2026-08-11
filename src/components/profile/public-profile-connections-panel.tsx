@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AsyncQueryState } from "@/components/ui/async-query-state";
 import { listPublicProfileFollowers, listPublicProfileFollows } from "@/lib/ranking.functions";
 import type { PublicProfileConnection } from "@/lib/profile-follow.types";
 import { profileRoute } from "@/lib/profile-follow.utils";
 import { useAvatarUrl } from "@/components/avatar-thumb";
-import { Loader2, UserCheck, Users } from "lucide-react";
+import { UserCheck, Users } from "lucide-react";
 
 type ConnectionCardProps = {
   connection: PublicProfileConnection;
@@ -51,38 +52,49 @@ function ConnectionSection({
   icon: Icon,
   connections,
   isLoading,
+  isError,
+  error,
   emptyText,
+  errorText,
+  onRetry,
 }: {
   title: string;
   icon: typeof Users;
   connections: PublicProfileConnection[];
   isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
   emptyText: string;
+  errorText: string;
+  onRetry: () => void;
 }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <Icon className="size-4 text-primary" />
         <h3 className="font-semibold text-sm">{title}</h3>
-        {connections.length > 0 ? (
+        {!isLoading && !isError && connections.length > 0 ? (
           <Badge variant="secondary" className="text-[10px] ml-auto">
             {connections.length}
           </Badge>
         ) : null}
       </div>
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="size-5 animate-spin text-muted-foreground" />
-        </div>
-      ) : connections.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-4">{emptyText}</p>
-      ) : (
+      <AsyncQueryState
+        isLoading={isLoading}
+        isError={isError}
+        isEmpty={connections.length === 0}
+        emptyLabel={emptyText}
+        errorLabel={errorText}
+        onRetry={onRetry}
+        devContext={title}
+        devError={error}
+      >
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {connections.map((c) => (
             <SocialConnectionCard key={c.profile_id} connection={c} />
           ))}
         </div>
-      )}
+      </AsyncQueryState>
     </div>
   );
 }
@@ -102,18 +114,19 @@ export function PublicProfileConnectionsPanel({
   const followingQ = useQuery({
     queryKey: ["public-profile-following", profileId],
     queryFn: async () => {
-      const rows = await fetchFollowing({ data: { profileId, limit: 12 } });
-      return rows as unknown as PublicProfileConnection[];
+      return fetchFollowing({ data: { profileId, limit: 12 } });
     },
   });
 
   const followersQ = useQuery({
     queryKey: ["public-profile-followers", profileId],
     queryFn: async () => {
-      const rows = await fetchFollowers({ data: { profileId, limit: 12 } });
-      return rows as unknown as PublicProfileConnection[];
+      return fetchFollowers({ data: { profileId, limit: 12 } });
     },
   });
+
+  const following = followingQ.data ?? [];
+  const followers = followersQ.data ?? [];
 
   return (
     <Card className={compact ? "p-4 shadow-card space-y-6" : "p-5 shadow-card space-y-8"}>
@@ -127,17 +140,25 @@ export function PublicProfileConnectionsPanel({
       <ConnectionSection
         title="Seguindo"
         icon={UserCheck}
-        connections={followingQ.data ?? []}
+        connections={following}
         isLoading={followingQ.isLoading}
+        isError={followingQ.isError}
+        error={followingQ.error}
         emptyText="Ainda não segue ninguém."
+        errorText="Não foi possível carregar quem este perfil segue."
+        onRetry={() => followingQ.refetch()}
       />
 
       <ConnectionSection
         title="Seguidores"
         icon={Users}
-        connections={followersQ.data ?? []}
+        connections={followers}
         isLoading={followersQ.isLoading}
+        isError={followersQ.isError}
+        error={followersQ.error}
         emptyText="Nenhum seguidor ainda."
+        errorText="Não foi possível carregar os seguidores."
+        onRetry={() => followersQ.refetch()}
       />
     </Card>
   );
