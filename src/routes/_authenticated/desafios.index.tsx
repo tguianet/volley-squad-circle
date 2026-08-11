@@ -176,14 +176,17 @@ function DesafiosPage() {
 
   const memberOnlyTeams = allMyTeams.filter((t) => !isUserTeamCaptain(t, userId));
 
-  const isTeamSelectable = useCallback((t: TeamLite) => {
-    const memberCount = t.members?.length ?? 0;
-    return (
-      isUserTeamCaptain(t, userId) &&
-      isTeamComplete(t.category as "dupla" | "quarteto", memberCount) &&
-      t.rank_position != null
-    );
-  }, [userId]);
+  const isTeamSelectable = useCallback(
+    (t: TeamLite) => {
+      const memberCount = t.members?.length ?? 0;
+      return (
+        isUserTeamCaptain(t, userId) &&
+        isTeamComplete(t.category as "dupla" | "quarteto", memberCount) &&
+        t.rank_position != null
+      );
+    },
+    [userId],
+  );
 
   const selectableCaptainedTeams = captainedTeams.filter(isTeamSelectable);
 
@@ -304,10 +307,7 @@ function DesafiosPage() {
     enabled: !!date,
   });
 
-  const slots = useMemo(
-    () => (availQ.data as CourtSlot[] | undefined) ?? [],
-    [availQ.data],
-  );
+  const slots = useMemo(() => (availQ.data as CourtSlot[] | undefined) ?? [], [availQ.data]);
 
   const availableTimes = useMemo(() => {
     const set = new Set<string>();
