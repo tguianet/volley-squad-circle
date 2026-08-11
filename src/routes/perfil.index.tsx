@@ -5,18 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Crown, Send, Check, X, Plus, Trash2, Loader2, LogOut, Users } from "lucide-react";
+import { Crown, Check, X, Trash2, Loader2, LogOut, Users } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,19 +18,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AvatarThumb } from "@/components/avatar-thumb";
-import { getTeamFormats, formatFromCategory, categoryGenderFromFormat } from "@/lib/team-format";
+import { formatFromCategory } from "@/lib/team-format";
 import { MyProfileHeader } from "@/components/profile/my-profile-header";
 import { MyProfileTabs } from "@/components/profile/my-profile-tabs";
 import type { PublicProfileAboutData } from "@/components/profile/public-profile-about";
@@ -186,7 +168,7 @@ function ProfilePage() {
             derrotas: profile.derrotas,
           }}
           aboutData={aboutData}
-          teamsSection={<TeamBuilder currentId={profile.id} currentGender={profile.genero} />}
+          teamsSection={<TeamBuilder currentId={profile.id} />}
           matchesSection={<MatchHistory userId={profile.id} />}
         />
 
@@ -227,6 +209,7 @@ type DbTeam = {
   category: "dupla" | "quarteto";
   gender: "M" | "F" | "X";
   captain_id: string;
+  is_active: boolean;
   created_at: string;
   invitations: DbInvitation[];
 };
@@ -237,33 +220,8 @@ type ReceivedInvite = {
   inviter: RosterPlayer | null;
 };
 
-function TeamBuilder({
-  currentId,
-  currentGender,
-}: {
-  currentId: string;
-  currentGender?: string | null;
-}) {
+function TeamBuilder({ currentId }: { currentId: string }) {
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
-
-  const rosterQ = useQuery<RosterPlayer[]>({
-    queryKey: ["roster-players"],
-    enabled: open,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name, apelido, username, avatar_url, genero")
-        .neq("id", currentId)
-        .order("display_name");
-      if (error) throw error;
-      return (data ?? []) as RosterPlayer[];
-    },
-  });
-
-  const others: RosterPlayer[] = rosterQ.data ?? [];
-  const getPlayer = (id: string): RosterPlayer | undefined => others.find((p) => p.id === id);
 
   const captainQ = useQuery<DbTeam[]>({
     queryKey: ["my-captain-teams", currentId],
@@ -271,10 +229,9 @@ function TeamBuilder({
       const { data, error } = await supabase
         .from("teams")
         .select(
-          "id, name, category, gender, captain_id, created_at, invitations:team_invitations(id, invitee_id, status, invitee:invitee_id(id, display_name, apelido, username, avatar_url))",
+          "id, name, category, gender, captain_id, is_active, created_at, invitations:team_invitations(id, invitee_id, status, invitee:invitee_id(id, display_name, apelido, username, avatar_url))",
         )
         .eq("captain_id", currentId)
-        .eq("is_active", true)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as DbTeam[];
@@ -292,7 +249,7 @@ function TeamBuilder({
       if (error) throw error;
       return (data ?? [])
         .map((r) => r.team)
-        .filter((t) => t?.is_active)
+        .filter(Boolean)
         .map((t) => ({ ...t!, invitations: [] as DbInvitation[] }));
     },
     enabled: !!currentId,
@@ -361,67 +318,6 @@ function TeamBuilder({
   });
   const received: ReceivedInvite[] = receivedQ.data ?? [];
 
-  const [name, setName] = useState("");
-
-  const defaultFormat = getTeamFormats(currentGender)[0];
-  const [format, setFormat] = useState(defaultFormat);
-  const [selected, setSelected] = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-
-  const required = categoryGenderFromFormat(format).category === "quarteto" ? 3 : 1;
-  const myExistingFormats = new Set<string>(
-    teams.map((t) => formatFromCategory(t.category, t.gender)),
-  );
-  const availableFormats = getTeamFormats(currentGender).filter((f) => !myExistingFormats.has(f));
-
-  useEffect(() => {
-    if (myExistingFormats.has(format) && availableFormats.length > 0) {
-      setFormat(availableFormats[0]);
-      setSelected([]);
-    }
-  }, [captainQ.data]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const reset = () => {
-    setName("");
-    setFormat(availableFormats[0] ?? defaultFormat);
-    setSelected([]);
-  };
-
-  const toggle = (id: string) => {
-    setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
-  };
-
-  const create = async () => {
-    if (!name.trim()) return toast.error("Dê um nome ao time");
-    if (myExistingFormats.has(format))
-      return toast.error(`Você já tem um time no formato ${format}`);
-    if (selected.length !== required)
-      return toast.error(
-        `Para ${format.toLowerCase()}, selecione exatamente ${required} participante(s)`,
-      );
-
-    setSubmitting(true);
-    try {
-      const { category, gender } = categoryGenderFromFormat(format);
-      const { error } = await untyped().rpc("create_team_with_invites", {
-        p_name: name.trim(),
-        p_category: category,
-        p_gender: gender,
-        p_invitee_ids: selected,
-      });
-      if (error) throw error;
-
-      toast.success(`Convites enviados para ${selected.length} jogador(es)`);
-      setOpen(false);
-      reset();
-      qc.invalidateQueries({ queryKey: ["my-captain-teams"] });
-    } catch (e: unknown) {
-      toast.error(getErrorMessage(e, "Falha ao enviar convites"));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   const respondToReceived = async (inviteId: string, status: "accepted" | "declined") => {
     const { error } = await untyped().rpc("respond_to_team_invitation", {
       p_invitation_id: inviteId,
@@ -474,108 +370,9 @@ function TeamBuilder({
           <Users className="size-5 text-primary" />
           <h2 className="font-semibold text-base">Meus times</h2>
         </div>
-        <Dialog
-          open={open}
-          onOpenChange={(v) => {
-            setOpen(v);
-            if (!v) reset();
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button
-              size="sm"
-              className="gradient-beach text-white border-0 shrink-0"
-              disabled={availableFormats.length === 0}
-            >
-              <Plus className="size-4 mr-1" />
-              Montar time
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Montar novo time</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="team-name">Nome do time</Label>
-                <Input
-                  id="team-name"
-                  placeholder="Ex: Tubarões da Areia"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Formato</Label>
-                <Select
-                  value={format}
-                  onValueChange={(v) => {
-                    setFormat(v);
-                    setSelected([]);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableFormats.map((f) => (
-                      <SelectItem key={f} value={f}>
-                        {f}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  Participantes ({selected.length}/{required})
-                </Label>
-                <div className="space-y-1 max-h-64 overflow-y-auto rounded-md border p-2">
-                  {others
-                    .filter((p) => {
-                      if (!currentGender) return false;
-                      if (format.includes("misto") || format.includes("mista")) return true;
-                      return p.genero === currentGender;
-                    })
-                    .map((pl) => (
-                      <label
-                        key={pl.id}
-                        className="flex items-center gap-3 p-2 rounded-md hover:bg-secondary/60 cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={selected.includes(pl.id)}
-                          onCheckedChange={() => toggle(pl.id)}
-                        />
-                        <Avatar className="size-8">
-                          <AvatarImage src={pl.avatar_url ?? undefined} />
-                          <AvatarFallback>{pl.display_name[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{pl.display_name}</div>
-                          <div className="text-[11px] text-muted-foreground truncate">
-                            @{pl.apelido ?? pl.username ?? ""}
-                          </div>
-                        </div>
-                      </label>
-                    ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
-                Cancelar
-              </Button>
-              <Button onClick={create} disabled={submitting}>
-                {submitting ? (
-                  <Loader2 className="size-4 mr-1 animate-spin" />
-                ) : (
-                  <Send className="size-4 mr-1" />
-                )}
-                Enviar convites
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/">Encontrar jogadores</Link>
+        </Button>
       </div>
 
       {received.length > 0 && (
@@ -632,7 +429,7 @@ function TeamBuilder({
             const isCaptain = t.captain_id === currentId;
             const accepted = t.invitations.filter((i) => i.status === "accepted").length;
             const total = t.invitations.length;
-            const allIn = total > 0 && accepted === total;
+            const confirmedPlayers = membersByTeam[t.id]?.length ?? 0;
             return (
               <div key={t.id} className="rounded-xl border border-border/70 p-3 space-y-3">
                 <div className="flex items-center gap-3">
@@ -642,15 +439,20 @@ function TeamBuilder({
                       <Badge variant="outline" className="text-[10px]">
                         {fmt}
                       </Badge>
-                      {isCaptain && allIn && (
+                      {t.is_active ? (
                         <Badge className="gradient-beach text-white border-0 text-[10px]">
                           No ranking
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary" className="text-[10px]">
+                          Em formação
                         </Badge>
                       )}
                     </div>
                     {isCaptain && (
                       <div className="text-[11px] text-muted-foreground">
-                        {accepted}/{total} confirmados
+                        {confirmedPlayers}/{t.category === "quarteto" ? 4 : 2} jogadores confirmados
+                        · {accepted}/{total} convites aceitos
                       </div>
                     )}
                   </div>
@@ -708,7 +510,7 @@ function TeamBuilder({
                 </div>
                 {isCaptain &&
                   t.invitations.map((inv) => {
-                    const pl = inv.invitee ?? getPlayer(inv.invitee_id);
+                    const pl = inv.invitee;
                     if (!pl) return null;
                     return (
                       <div
