@@ -11,6 +11,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { isMissingRpcError, normalizeProfileHandle } from "@/lib/media-url";
 import type { PublicProfileConnection } from "@/lib/profile-follow.types";
+import { firstDayOfMonth, validateAvailabilityInput } from "@/lib/team-availability";
 
 // =====================================================================
 // ARENAS
@@ -188,11 +189,6 @@ export const createTeam = createServerFn({ method: "POST" })
 // =====================================================================
 // AVAILABILITY
 // =====================================================================
-function firstOfMonthISO(d = new Date()): string {
-  const x = new Date(d.getFullYear(), d.getMonth(), 1);
-  return x.toISOString().slice(0, 10);
-}
-
 export const getTeamAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
@@ -204,7 +200,8 @@ export const getTeamAvailability = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const month = data.month ?? firstOfMonthISO();
+    const month = data.month ?? firstDayOfMonth();
+    if (!/^\d{4}-\d{2}-01$/.test(month)) throw new Error("Mês inválido.");
     // ensure rows exist (best effort, for this captain only)
     const { data: team } = await context.supabase
       .from("teams")
@@ -255,21 +252,26 @@ export const upsertSundayAvailability = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    const validationError = validateAvailabilityInput({
+      sundayDate: data.sundayDate,
+      isAvailable: data.isAvailable,
+      timeStart: data.timeStart,
+      timeEnd: data.timeEnd,
+      arenaId: data.arenaId,
+    });
+    if (validationError) throw new Error(validationError);
+
     const month = data.sundayDate.slice(0, 7) + "-01";
-    let arenaId = data.arenaId ?? null;
-    if (data.isAvailable && !arenaId) {
-      const { data: setting } = await context.supabase
-        .from("app_settings")
-        .select("value")
-        .eq("key", "default_arena_id")
-        .single();
-      if (setting?.value) {
-        arenaId =
-          typeof setting.value === "string"
-            ? setting.value.replace(/"/g, "")
-            : String(setting.value).replace(/"/g, "");
-      }
+    const { data: team, error: teamError } = await context.supabase
+      .from("teams")
+      .select("captain_id")
+      .eq("id", data.teamId)
+      .single();
+    if (teamError || !team) throw new Error("Equipe não encontrada.");
+    if (team.captain_id !== context.userId) {
+      throw new Error("Somente o capitão pode alterar a disponibilidade.");
     }
+
     const { error } = await context.supabase.from("team_monthly_availability").upsert(
       {
         team_id: data.teamId,
@@ -278,7 +280,7 @@ export const upsertSundayAvailability = createServerFn({ method: "POST" })
         is_available: data.isAvailable,
         time_start: data.isAvailable ? data.timeStart || null : null,
         time_end: data.isAvailable ? data.timeEnd || null : null,
-        arena_id: data.isAvailable ? arenaId : null,
+        arena_id: data.isAvailable ? data.arenaId : null,
         court_id: data.isAvailable ? data.courtId || null : null,
       },
       { onConflict: "team_id,sunday_date" },
@@ -321,7 +323,7 @@ export const findCommonSundays = createServerFn({ method: "GET" })
       .parse(d),
   )
   .handler(async ({ data, context }): Promise<Overlap[]> => {
-    const month = data.month ?? firstOfMonthISO();
+    const month = data.month ?? firstDayOfMonth();
     const { data: rows, error } = await context.supabase
       .from("team_monthly_availability")
       .select("team_id, sunday_date, is_available, time_start, time_end, arena_id")
