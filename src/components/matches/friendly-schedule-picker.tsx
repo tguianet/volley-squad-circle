@@ -50,7 +50,7 @@ export function FriendlySchedulePicker({
     enabled: !!date && !!arenaId,
   });
 
-  const slots = availQ.data ?? [];
+  const slots = useMemo(() => availQ.data ?? [], [availQ.data]);
 
   const availableTimes = useMemo(() => {
     const set = new Set<string>();
