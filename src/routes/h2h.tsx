@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Swords } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,7 +39,7 @@ async function fetchPlayers(): Promise<Player[]> {
 
 function H2HPage() {
   const q = useQuery({ queryKey: ["h2h-players"], queryFn: fetchPlayers });
-  const players = q.data ?? [];
+  const players = useMemo(() => q.data ?? [], [q.data]);
   const [a, setA] = useState<string>("");
   const [b, setB] = useState<string>("");
 
