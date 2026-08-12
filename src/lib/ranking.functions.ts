@@ -300,6 +300,8 @@ type Overlap = {
   challenged_arena_id: string | null;
 };
 
+export type ChallengeAvailabilityOverlap = Overlap;
+
 function overlapTimes(
   a: { start: string | null; end: string | null },
   b: { start: string | null; end: string | null },
@@ -324,11 +326,15 @@ export const findCommonSundays = createServerFn({ method: "GET" })
   )
   .handler(async ({ data, context }): Promise<Overlap[]> => {
     const month = data.month ?? firstDayOfMonth();
+    const monthEndDate = new Date(`${month}T12:00:00`);
+    monthEndDate.setMonth(monthEndDate.getMonth() + 3);
+    const monthEnd = data.month ? month : monthEndDate.toISOString().slice(0, 10);
     const { data: rows, error } = await context.supabase
       .from("team_monthly_availability")
       .select("team_id, sunday_date, is_available, time_start, time_end, arena_id")
       .in("team_id", [data.challengerTeamId, data.challengedTeamId])
-      .eq("month", month)
+      .gte("month", month)
+      .lte("month", monthEnd)
       .eq("is_available", true);
     if (error) throw new Error(error.message);
 
@@ -342,6 +348,7 @@ export const findCommonSundays = createServerFn({ method: "GET" })
     for (const [sunday, ch] of bySundayChallenger) {
       const cd = bySundayChallenged.get(sunday);
       if (!cd) continue;
+      if (!ch.arena_id || ch.arena_id !== cd.arena_id) continue;
       const ov = overlapTimes(
         { start: ch.time_start, end: ch.time_end },
         { start: cd.time_start, end: cd.time_end },
@@ -369,6 +376,7 @@ export const createChallenge = createServerFn({ method: "POST" })
         date: z.string(), // YYYY-MM-DD (domingo)
         time: z.string(), // HH:MM
         courtId: z.string().uuid(),
+        arenaId: z.string().uuid(),
       })
       .parse(d),
   )
@@ -423,53 +431,14 @@ export const createChallenge = createServerFn({ method: "POST" })
       throw new Error(CHALLENGE_INVALID_MESSAGE);
     }
 
-    const { data: setting, error: sErr } = await context.supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "default_arena_id")
-      .single();
-    if (sErr || !setting?.value) throw new Error("Arena padrão não configurada.");
-    const arenaId =
-      typeof setting.value === "string"
-        ? setting.value.replace(/"/g, "")
-        : String(setting.value).replace(/"/g, "");
-
-    const { data: court, error: cErr } = await context.supabase
-      .from("courts")
-      .select("id")
-      .eq("id", data.courtId)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (cErr) throw new Error(cErr.message);
-    if (!court) throw new Error("Quadra inválida ou inativa.");
-
-    const { data: busy, error: bErr } = await context.supabase
-      .from("challenges")
-      .select("id")
-      .eq("scheduled_date", data.date)
-      .eq("scheduled_time", data.time)
-      .eq("court_id", data.courtId)
-      .in("status", ["pending", "scheduled", "awaiting_schedule", "reschedule_requested"]);
-    if (bErr) throw new Error(bErr.message);
-    if (busy && busy.length > 0) {
-      throw new Error("Esta quadra já está reservada nesse horário. Escolha outra.");
-    }
-    const freeCourt = { id: data.courtId };
-
-    const { data: row, error } = await context.supabase
-      .from("challenges")
-      .insert({
-        challenger_team_id: data.challengerTeamId,
-        challenged_team_id: data.challengedTeamId,
-        scheduled_date: data.date,
-        scheduled_time: data.time,
-        arena_id: arenaId,
-        court_id: freeCourt.id,
-        status: "pending",
-        created_by: context.userId,
-      })
-      .select()
-      .single();
+    const { data: row, error } = await untyped(context.supabase).rpc("create_challenge_with_hold", {
+      p_challenger_team_id: data.challengerTeamId,
+      p_challenged_team_id: data.challengedTeamId,
+      p_scheduled_date: data.date,
+      p_scheduled_time: data.time,
+      p_arena_id: data.arenaId,
+      p_court_id: data.courtId,
+    });
     if (error) {
       if (error.message.includes("Desafio inválido pelas regras do ranking")) {
         throw new Error(CHALLENGE_INVALID_MESSAGE);
@@ -477,6 +446,46 @@ export const createChallenge = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
     return row;
+  });
+
+export const getAvailableChallengeCourts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        date: z.string(),
+        time: z.string(),
+        arenaId: z.string().uuid(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const [hours, minutes] = data.time.slice(0, 5).split(":").map(Number);
+    const endMinutes = hours * 60 + minutes + 60;
+    const end = `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
+    const { data: rows, error } = await untyped(context.supabase).rpc("get_available_courts", {
+      p_match_date: data.date,
+      p_start_time: data.time,
+      p_end_time: end,
+      p_arena_id: data.arenaId,
+    });
+    if (error) throw new Error(error.message);
+    const available = (rows ?? []) as Array<{ court_number: number; court_name: string }>;
+    if (available.length === 0) return [];
+    const { data: courts, error: courtsError } = await context.supabase
+      .from("courts")
+      .select("id, number, name")
+      .in(
+        "number",
+        available.map((court) => court.court_number),
+      )
+      .eq("is_active", true);
+    if (courtsError) throw new Error(courtsError.message);
+    return (courts ?? []).map((court) => ({
+      court_id: court.id,
+      court_number: court.number,
+      court_name: court.name,
+    }));
   });
 
 export const respondToChallenge = createServerFn({ method: "POST" })
@@ -519,65 +528,30 @@ export const respondToChallenge = createServerFn({ method: "POST" })
     } | null;
     if (!challengedTeam) throw new Error("Time desafiado não encontrado.");
 
-    const isChallengedCaptain = isUserTeamCaptain(challengedTeam, context.userId);
-    const isAdmin = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    const adminOk = isAdmin.data === true;
-
-    if (!isChallengedCaptain && !adminOk) {
-      throw new Error("Somente o capitão pode aceitar ou recusar este desafio.");
-    }
-
-    if (data.action === "accept") {
-      if (!challenge.scheduled_date || !challenge.scheduled_time) {
-        throw new Error("Desafio sem data ou horário definido.");
-      }
-
-      const slotStart = new Date(
-        `${challenge.scheduled_date}T${challenge.scheduled_time.slice(0, 5)}:00`,
-      );
-      if (Number.isNaN(slotStart.getTime()) || slotStart.getTime() < Date.now()) {
-        throw new Error("Não é possível aceitar um desafio expirado.");
-      }
-
-      if (challenge.court_id) {
-        const { data: busy, error: busyErr } = await context.supabase
-          .from("challenges")
-          .select("id")
-          .eq("scheduled_date", challenge.scheduled_date)
-          .eq("scheduled_time", challenge.scheduled_time)
-          .eq("court_id", challenge.court_id)
-          .neq("id", data.challengeId)
-          .in("status", ["pending", "scheduled", "awaiting_schedule", "reschedule_requested"]);
-        if (busyErr) throw new Error(busyErr.message);
-        if (busy && busy.length > 0) {
-          throw new Error("Esta quadra não está mais disponível neste horário.");
-        }
+    if (!isUserTeamCaptain(challengedTeam, context.userId)) {
+      const isAdmin = await context.supabase.rpc("has_role", {
+        _user_id: context.userId,
+        _role: "admin",
+      });
+      if (isAdmin.data !== true) {
+        throw new Error("Somente o capitão pode aceitar ou recusar este desafio.");
       }
     }
 
-    const next =
-      data.action === "accept"
-        ? "scheduled"
-        : data.action === "decline"
-          ? "declined"
-          : "reschedule_requested";
-
-    const { data: updated, error } = await context.supabase
-      .from("challenges")
-      .update({
-        status: next,
-        responded_at: new Date().toISOString(),
-        reschedule_reason: data.action === "reschedule" ? (data.reason ?? null) : null,
-      })
-      .eq("id", data.challengeId)
-      .eq("status", "pending")
-      .select("id")
-      .maybeSingle();
+    const { data: updated, error } = await untyped(context.supabase).rpc(
+      "respond_to_challenge_invitation",
+      {
+        p_challenge_id: data.challengeId,
+        p_action: data.action,
+        p_reason: data.reason ?? null,
+      },
+    );
     if (error) throw new Error(error.message);
-    if (!updated) throw new Error("Este desafio não está mais pendente.");
+    if (!updated) throw new Error("Não foi possível responder ao desafio.");
+    const next = (updated as { status: string }).status;
+    if (next === "expired") {
+      throw new Error("Este convite expirou e a quadra foi liberada.");
+    }
 
     const dt = challenge.scheduled_date
       ? new Date(challenge.scheduled_date + "T12:00:00").toLocaleDateString("pt-BR", {
