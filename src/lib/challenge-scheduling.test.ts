@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { hourlyStartsWithinWindow, validateCommonAvailability } from "@/lib/challenge-scheduling";
+import {
+  hourlyStartsWithinWindow,
+  validateCommonAvailability,
+  validateRescheduleSelection,
+} from "@/lib/challenge-scheduling";
 
 describe("challenge scheduling", () => {
   it("keeps one-hour starts inside the common window", () => {
@@ -39,5 +43,26 @@ describe("challenge scheduling", () => {
         challengedArenaId: "arena-b",
       }),
     ).toBe("Desafios só podem ocorrer aos domingos.");
+  });
+
+  it("requires a complete Sunday counterproposal", () => {
+    expect(
+      validateRescheduleSelection({
+        date: "2026-08-16",
+        time: "10:00",
+        arenaId: "arena-a",
+        courtId: "court-a",
+        reason: "Novo horário comum",
+      }),
+    ).toBeNull();
+    expect(
+      validateRescheduleSelection({
+        date: "2026-08-17",
+        time: "10:00",
+        arenaId: "arena-a",
+        courtId: "court-a",
+        reason: "Novo horário comum",
+      }),
+    ).toBe("Selecione um domingo compatível.");
   });
 });

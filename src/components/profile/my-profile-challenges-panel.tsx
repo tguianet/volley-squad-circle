@@ -14,6 +14,7 @@ import {
   registerScore,
   requestAdminScoreReview,
   respondToChallenge,
+  respondToChallengeReschedule,
 } from "@/lib/ranking.functions";
 import { getCurrentFortnightInfo } from "@/lib/challenge-fortnight";
 import { useCurrentUser } from "@/hooks/use-auth";
@@ -34,6 +35,10 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { TeamAvailabilityPanel } from "@/components/challenges/team-availability-panel";
+import {
+  ChallengeRescheduleDialog,
+  type RescheduleTarget,
+} from "@/components/challenges/challenge-reschedule-dialog";
 
 type ChallengeRow = {
   id: string;
@@ -41,6 +46,10 @@ type ChallengeRow = {
   scheduled_date: string | null;
   scheduled_time: string | null;
   reschedule_reason: string | null;
+  proposed_date: string | null;
+  proposed_time: string | null;
+  proposed_arena: { id: string; name: string } | null;
+  proposed_court: { id: string; number: number; name: string } | null;
   created_at: string;
   score_challenger: number | null;
   score_challenged: number | null;
@@ -69,13 +78,15 @@ const ACTIVE_OUTGOING = new Set([
   "awaiting_schedule",
   "awaiting_confirmation",
 ]);
-const HISTORY_STATUSES = new Set(["completed", "declined", "wo"]);
+const HISTORY_STATUSES = new Set(["completed", "declined", "cancelled", "expired", "wo"]);
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Aguardando resposta",
   scheduled: "Agendado",
   reschedule_requested: "Reagendamento solicitado",
   declined: "Recusado",
+  cancelled: "Contraproposta recusada",
+  expired: "Expirado",
   completed: "Finalizado",
   wo: "W.O.",
   awaiting_schedule: "Aguardando horário",
@@ -97,6 +108,9 @@ function ChallengeCard({
   direction,
   onAccept,
   onDecline,
+  onProposeReschedule,
+  onAcceptReschedule,
+  onDeclineReschedule,
   onRegisterScore,
   onConfirmScore,
   onRejectScore,
@@ -108,6 +122,9 @@ function ChallengeCard({
   direction: "incoming" | "outgoing" | "history";
   onAccept?: (id: string) => void;
   onDecline?: (id: string) => void;
+  onProposeReschedule?: (row: ChallengeRow) => void;
+  onAcceptReschedule?: (id: string) => void;
+  onDeclineReschedule?: (id: string) => void;
   onRegisterScore?: (id: string, scoreChallenger: number, scoreChallenged: number) => void;
   onConfirmScore?: (id: string) => void;
   onRejectScore?: (id: string) => void;
@@ -120,6 +137,11 @@ function ChallengeCard({
   const myTeam = direction === "outgoing" ? row.challenger : row.challenged;
   const opponent = direction === "outgoing" ? row.challenged : row.challenger;
   const showActions = direction === "incoming" && row.status === "pending" && onAccept && onDecline;
+  const showRescheduleResponse =
+    direction === "outgoing" &&
+    row.status === "reschedule_requested" &&
+    onAcceptReschedule &&
+    onDeclineReschedule;
   const canRegisterScore = row.status === "scheduled" && onRegisterScore;
   const isScoreAuthor = row.score_registered_by === currentUserId;
   const canReviewScore =
@@ -193,6 +215,16 @@ function ChallengeCard({
         </p>
       ) : null}
 
+      {row.status === "reschedule_requested" && row.proposed_date ? (
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs space-y-1">
+          <p className="font-semibold text-primary">Novo horário proposto</p>
+          <p>{formatChallengeDate(row.proposed_date, row.proposed_time)}</p>
+          <p>
+            {row.proposed_court?.name ?? "Quadra"} · {row.proposed_arena?.name ?? "Arena"}
+          </p>
+        </div>
+      ) : null}
+
       {showActions ? (
         <div className="flex gap-2 pt-1">
           <Button
@@ -213,6 +245,33 @@ function ChallengeCard({
           >
             <X className="size-4 mr-1" />
             Recusar
+          </Button>
+          {onProposeReschedule ? (
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex-1"
+              disabled={busy}
+              onClick={() => onProposeReschedule(row)}
+            >
+              <Clock className="size-4 mr-1" /> Reagendar
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {showRescheduleResponse ? (
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button size="sm" disabled={busy} onClick={() => onAcceptReschedule(row.id)}>
+            <Check className="size-4 mr-1" /> Aceitar novo horário
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            onClick={() => onDeclineReschedule(row.id)}
+          >
+            <X className="size-4 mr-1" /> Recusar proposta
           </Button>
         </div>
       ) : null}
@@ -364,10 +423,12 @@ export function MyProfileChallengesPanel() {
   const qc = useQueryClient();
   const { user } = useCurrentUser();
   const [subTab, setSubTab] = useState<SubTab>("aceitar");
+  const [rescheduleTarget, setRescheduleTarget] = useState<ChallengeRow | null>(null);
   const fortnight = getCurrentFortnightInfo();
 
   const fetchChallenges = useServerFn(listMyChallenges);
   const respond = useServerFn(respondToChallenge);
+  const respondReschedule = useServerFn(respondToChallengeReschedule);
   const register = useServerFn(registerScore);
   const confirm = useServerFn(confirmScore);
   const reject = useServerFn(disputeScore);
@@ -380,6 +441,9 @@ export function MyProfileChallengesPanel() {
 
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<"accept" | "decline" | null>(null);
+  const [lastRescheduleAction, setLastRescheduleAction] = useState<"accept" | "decline" | null>(
+    null,
+  );
 
   const respondM = useMutation({
     mutationFn: respond,
@@ -392,6 +456,23 @@ export function MyProfileChallengesPanel() {
     },
     onError: (e: Error) => {
       toast.error(e.message);
+      setRespondingId(null);
+    },
+  });
+
+  const respondRescheduleM = useMutation({
+    mutationFn: respondReschedule,
+    onSuccess: () => {
+      toast.success(
+        lastRescheduleAction === "accept"
+          ? "Novo horário aceito e reserva confirmada."
+          : "Contraproposta recusada e quadra liberada.",
+      );
+      setLastRescheduleAction(null);
+      refreshChallenges();
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
       setRespondingId(null);
     },
   });
@@ -485,6 +566,11 @@ export function MyProfileChallengesPanel() {
     setLastAction("decline");
     respondM.mutate({ data: { challengeId: id, action: "decline" } });
   };
+  const handleRescheduleResponse = (id: string, action: "accept" | "decline") => {
+    setRespondingId(id);
+    setLastRescheduleAction(action);
+    respondRescheduleM.mutate({ data: { challengeId: id, action } });
+  };
 
   const handleRegisterScore = (id: string, scoreChallenger: number, scoreChallenged: number) => {
     setRespondingId(id);
@@ -505,10 +591,26 @@ export function MyProfileChallengesPanel() {
 
   const scoreMutationPending =
     registerM.isPending || confirmM.isPending || rejectM.isPending || requestAdminM.isPending;
-  const busyId = respondM.isPending || scoreMutationPending ? respondingId : null;
+  const busyId =
+    respondM.isPending || respondRescheduleM.isPending || scoreMutationPending
+      ? respondingId
+      : null;
 
   return (
     <div className="space-y-4">
+      <ChallengeRescheduleDialog
+        key={rescheduleTarget?.id ?? "closed"}
+        challenge={rescheduleTarget as RescheduleTarget | null}
+        open={!!rescheduleTarget}
+        onOpenChange={(open) => {
+          if (!open) setRescheduleTarget(null);
+        }}
+        onSaved={() => {
+          qc.invalidateQueries({ queryKey: ["my-challenges"] });
+          qc.invalidateQueries({ queryKey: ["pending-challenge-invite"] });
+          setRescheduleTarget(null);
+        }}
+      />
       <TeamAvailabilityPanel />
       <Card className="p-4 sm:p-5 border-primary/20 bg-primary/5 shadow-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -597,6 +699,7 @@ export function MyProfileChallengesPanel() {
                   direction="incoming"
                   onAccept={handleAccept}
                   onDecline={handleDecline}
+                  onProposeReschedule={setRescheduleTarget}
                   onRegisterScore={handleRegisterScore}
                   onConfirmScore={handleConfirmScore}
                   onRejectScore={handleRejectScore}
@@ -630,6 +733,8 @@ export function MyProfileChallengesPanel() {
                   key={r.id}
                   row={r}
                   direction="outgoing"
+                  onAcceptReschedule={(id) => handleRescheduleResponse(id, "accept")}
+                  onDeclineReschedule={(id) => handleRescheduleResponse(id, "decline")}
                   onRegisterScore={handleRegisterScore}
                   onConfirmScore={handleConfirmScore}
                   onRejectScore={handleRejectScore}
