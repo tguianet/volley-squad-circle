@@ -17,7 +17,9 @@ import {
   listTeams,
   getMyTeams,
   createChallenge,
-  getCourtAvailability,
+  findCommonSundays,
+  getAvailableChallengeCourts,
+  listArenas,
 } from "@/lib/ranking.functions";
 import {
   Users,
@@ -40,6 +42,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useMyProfile } from "@/hooks/use-auth";
 import { requiredTeamMemberCount } from "@/lib/team-format";
+import { hourlyStartsWithinWindow } from "@/lib/challenge-scheduling";
 import {
   CHALLENGE_INVALID_MESSAGE,
   canChallengeTeam,
@@ -109,11 +112,15 @@ type CourtSlot = {
   court_id: string;
   court_number: number;
   court_name: string;
-  slot_time: string;
-  is_free: boolean;
 };
 
-const MONTHS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+type CommonSunday = {
+  sunday_date: string;
+  overlap_start: string;
+  overlap_end: string;
+  challenger_arena_id: string | null;
+  challenged_arena_id: string | null;
+};
 
 function initials(name?: string | null) {
   if (!name) return "?";
@@ -164,11 +171,14 @@ function DesafiosPage() {
 
   const fetchTeams = useServerFn(listTeams);
   const fetchMyTeams = useServerFn(getMyTeams);
-  const fetchAvail = useServerFn(getCourtAvailability);
+  const fetchCommonSundays = useServerFn(findCommonSundays);
+  const fetchAvailableCourts = useServerFn(getAvailableChallengeCourts);
+  const fetchArenas = useServerFn(listArenas);
   const create = useServerFn(createChallenge);
 
   const teamsQ = useQuery({ queryKey: ["teams"], queryFn: () => fetchTeams() });
   const myTeamsQ = useQuery({ queryKey: ["my-teams"], queryFn: () => fetchMyTeams() });
+  const arenasQ = useQuery({ queryKey: ["arenas"], queryFn: () => fetchArenas() });
 
   const allMyTeams = (myTeamsQ.data ?? []) as TeamLite[];
 
@@ -284,54 +294,41 @@ function DesafiosPage() {
     [teamsQ.data, opponentId],
   );
 
-  const nextSundays = useMemo(() => {
-    const out: { iso: string; day: string; month: string }[] = [];
-    const d = new Date();
-    d.setHours(12, 0, 0, 0);
-    const offset = (7 - d.getDay()) % 7 || 7;
-    d.setDate(d.getDate() + offset);
-    for (let i = 0; i < 6; i++) {
-      out.push({
-        iso: d.toISOString().slice(0, 10),
-        day: String(d.getDate()).padStart(2, "0"),
-        month: MONTHS[d.getMonth()],
-      });
-      d.setDate(d.getDate() + 7);
-    }
-    return out;
-  }, []);
-
-  const availQ = useQuery({
-    queryKey: ["court-avail", date],
-    queryFn: () => fetchAvail({ data: { date } }),
-    enabled: !!date,
+  const commonSundaysQ = useQuery({
+    queryKey: ["common-sundays", myTeamId, opponentId],
+    queryFn: () =>
+      fetchCommonSundays({
+        data: { challengerTeamId: myTeamId, challengedTeamId: opponentId },
+      }),
+    enabled: !!myTeamId && !!opponentId,
   });
 
-  const slots = useMemo(() => (availQ.data as CourtSlot[] | undefined) ?? [], [availQ.data]);
+  const commonSundays = (commonSundaysQ.data ?? []) as CommonSunday[];
+  const selectedOverlap = commonSundays.find((item) => item.sunday_date === date);
+  const arenaId = selectedOverlap?.challenger_arena_id ?? "";
+  const arenaName = (arenasQ.data ?? []).find((arena) => arena.id === arenaId)?.name;
 
   const availableTimes = useMemo(() => {
-    const set = new Set<string>();
-    slots.forEach((s) => {
-      if (s.is_free) set.add(s.slot_time.slice(0, 5));
-    });
-    return Array.from(set).sort();
-  }, [slots]);
+    if (!selectedOverlap) return [];
+    return hourlyStartsWithinWindow(selectedOverlap.overlap_start, selectedOverlap.overlap_end);
+  }, [selectedOverlap]);
+
+  const courtsQ = useQuery({
+    queryKey: ["challenge-courts", date, time, arenaId],
+    queryFn: () => fetchAvailableCourts({ data: { date, time, arenaId } }),
+    enabled: !!date && !!time && !!arenaId,
+  });
 
   const availableCourts = useMemo(() => {
-    if (!time) return [];
-    const m = new Map<string, CourtSlot>();
-    slots.forEach((s) => {
-      if (s.slot_time.slice(0, 5) === time && s.is_free) m.set(s.court_id, s);
-    });
-    return Array.from(m.values()).sort((a, b) => a.court_number - b.court_number);
-  }, [slots, time]);
+    return ((courtsQ.data ?? []) as CourtSlot[]).sort((a, b) => a.court_number - b.court_number);
+  }, [courtsQ.data]);
 
   const selectedCourt = availableCourts.find((c) => c.court_id === courtId);
 
   const sendM = useMutation({
     mutationFn: create,
     onSuccess: () => {
-      toast.success("Desafio enviado! Quadra reservada.");
+      toast.success("Desafio enviado! Quadra pré-bloqueada até a resposta.");
       qc.invalidateQueries({ queryKey: ["my-challenges"] });
       setStep(1);
       setOpponentId("");
@@ -362,7 +359,7 @@ function DesafiosPage() {
       toast.error(CHALLENGE_INVALID_MESSAGE);
       return false;
     }
-    if (!date || !time || !courtId) {
+    if (!date || !time || !courtId || !arenaId || !selectedOverlap) {
       toast.error(CHALLENGE_INVALID_MESSAGE);
       return false;
     }
@@ -375,6 +372,7 @@ function DesafiosPage() {
     !!date &&
     !!time &&
     !!courtId &&
+    !!arenaId &&
     !sendM.isPending &&
     candidates.some((c) => c.id === opponentId);
 
@@ -387,6 +385,7 @@ function DesafiosPage() {
         date,
         time,
         courtId,
+        arenaId,
       },
     });
   };
@@ -894,45 +893,68 @@ function DesafiosPage() {
                               Selecione a Data (Domingos)
                             </h2>
                           </div>
-                          <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                            {nextSundays.map((s) => (
-                              <button
-                                key={s.iso}
-                                type="button"
-                                onClick={() => {
-                                  setDate(s.iso);
-                                  setTime("");
-                                  setCourtId("");
-                                }}
-                                className={cn(
-                                  "shrink-0 w-24 h-32 rounded-xl border-2 flex flex-col items-center justify-center transition-all group",
-                                  date === s.iso
-                                    ? "border-primary bg-primary/10 shadow-md"
-                                    : "border-border hover:border-primary/50 hover:bg-primary/5",
-                                )}
-                              >
-                                <span
-                                  className={cn(
-                                    "text-xs uppercase font-bold",
-                                    date === s.iso
-                                      ? "text-primary"
-                                      : "text-muted-foreground group-hover:text-primary",
-                                  )}
-                                >
-                                  {s.month}
-                                </span>
-                                <span
-                                  className={cn(
-                                    "text-3xl font-display font-bold my-1",
-                                    date === s.iso && "text-primary",
-                                  )}
-                                >
-                                  {s.day}
-                                </span>
-                                <span className="text-xs font-semibold text-accent">DOM</span>
-                              </button>
-                            ))}
-                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Mostramos somente domingos em que as duas equipes escolheram a mesma
+                            arena e possuem horários compatíveis.
+                          </p>
+                          {commonSundaysQ.isLoading ? (
+                            <p className="text-sm text-muted-foreground">Cruzando agendas…</p>
+                          ) : commonSundays.length === 0 ? (
+                            <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                              Não há domingo compatível nos próximos três meses. Os capitães devem
+                              revisar a disponibilidade mensal.
+                            </div>
+                          ) : (
+                            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                              {commonSundays.map((s) => {
+                                const sunday = new Date(`${s.sunday_date}T12:00:00`);
+                                return (
+                                  <button
+                                    key={s.sunday_date}
+                                    type="button"
+                                    onClick={() => {
+                                      setDate(s.sunday_date);
+                                      setTime("");
+                                      setCourtId("");
+                                    }}
+                                    className={cn(
+                                      "shrink-0 w-24 h-32 rounded-xl border-2 flex flex-col items-center justify-center transition-all group",
+                                      date === s.sunday_date
+                                        ? "border-primary bg-primary/10 shadow-md"
+                                        : "border-border hover:border-primary/50 hover:bg-primary/5",
+                                    )}
+                                  >
+                                    <span
+                                      className={cn(
+                                        "text-xs uppercase font-bold",
+                                        date === s.sunday_date
+                                          ? "text-primary"
+                                          : "text-muted-foreground group-hover:text-primary",
+                                      )}
+                                    >
+                                      {sunday.toLocaleDateString("pt-BR", { month: "short" })}
+                                    </span>
+                                    <span
+                                      className={cn(
+                                        "text-3xl font-display font-bold my-1",
+                                        date === s.sunday_date && "text-primary",
+                                      )}
+                                    >
+                                      {String(sunday.getDate()).padStart(2, "0")}
+                                    </span>
+                                    <span className="text-xs font-semibold text-accent">DOM</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {selectedOverlap ? (
+                            <div className="rounded-xl bg-primary/5 border border-primary/15 p-3 text-sm">
+                              <strong>{arenaName ?? "Arena selecionada"}</strong> · janela comum das{" "}
+                              {selectedOverlap.overlap_start.slice(0, 5)} às{" "}
+                              {selectedOverlap.overlap_end.slice(0, 5)}
+                            </div>
+                          ) : null}
                           <div className="flex justify-between gap-3 pt-2">
                             <Button variant="ghost" onClick={() => setStep(2)}>
                               <ArrowLeft className="size-4 mr-1" /> Voltar
@@ -957,9 +979,7 @@ function DesafiosPage() {
                             <Clock className="size-5" />
                             <h2 className="font-display text-xl font-bold">Horários Disponíveis</h2>
                           </div>
-                          {availQ.isLoading ? (
-                            <p className="text-sm text-muted-foreground">Carregando horários…</p>
-                          ) : availableTimes.length === 0 ? (
+                          {availableTimes.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
                               Nenhum horário livre neste domingo.
                             </p>
@@ -1009,7 +1029,9 @@ function DesafiosPage() {
                             <MapPin className="size-5" />
                             <h2 className="font-display text-xl font-bold">Escolha a Quadra</h2>
                           </div>
-                          {availableCourts.length === 0 ? (
+                          {courtsQ.isLoading ? (
+                            <p className="text-sm text-muted-foreground">Consultando quadras…</p>
+                          ) : availableCourts.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
                               Nenhuma quadra livre neste horário.
                             </p>
