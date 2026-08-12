@@ -39,6 +39,7 @@ import {
   ChallengeRescheduleDialog,
   type RescheduleTarget,
 } from "@/components/challenges/challenge-reschedule-dialog";
+import { hasChallengeStarted } from "@/lib/challenge-scheduling";
 
 type ChallengeRow = {
   id: string;
@@ -54,6 +55,9 @@ type ChallengeRow = {
   score_challenger: number | null;
   score_challenged: number | null;
   score_registered_by: string | null;
+  score_registered_at: string | null;
+  score_confirmed_by: string | null;
+  score_confirmed_at: string | null;
   score_admin_review_requested_by: string | null;
   score_admin_review_requested_at: string | null;
   challenger: { id: string; name: string; rank_position: number | null } | null;
@@ -142,7 +146,8 @@ function ChallengeCard({
     row.status === "reschedule_requested" &&
     onAcceptReschedule &&
     onDeclineReschedule;
-  const canRegisterScore = row.status === "scheduled" && onRegisterScore;
+  const challengeStarted = hasChallengeStarted(row.scheduled_date, row.scheduled_time);
+  const canRegisterScore = row.status === "scheduled" && challengeStarted && onRegisterScore;
   const isScoreAuthor = row.score_registered_by === currentUserId;
   const canReviewScore =
     row.status === "awaiting_confirmation" &&
@@ -321,6 +326,12 @@ function ChallengeCard({
         </div>
       ) : null}
 
+      {row.status === "scheduled" && !challengeStarted ? (
+        <p className="border-t border-border/60 pt-3 text-xs text-muted-foreground">
+          O placar será liberado após o início programado da partida.
+        </p>
+      ) : null}
+
       {row.status === "awaiting_confirmation" ? (
         <div className="space-y-2 border-t border-border/60 pt-3">
           {canReviewScore ? (
@@ -374,6 +385,12 @@ function ChallengeCard({
             </div>
           )}
         </div>
+      ) : null}
+
+      {row.status === "completed" && row.score_confirmed_at ? (
+        <p className="border-t border-border/60 pt-3 text-[11px] text-muted-foreground">
+          Resultado confirmado em {new Date(row.score_confirmed_at).toLocaleString("pt-BR")}.
+        </p>
       ) : null}
     </div>
   );

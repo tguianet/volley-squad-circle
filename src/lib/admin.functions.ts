@@ -130,6 +130,19 @@ export const adminConfirmChallengeScore = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const adminRejectChallengeScore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ challengeId: z.string().uuid() }).parse(d))
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context, true);
+    const { error } = await untyped(context.supabase).rpc("reject_challenge_score", {
+      _challenge_id: data.challengeId,
+    });
+    if (error) throw new Error(error.message);
+    await audit(context, "challenge.score.admin_reject", "challenge", data.challengeId);
+    return { ok: true };
+  });
+
 // ===== Users =====
 export const listUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
