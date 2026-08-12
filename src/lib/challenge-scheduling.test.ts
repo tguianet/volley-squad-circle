@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hourlyStartsWithinWindow,
+  hasChallengeStarted,
   validateCommonAvailability,
   validateRescheduleSelection,
 } from "@/lib/challenge-scheduling";
@@ -64,5 +65,12 @@ describe("challenge scheduling", () => {
         reason: "Novo horário comum",
       }),
     ).toBe("Selecione um domingo compatível.");
+  });
+
+  it("only releases score registration after the scheduled start", () => {
+    const now = new Date("2026-08-16T13:30:00.000Z");
+    expect(hasChallengeStarted("2026-08-16", "10:00:00", now)).toBe(true);
+    expect(hasChallengeStarted("2026-08-16", "11:00:00", now)).toBe(false);
+    expect(hasChallengeStarted(null, null, now)).toBe(false);
   });
 });

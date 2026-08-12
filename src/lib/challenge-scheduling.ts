@@ -44,3 +44,13 @@ export function validateRescheduleSelection(input: {
   if (input.reason.trim().length < 3) return "Informe o motivo do reagendamento.";
   return null;
 }
+
+export function hasChallengeStarted(
+  scheduledDate: string | null,
+  scheduledTime: string | null,
+  now = new Date(),
+): boolean {
+  if (!scheduledDate || !scheduledTime) return false;
+  const startsAt = new Date(`${scheduledDate}T${scheduledTime.slice(0, 8)}-03:00`);
+  return Number.isFinite(startsAt.getTime()) && startsAt.getTime() <= now.getTime();
+}

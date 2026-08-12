@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   adminConfirmChallengeScore,
+  adminRejectChallengeScore,
   getAdminStats,
   listPendingAdminScoreReviews,
 } from "@/lib/admin.functions";
@@ -65,6 +66,7 @@ function AdminDashboard() {
   const fn = useServerFn(getAdminStats);
   const listScoreReviews = useServerFn(listPendingAdminScoreReviews);
   const confirmScore = useServerFn(adminConfirmChallengeScore);
+  const rejectScore = useServerFn(adminRejectChallengeScore);
   const { data, isLoading } = useQuery({ queryKey: ["admin-stats"], queryFn: () => fn() });
   const scoreReviews = useQuery({
     queryKey: ["admin-score-reviews"],
@@ -75,6 +77,15 @@ function AdminDashboard() {
     mutationFn: confirmScore,
     onSuccess: () => {
       toast.success("Placar confirmado pelo ADM.");
+      qc.invalidateQueries({ queryKey: ["admin-score-reviews"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const rejectScoreM = useMutation({
+    mutationFn: rejectScore,
+    onSuccess: () => {
+      toast.success("Placar rejeitado pelo ADM e devolvido aos capitães.");
       qc.invalidateQueries({ queryKey: ["admin-score-reviews"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
     },
@@ -154,13 +165,23 @@ function AdminDashboard() {
                     </p>
                     <p className="text-xs text-white/50">Um capitão pediu a análise do ADM.</p>
                   </div>
-                  <Button
-                    size="sm"
-                    disabled={confirmScoreM.isPending}
-                    onClick={() => confirmScoreM.mutate({ data: { challengeId: review.id } })}
-                  >
-                    Confirmar placar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      disabled={confirmScoreM.isPending || rejectScoreM.isPending}
+                      onClick={() => confirmScoreM.mutate({ data: { challengeId: review.id } })}
+                    >
+                      Confirmar placar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={confirmScoreM.isPending || rejectScoreM.isPending}
+                      onClick={() => rejectScoreM.mutate({ data: { challengeId: review.id } })}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
