@@ -494,8 +494,7 @@ export const respondToChallenge = createServerFn({ method: "POST" })
     z
       .object({
         challengeId: z.string().uuid(),
-        action: z.enum(["accept", "decline", "reschedule"]),
-        reason: z.string().max(500).optional(),
+        action: z.enum(["accept", "decline"]),
       })
       .parse(d),
   )
@@ -543,7 +542,7 @@ export const respondToChallenge = createServerFn({ method: "POST" })
       {
         p_challenge_id: data.challengeId,
         p_action: data.action,
-        p_reason: data.reason ?? null,
+        p_reason: null,
       },
     );
     if (error) throw new Error(error.message);
@@ -553,69 +552,59 @@ export const respondToChallenge = createServerFn({ method: "POST" })
       throw new Error("Este convite expirou e a quadra foi liberada.");
     }
 
-    const dt = challenge.scheduled_date
-      ? new Date(challenge.scheduled_date + "T12:00:00").toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-        })
-      : "";
-    const timeLabel = challenge.scheduled_time?.slice(0, 5) ?? "";
-    const courtName =
-      (challenge.court as { name?: string; number?: number } | null)?.name ??
-      `Quadra ${(challenge.court as { number?: number } | null)?.number ?? ""}`;
-    const arenaName = (challenge.arena as { name?: string } | null)?.name ?? "Arena";
-    const challengerName =
-      (challenge.challenger as { name?: string } | null)?.name ?? "Time desafiante";
-    const challengedName = challengedTeam.name;
-
-    async function notifyTeamMembers(teamId: string, title: string, body: string) {
-      const { data: members } = await context.supabase
-        .from("team_members")
-        .select("profile_id")
-        .eq("team_id", teamId);
-      const { data: teamRow } = await context.supabase
-        .from("teams")
-        .select("captain_id")
-        .eq("id", teamId)
-        .maybeSingle();
-
-      const userIds = new Set<string>();
-      for (const m of members ?? []) userIds.add(m.profile_id);
-      if (teamRow?.captain_id) userIds.add(teamRow.captain_id);
-
-      if (userIds.size === 0) return;
-
-      await context.supabase.from("notifications").insert(
-        [...userIds].map((user_id) => ({
-          user_id,
-          kind: data.action === "accept" ? "challenge_accepted" : "challenge_declined",
-          title,
-          body,
-          link_url: "/desafios",
-        })),
-      );
-    }
-
-    if (data.action === "accept") {
-      await notifyTeamMembers(
-        challenge.challenger_team_id,
-        "Desafio aceito",
-        `${challengedName} aceitou o desafio. ${dt} às ${timeLabel} — ${courtName}, ${arenaName}.`,
-      );
-      await notifyTeamMembers(
-        challenge.challenged_team_id,
-        "Desafio aceito",
-        `Desafio confirmado contra ${challengerName}. ${dt} às ${timeLabel} — ${courtName}, ${arenaName}.`,
-      );
-    } else if (data.action === "decline") {
-      await notifyTeamMembers(
-        challenge.challenger_team_id,
-        "Desafio recusado",
-        `${challengedName} recusou o desafio de ${challengerName}.`,
-      );
-    }
-
     return { ok: true, status: next };
+  });
+
+export const proposeChallengeReschedule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        challengeId: z.string().uuid(),
+        date: z.string(),
+        time: z.string(),
+        arenaId: z.string().uuid(),
+        courtId: z.string().uuid(),
+        reason: z.string().trim().min(3).max(500),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: updated, error } = await untyped(context.supabase).rpc(
+      "propose_challenge_reschedule",
+      {
+        p_challenge_id: data.challengeId,
+        p_proposed_date: data.date,
+        p_proposed_time: data.time,
+        p_proposed_arena_id: data.arenaId,
+        p_proposed_court_id: data.courtId,
+        p_reason: data.reason,
+      },
+    );
+    if (error) throw new Error(error.message);
+    return updated;
+  });
+
+export const respondToChallengeReschedule = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        challengeId: z.string().uuid(),
+        action: z.enum(["accept", "decline"]),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: updated, error } = await untyped(context.supabase).rpc(
+      "respond_to_challenge_reschedule",
+      { p_challenge_id: data.challengeId, p_action: data.action },
+    );
+    if (error) throw new Error(error.message);
+    if ((updated as { status?: string } | null)?.status === "expired") {
+      throw new Error("A contraproposta expirou e a quadra foi liberada.");
+    }
+    return updated;
   });
 
 export const listMyChallenges = createServerFn({ method: "GET" })
@@ -634,12 +623,15 @@ export const listMyChallenges = createServerFn({ method: "GET" })
       .select(
         `
         id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes, created_at,
+        proposed_date, proposed_time, proposed_arena_id, proposed_court_id, reschedule_proposed_by,
         score_challenger, score_challenged, score_registered_by, score_registered_at, score_confirmed_by, score_confirmed_at,
         score_admin_review_requested_by, score_admin_review_requested_at,
         challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
         challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),
         arena:arenas(id, name),
-        court:courts(id, number, name)
+        court:courts(id, number, name),
+        proposed_arena:arenas!challenges_proposed_arena_id_fkey(id, name),
+        proposed_court:courts!challenges_proposed_court_id_fkey(id, number, name)
       `,
       )
       .or(`challenger_team_id.in.(${ids.join(",")}),challenged_team_id.in.(${ids.join(",")})`)

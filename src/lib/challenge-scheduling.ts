@@ -31,3 +31,16 @@ export function hourlyStartsWithinWindow(start: string, end: string): string[] {
   }
   return result;
 }
+
+export function validateRescheduleSelection(input: {
+  date: string;
+  time: string;
+  arenaId: string;
+  courtId: string;
+  reason: string;
+}): string | null {
+  if (!isSundayISO(input.date)) return "Selecione um domingo compatível.";
+  if (!input.time || !input.arenaId || !input.courtId) return "Selecione horário e quadra.";
+  if (input.reason.trim().length < 3) return "Informe o motivo do reagendamento.";
+  return null;
+}
