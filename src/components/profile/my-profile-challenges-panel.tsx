@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { AsyncQueryState } from "@/components/ui/async-query-state";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -698,11 +699,16 @@ export function MyProfileChallengesPanel() {
         />
       </div>
 
-      {challengesQ.isLoading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-primary" />
-        </div>
-      ) : (
+      <AsyncQueryState
+        isLoading={challengesQ.isLoading}
+        isError={challengesQ.isError}
+        isEmpty={false}
+        emptyLabel=""
+        errorLabel="Não foi possível carregar seus desafios."
+        onRetry={() => challengesQ.refetch()}
+        devContext="Meus Desafios"
+        devError={challengesQ.error}
+      >
         <div className="space-y-3">
           {subTab === "aceitar" &&
             (toAccept.length === 0 ? (
@@ -787,7 +793,7 @@ export function MyProfileChallengesPanel() {
               })
             ))}
         </div>
-      )}
+      </AsyncQueryState>
     </div>
   );
 }
