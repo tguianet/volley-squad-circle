@@ -202,15 +202,64 @@ function resolveTeamArenaLabel(
   return RANKING_ARENA_UNDEFINED;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value != null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function asNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function asNullableNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" ? value : fallback;
+}
+
 function parseDetailsPayload(raw: unknown): RankingDetailsPayload {
-  const data = raw as {
-    summary?: RankingDetailsPayload["summary"];
-    matches?: RankingMatchDetail[];
-  } | null;
-  return {
-    summary: data?.summary ?? null,
-    matches: data?.matches ?? [],
-  };
+  const data = asRecord(raw);
+  const rawSummary = asRecord(data?.summary);
+  const rawMatches = Array.isArray(data?.matches) ? data.matches : [];
+
+  const summary: RankingDetailsPayload["summary"] = rawSummary
+    ? {
+        wins: asNumber(rawSummary.wins),
+        losses: asNumber(rawSummary.losses),
+        games: asNumber(rawSummary.games),
+        win_rate: asNumber(rawSummary.win_rate),
+        points: asNumber(rawSummary.points),
+        rank_position: asNullableNumber(rawSummary.rank_position),
+        last_updated: asString(rawSummary.last_updated),
+        last_five: Array.isArray(rawSummary.last_five)
+          ? rawSummary.last_five.filter((item): item is string => typeof item === "string")
+          : [],
+        best_set_score: asNullableNumber(rawSummary.best_set_score),
+      }
+    : null;
+
+  const matches: RankingMatchDetail[] = rawMatches.flatMap((item) => {
+    const match = asRecord(item);
+    if (!match) return [];
+
+    return [
+      {
+        match_date: asString(match.match_date ?? match.date) || null,
+        match_time: asString(match.match_time ?? match.time) || null,
+        competition: asString(match.competition ?? match.title, "Partida"),
+        opponent_name: asString(match.opponent_name) || null,
+        outcome: asString(match.outcome, "—"),
+        score_label: asString(match.score_label, "—"),
+        points_gained: asNumber(match.points_gained),
+        rank_position: asNullableNumber(match.rank_position),
+      },
+    ];
+  });
+
+  return { summary, matches };
 }
 
 export async function fetchIndividualRankingRows(gender: GenderFilter): Promise<RankingTableRow[]> {
