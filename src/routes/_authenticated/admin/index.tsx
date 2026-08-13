@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   adminConfirmChallengeScore,
+  adminCorrectChallengeScore,
   adminRejectChallengeScore,
   getAdminStats,
   listPendingAdminScoreReviews,
@@ -10,6 +12,7 @@ import {
 import { formatDateTimeBR } from "@/lib/date-format";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/use-auth";
 import {
@@ -67,6 +70,10 @@ function AdminDashboard() {
   const listScoreReviews = useServerFn(listPendingAdminScoreReviews);
   const confirmScore = useServerFn(adminConfirmChallengeScore);
   const rejectScore = useServerFn(adminRejectChallengeScore);
+  const correctScore = useServerFn(adminCorrectChallengeScore);
+  const [corrections, setCorrections] = useState<
+    Record<string, { challenger: string; challenged: string }>
+  >({});
   const { data, isLoading } = useQuery({ queryKey: ["admin-stats"], queryFn: () => fn() });
   const scoreReviews = useQuery({
     queryKey: ["admin-score-reviews"],
@@ -86,6 +93,15 @@ function AdminDashboard() {
     mutationFn: rejectScore,
     onSuccess: () => {
       toast.success("Placar rejeitado pelo ADM e devolvido aos capitães.");
+      qc.invalidateQueries({ queryKey: ["admin-score-reviews"] });
+      qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const correctScoreM = useMutation({
+    mutationFn: correctScore,
+    onSuccess: () => {
+      toast.success("Placar corrigido e confirmado pelo ADM.");
       qc.invalidateQueries({ queryKey: ["admin-score-reviews"] });
       qc.invalidateQueries({ queryKey: ["admin-stats"] });
     },
@@ -164,23 +180,85 @@ function AdminDashboard() {
                       {review.score_challenged} {review.challenged?.name ?? "Desafiado"}
                     </p>
                     <p className="text-xs text-white/50">Um capitão pediu a análise do ADM.</p>
+                    <p className="text-xs text-white/50">
+                      {review.arena?.name ?? "Arena"} · {review.court?.name ?? "Quadra"} ·{" "}
+                      {review.scheduled_date} {review.scheduled_time.slice(0, 5)}
+                    </p>
+                    <p className="text-xs text-white/50">
+                      Capitães: {review.challenger?.captain?.display_name ?? "—"} e{" "}
+                      {review.challenged?.captain?.display_name ?? "—"}
+                    </p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      disabled={confirmScoreM.isPending || rejectScoreM.isPending}
-                      onClick={() => confirmScoreM.mutate({ data: { challengeId: review.id } })}
-                    >
-                      Confirmar placar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={confirmScoreM.isPending || rejectScoreM.isPending}
-                      onClick={() => rejectScoreM.mutate({ data: { challengeId: review.id } })}
-                    >
-                      Rejeitar
-                    </Button>
+                  <div className="flex flex-col gap-2 sm:min-w-64">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder={String(review.score_challenger)}
+                        value={corrections[review.id]?.challenger ?? ""}
+                        onChange={(event) =>
+                          setCorrections((current) => ({
+                            ...current,
+                            [review.id]: {
+                              challenger: event.target.value,
+                              challenged: current[review.id]?.challenged ?? "",
+                            },
+                          }))
+                        }
+                      />
+                      <Input
+                        type="number"
+                        min={0}
+                        placeholder={String(review.score_challenged)}
+                        value={corrections[review.id]?.challenged ?? ""}
+                        onChange={(event) =>
+                          setCorrections((current) => ({
+                            ...current,
+                            [review.id]: {
+                              challenger: current[review.id]?.challenger ?? "",
+                              challenged: event.target.value,
+                            },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={confirmScoreM.isPending || rejectScoreM.isPending}
+                        onClick={() => confirmScoreM.mutate({ data: { challengeId: review.id } })}
+                      >
+                        Confirmar placar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={confirmScoreM.isPending || rejectScoreM.isPending}
+                        onClick={() => rejectScoreM.mutate({ data: { challengeId: review.id } })}
+                      >
+                        Rejeitar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={
+                          !corrections[review.id]?.challenger ||
+                          !corrections[review.id]?.challenged ||
+                          correctScoreM.isPending
+                        }
+                        onClick={() =>
+                          correctScoreM.mutate({
+                            data: {
+                              challengeId: review.id,
+                              scoreChallenger: Number(corrections[review.id].challenger),
+                              scoreChallenged: Number(corrections[review.id].challenged),
+                            },
+                          })
+                        }
+                      >
+                        Corrigir
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}

@@ -626,6 +626,7 @@ export const listMyChallenges = createServerFn({ method: "GET" })
         proposed_date, proposed_time, proposed_arena_id, proposed_court_id, reschedule_proposed_by,
         score_challenger, score_challenged, score_registered_by, score_registered_at, score_confirmed_by, score_confirmed_at,
         score_admin_review_requested_by, score_admin_review_requested_at,
+        score_confirmation_due_at, score_confirmation_reminder_sent_at,
         challenger:teams!challenges_challenger_team_id_fkey(id, name, rank_position),
         challenged:teams!challenges_challenged_team_id_fkey(id, name, rank_position),
         arena:arenas(id, name),

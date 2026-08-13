@@ -60,6 +60,7 @@ type ChallengeRow = {
   score_confirmed_at: string | null;
   score_admin_review_requested_by: string | null;
   score_admin_review_requested_at: string | null;
+  score_confirmation_due_at: string | null;
   challenger: { id: string; name: string; rank_position: number | null } | null;
   challenged: { id: string; name: string; rank_position: number | null } | null;
   arena: { id: string; name: string } | null;
@@ -365,6 +366,11 @@ function ChallengeCard({
               <p className="text-xs text-muted-foreground">
                 Placar enviado. Aguardando a confirmação do outro capitão.
               </p>
+              {row.score_confirmation_due_at ? (
+                <p className="text-[11px] font-medium text-amber-600">
+                  Prazo: {new Date(row.score_confirmation_due_at).toLocaleString("pt-BR")}.
+                </p>
+              ) : null}
               {isScoreAuthor && onRequestAdminReview ? (
                 row.score_admin_review_requested_at ? (
                   <p className="text-xs font-medium text-amber-600">
