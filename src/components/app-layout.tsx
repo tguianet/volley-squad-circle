@@ -141,6 +141,14 @@ export function AppLayout({ children }: { children: ReactNode }) {
               <LogOut className="size-4" />
               Sair
             </button>
+            <div className="mt-2 flex justify-center gap-3 text-[11px] text-muted-foreground">
+              <Link to="/termos" className="hover:text-foreground hover:underline">
+                Termos
+              </Link>
+              <Link to="/privacidade" className="hover:text-foreground hover:underline">
+                Privacidade
+              </Link>
+            </div>
           </div>
           <div className="mt-auto p-4 rounded-2xl border border-accent/30 bg-accent/5 text-sm">
             <div className="font-display text-lg leading-none tracking-wide text-accent">
@@ -287,6 +295,18 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 <LogOut className="size-4" />
                 Sair da conta
               </button>
+              <div className="mt-4 flex justify-center gap-5 text-xs text-muted-foreground">
+                <SheetClose asChild>
+                  <Link to="/termos" className="min-h-11 content-center hover:underline">
+                    Termos de Uso
+                  </Link>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Link to="/privacidade" className="min-h-11 content-center hover:underline">
+                    Privacidade
+                  </Link>
+                </SheetClose>
+              </div>
             </SheetContent>
           </Sheet>
         </div>
