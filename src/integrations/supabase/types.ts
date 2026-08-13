@@ -173,6 +173,8 @@ export type Database = {
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1179,6 +1181,8 @@ export type Database = {
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1413,6 +1417,8 @@ export type Database = {
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1446,6 +1452,8 @@ export type Database = {
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1491,6 +1499,8 @@ export type Database = {
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
