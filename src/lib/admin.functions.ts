@@ -12,8 +12,13 @@ type PendingAdminScoreReview = {
   score_challenged: number;
   score_registered_at: string;
   score_admin_review_requested_at: string;
-  challenger: { name: string } | null;
-  challenged: { name: string } | null;
+  scheduled_date: string;
+  scheduled_time: string;
+  score_confirmation_due_at: string | null;
+  arena: { name: string } | null;
+  court: { name: string } | null;
+  challenger: { name: string; captain: { display_name: string } | null } | null;
+  challenged: { name: string; captain: { display_name: string } | null } | null;
 };
 
 async function assertAdmin(context: AdminContext, requireFullAdmin = false) {
@@ -106,9 +111,11 @@ export const listPendingAdminScoreReviews = createServerFn({ method: "GET" })
     const { data, error } = await untyped(context.supabase)
       .from("challenges")
       .select(
-        `id, score_challenger, score_challenged, score_registered_at, score_admin_review_requested_at,
-         challenger:teams!challenges_challenger_team_id_fkey(name),
-         challenged:teams!challenges_challenged_team_id_fkey(name)`,
+        `id, scheduled_date, scheduled_time, score_challenger, score_challenged,
+         score_registered_at, score_admin_review_requested_at, score_confirmation_due_at,
+         arena:arenas(name), court:courts(name),
+         challenger:teams!challenges_challenger_team_id_fkey(name, captain:profiles!teams_captain_id_fkey(display_name)),
+         challenged:teams!challenges_challenged_team_id_fkey(name, captain:profiles!teams_captain_id_fkey(display_name))`,
       )
       .eq("status", "awaiting_confirmation")
       .not("score_admin_review_requested_at", "is", null)
@@ -140,6 +147,32 @@ export const adminRejectChallengeScore = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     await audit(context, "challenge.score.admin_reject", "challenge", data.challengeId);
+    return { ok: true };
+  });
+
+export const adminCorrectChallengeScore = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        challengeId: z.string().uuid(),
+        scoreChallenger: z.number().int().min(0),
+        scoreChallenged: z.number().int().min(0),
+      })
+      .refine(
+        (value) => value.scoreChallenger !== value.scoreChallenged,
+        "O placar não pode terminar empatado",
+      )
+      .parse(d),
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context, true);
+    const { error } = await untyped(context.supabase).rpc("admin_correct_challenge_score", {
+      p_challenge_id: data.challengeId,
+      p_score_challenger: data.scoreChallenger,
+      p_score_challenged: data.scoreChallenged,
+    });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
 
