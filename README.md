@@ -132,9 +132,16 @@ Todos leem as variáveis do `.env`, então rode com `node --env-file=.env`:
 | `scripts/list-rpcs.mjs`                | lista as RPCs expostas pela API (filtra ranking/quadra/desafio) |
 | `scripts/probe-sql-api.mjs`            | verifica quais endpoints SQL a API expõe (diagnóstico)          |
 | `scripts/apply-lovable-migration.mjs`  | auxiliar de aplicação de migration                              |
+| `scripts/homologate-challenge-score.sql` | homologa o ciclo de placar com rollback obrigatório            |
 
 Exemplo:
 
 ```bash
 node --env-file=.env scripts/validate-lovable-backend.mjs
+```
+
+Homologação do placar no PostgreSQL, sem deixar dados de teste:
+
+```bash
+psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/homologate-challenge-score.sql
 ```
