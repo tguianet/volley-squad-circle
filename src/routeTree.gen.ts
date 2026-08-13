@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as Char91indexChar93RouteImport } from './routes/[index]'
+import { Route as TermosRouteImport } from './routes/termos'
 import { Route as RedefinirSenhaRouteImport } from './routes/redefinir-senha'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as NotificacoesRouteImport } from './routes/notificacoes'
 import { Route as H2hRouteImport } from './routes/h2h'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -44,9 +46,19 @@ const Char91indexChar93Route = Char91indexChar93RouteImport.update({
   path: '/index',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TermosRoute = TermosRouteImport.update({
+  id: '/termos',
+  path: '/termos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RedefinirSenhaRoute = RedefinirSenhaRouteImport.update({
   id: '/redefinir-senha',
   path: '/redefinir-senha',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificacoesRoute = NotificacoesRouteImport.update({
@@ -199,7 +211,9 @@ export interface FileRoutesByFullPath {
   '/h2h': typeof H2hRoute
   '/index': typeof Char91indexChar93Route
   '/notificacoes': typeof NotificacoesRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
@@ -229,7 +243,9 @@ export interface FileRoutesByTo {
   '/h2h': typeof H2hRoute
   '/index': typeof Char91indexChar93Route
   '/notificacoes': typeof NotificacoesRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/termos': typeof TermosRoute
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
   '/perfil/$username': typeof PerfilUsernameRoute
@@ -260,7 +276,9 @@ export interface FileRoutesById {
   '/h2h': typeof H2hRoute
   '/index': typeof Char91indexChar93Route
   '/notificacoes': typeof NotificacoesRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/redefinir-senha': typeof RedefinirSenhaRoute
+  '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteRouteWithChildren
   '/arenas/$id': typeof ArenasIdRoute
   '/partidas/nova': typeof PartidasNovaRoute
@@ -292,7 +310,9 @@ export interface FileRouteTypes {
     | '/h2h'
     | '/index'
     | '/notificacoes'
+    | '/privacidade'
     | '/redefinir-senha'
+    | '/termos'
     | '/admin'
     | '/arenas/$id'
     | '/partidas/nova'
@@ -322,7 +342,9 @@ export interface FileRouteTypes {
     | '/h2h'
     | '/index'
     | '/notificacoes'
+    | '/privacidade'
     | '/redefinir-senha'
+    | '/termos'
     | '/arenas/$id'
     | '/partidas/nova'
     | '/perfil/$username'
@@ -352,7 +374,9 @@ export interface FileRouteTypes {
     | '/h2h'
     | '/index'
     | '/notificacoes'
+    | '/privacidade'
     | '/redefinir-senha'
+    | '/termos'
     | '/_authenticated/admin'
     | '/arenas/$id'
     | '/partidas/nova'
@@ -384,7 +408,9 @@ export interface RootRouteChildren {
   H2hRoute: typeof H2hRoute
   Char91indexChar93Route: typeof Char91indexChar93Route
   NotificacoesRoute: typeof NotificacoesRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
+  TermosRoute: typeof TermosRoute
   ArenasIdRoute: typeof ArenasIdRoute
   PartidasNovaRoute: typeof PartidasNovaRoute
   PerfilUsernameRoute: typeof PerfilUsernameRoute
@@ -407,11 +433,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91indexChar93RouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/redefinir-senha': {
       id: '/redefinir-senha'
       path: '/redefinir-senha'
       fullPath: '/redefinir-senha'
       preLoaderRoute: typeof RedefinirSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notificacoes': {
@@ -656,7 +696,9 @@ const rootRouteChildren: RootRouteChildren = {
   H2hRoute: H2hRoute,
   Char91indexChar93Route: Char91indexChar93Route,
   NotificacoesRoute: NotificacoesRoute,
+  PrivacidadeRoute: PrivacidadeRoute,
   RedefinirSenhaRoute: RedefinirSenhaRoute,
+  TermosRoute: TermosRoute,
   ArenasIdRoute: ArenasIdRoute,
   PartidasNovaRoute: PartidasNovaRoute,
   PerfilUsernameRoute: PerfilUsernameRoute,
@@ -672,3 +714,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

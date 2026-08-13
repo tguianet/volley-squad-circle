@@ -289,6 +289,17 @@ function Auth() {
           >
             Continuar sem login →
           </Link>
+          <p className="mt-5 text-center text-[11px] leading-5 text-muted-foreground">
+            Ao continuar, você concorda com os{" "}
+            <Link to="/termos" className="font-semibold underline hover:text-foreground">
+              Termos de Uso
+            </Link>{" "}
+            e a{" "}
+            <Link to="/privacidade" className="font-semibold underline hover:text-foreground">
+              Política de Privacidade
+            </Link>
+            .
+          </p>
         </Card>
       </div>
     </div>
