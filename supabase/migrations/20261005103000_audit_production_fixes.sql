@@ -213,4 +213,75 @@ $$;
 REVOKE ALL ON FUNCTION public.get_public_profile_by_id(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_profile_by_id(uuid) TO anon, authenticated;
 
+
+CREATE OR REPLACE FUNCTION public.admin_dashboard_stats()
+RETURNS jsonb
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $
+DECLARE
+  v_result jsonb;
+BEGIN
+  IF auth.uid() IS NULL OR NOT (
+    public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'moderator')
+  ) THEN
+    RAISE EXCEPTION 'Acesso negado';
+  END IF;
+
+  SELECT jsonb_build_object(
+    'totals', jsonb_build_object(
+      'players', (SELECT count(*) FROM public.profiles),
+      'verified', (SELECT count(*) FROM public.profiles WHERE is_verified),
+      'suspended', (SELECT count(*) FROM public.profiles WHERE is_suspended),
+      'activeBanners', (SELECT count(*) FROM public.banners WHERE is_active),
+      'pendingReports', (SELECT count(*) FROM public.reports WHERE status = 'pending'),
+      'notifications', (SELECT count(*) FROM public.notifications)
+    ),
+    'signupsLast30', (
+      SELECT COALESCE(jsonb_agg(jsonb_build_object('day', days.day, 'count', COALESCE(s.count, 0)) ORDER BY days.day), '[]'::jsonb)
+      FROM (
+        SELECT generate_series(
+          current_date - interval '29 days',
+          current_date,
+          interval '1 day'
+        )::date AS day
+      ) days
+      LEFT JOIN (
+        SELECT created_at::date AS day, count(*) AS count
+        FROM public.profiles
+        WHERE created_at >= current_date - interval '29 days'
+        GROUP BY created_at::date
+      ) s USING (day)
+    ),
+    'cityBreakdown', (
+      SELECT COALESCE(jsonb_agg(jsonb_build_object('city', city, 'count', count) ORDER BY count DESC, city), '[]'::jsonb)
+      FROM (
+        SELECT COALESCE(NULLIF(btrim(city), ''), '—') AS city, count(*) AS count
+        FROM public.profiles
+        GROUP BY COALESCE(NULLIF(btrim(city), ''), '—')
+        ORDER BY count(*) DESC
+        LIMIT 8
+      ) ranked_cities
+    ),
+    'recentAudit', (
+      SELECT COALESCE(jsonb_agg(to_jsonb(a) ORDER BY a.created_at DESC), '[]'::jsonb)
+      FROM (
+        SELECT *
+        FROM public.audit_log
+        ORDER BY created_at DESC
+        LIMIT 10
+      ) a
+    )
+  )
+  INTO v_result;
+
+  RETURN v_result;
+END;
+$;
+
+REVOKE ALL ON FUNCTION public.admin_dashboard_stats() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_dashboard_stats() TO authenticated;
+
 NOTIFY pgrst, 'reload schema';
