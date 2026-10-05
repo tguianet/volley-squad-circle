@@ -136,52 +136,40 @@ export const createTeam = createServerFn({ method: "POST" })
         category: z.enum(["dupla", "quarteto"]),
         gender: z.enum(["M", "F", "X"]).default("M"),
         preferred_arena_id: z.string().uuid().optional().nullable(),
-        member_profile_ids: z.array(z.string().uuid()).max(4).default([]),
+        member_profile_ids: z.array(z.string().uuid()).min(1).max(3).default([]),
+      })
+      .superRefine((value, ctx) => {
+        const maxInvitees = value.category === "quarteto" ? 3 : 1;
+        if (value.member_profile_ids.length > maxInvitees) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: ["member_profile_ids"],
+            message: value.category === "quarteto"
+              ? "Quarteto aceita no máximo 3 jogadores convidados."
+              : "Dupla aceita apenas 1 jogador convidado.",
+          });
+        }
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const { data: team, error } = await context.supabase
-      .from("teams")
-      .insert({
-        name: data.name,
-        category: data.category,
-        gender: data.gender,
-        captain_id: context.userId,
-        preferred_arena_id: data.preferred_arena_id ?? null,
-      })
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-
-    // include captain as member + provided members
-    const memberRows = Array.from(new Set([context.userId, ...data.member_profile_ids])).map(
-      (pid) => ({ team_id: team.id, profile_id: pid }),
-    );
-    const { error: memErr } = await context.supabase.from("team_members").insert(memberRows);
-    if (memErr) console.error("[createTeam] members:", memErr.message);
-
-    // generate availability for current month
-    const month = new Date();
-    month.setDate(1);
-    const monthStr = month.toISOString().slice(0, 10);
-    // simple: call rpc not exposed; insert directly for this team
-    const { data: sundays } = await context.supabase.rpc("get_sundays_of_month", {
-      _month: monthStr,
+    const inviteeIds = Array.from(new Set(data.member_profile_ids));
+    const { data: teamId, error } = await untyped(context.supabase).rpc("create_team_safely", {
+      p_name: data.name,
+      p_category: data.category,
+      p_gender: data.gender,
+      p_preferred_arena_id: data.preferred_arena_id ?? null,
+      p_invitee_ids: inviteeIds,
     });
-    if (sundays && Array.isArray(sundays)) {
-      const rows = (sundays as Array<{ sunday_date: string }>).map((s) => ({
-        team_id: team.id,
-        month: monthStr,
-        sunday_date: s.sunday_date,
-        is_available: false,
-      }));
-      if (rows.length > 0) {
-        await context.supabase.from("team_monthly_availability").upsert(rows, {
-          onConflict: "team_id,sunday_date",
-        });
-      }
-    }
+    if (error) throw new Error(error.message);
+    if (!teamId) throw new Error("Não foi possível criar a equipe.");
+
+    const { data: team, error: teamError } = await context.supabase
+      .from("teams")
+      .select("*")
+      .eq("id", teamId as string)
+      .single();
+    if (teamError) throw new Error(teamError.message);
 
     return team;
   });
@@ -919,13 +907,9 @@ export const getPublicProfileByUsername = createServerFn({ method: "GET" })
     if (
       /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(username)
     ) {
-      const { data: profile, error: idError } = await supabase
-        .from("profiles")
-        .select(
-          "id, display_name, username, apelido, bio, city, state, whatsapp, instagram, posicao_principal, level, mao_dominante, altura, avatar_url, banner_url, genero, status, pontos, vitorias, derrotas",
-        )
-        .eq("id", username)
-        .maybeSingle();
+      const { data: profile, error: idError } = await untyped().rpc("get_public_profile_by_id", {
+        p_profile_id: username,
+      });
       if (idError) throw new Error(idError.message);
       if (profile) return profile;
     }
