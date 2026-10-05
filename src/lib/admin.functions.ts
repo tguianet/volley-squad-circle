@@ -42,13 +42,14 @@ async function audit(
   target_id: string | null,
   payload: Json | null = null,
 ) {
-  await context.supabase.from("audit_log").insert({
+  const { error } = await context.supabase.from("audit_log").insert({
     actor_id: context.userId,
     action,
     target_type,
     target_id,
     payload,
   });
+  if (error) throw new Error(`Falha ao registrar auditoria: ${error.message}`);
 }
 
 // ===== Dashboard stats =====
@@ -56,52 +57,23 @@ export const getAdminStats = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const sb = context.supabase;
-    const [profiles, banners, reports, notifications, audit] = await Promise.all([
-      sb.from("profiles").select("id, created_at, city, is_verified, is_suspended"),
-      sb.from("banners").select("id, is_active"),
-      sb.from("reports").select("id, status"),
-      sb.from("notifications").select("id"),
-      sb
-        .from("audit_log")
-        .select("id, created_at")
-        .order("created_at", { ascending: false })
-        .limit(10),
-    ]);
-
-    const profs = profiles.data ?? [];
-    const now = Date.now();
-    const last30 = Array.from({ length: 30 }, (_, i) => {
-      const d = new Date(now - (29 - i) * 86400000);
-      const day = d.toISOString().slice(0, 10);
-      return { day, count: 0 };
-    });
-    for (const p of profs) {
-      const day = (p.created_at as string).slice(0, 10);
-      const slot = last30.find((s) => s.day === day);
-      if (slot) slot.count += 1;
-    }
-    const byCity: Record<string, number> = {};
-    for (const p of profs) {
-      const c = p.city ?? "—";
-      byCity[c] = (byCity[c] ?? 0) + 1;
-    }
-    return {
-      totals: {
-        players: profs.length,
-        verified: profs.filter((p) => p.is_verified).length,
-        suspended: profs.filter((p) => p.is_suspended).length,
-        activeBanners: (banners.data ?? []).filter((b) => b.is_active).length,
-        pendingReports: (reports.data ?? []).filter((r) => r.status === "pending").length,
-        notifications: (notifications.data ?? []).length,
-      },
-      signupsLast30: last30,
-      cityBreakdown: Object.entries(byCity)
-        .map(([city, count]) => ({ city, count }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 8),
-      recentAudit: audit.data ?? [],
-    };
+    const { data, error } = await untyped(context.supabase).rpc("admin_dashboard_stats");
+    if (error) throw new Error(error.message);
+    return (
+      data ?? {
+        totals: {
+          players: 0,
+          verified: 0,
+          suspended: 0,
+          activeBanners: 0,
+          pendingReports: 0,
+          notifications: 0,
+        },
+        signupsLast30: [],
+        cityBreakdown: [],
+        recentAudit: [],
+      }
+    );
   });
 
 export const listPendingAdminScoreReviews = createServerFn({ method: "GET" })
@@ -352,26 +324,22 @@ export const broadcastNotification = createServerFn({ method: "POST" })
   )
   .handler(async ({ context, data }) => {
     await assertAdmin(context);
-    let q = context.supabase.from("profiles").select("id");
-    if (data.city) q = q.eq("city", data.city);
-    const { data: targets, error } = await q;
-    if (error) throw error;
-    if (!targets?.length) return { ok: true, sent: 0 };
-    const rows = targets.map((t) => ({
-      user_id: t.id,
-      title: data.title,
-      body: data.body ?? null,
-      link_url: data.link_url ?? null,
-      kind: "broadcast",
-      created_by: context.userId,
-    }));
-    const { error: insErr } = await context.supabase.from("notifications").insert(rows);
-    if (insErr) throw insErr;
+    const { data: sent, error } = await untyped(context.supabase).rpc(
+      "admin_broadcast_notification",
+      {
+        p_title: data.title,
+        p_body: data.body ?? "",
+        p_link_url: data.link_url ?? "",
+        p_city: data.city ?? null,
+      },
+    );
+    if (error) throw new Error(error.message);
+    const count = Number(sent ?? 0);
     await audit(context, "notification.broadcast", null, null, {
-      count: rows.length,
-      city: data.city,
+      count,
+      city: data.city ?? null,
     });
-    return { ok: true, sent: rows.length };
+    return { ok: true, sent: count };
   });
 
 // ===== Settings =====
