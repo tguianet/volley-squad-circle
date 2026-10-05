@@ -59,19 +59,21 @@ export const getAdminStats = createServerFn({ method: "GET" })
     await assertAdmin(context);
     const { data, error } = await untyped(context.supabase).rpc("admin_dashboard_stats");
     if (error) throw new Error(error.message);
-    return data ?? {
-      totals: {
-        players: 0,
-        verified: 0,
-        suspended: 0,
-        activeBanners: 0,
-        pendingReports: 0,
-        notifications: 0,
-      },
-      signupsLast30: [],
-      cityBreakdown: [],
-      recentAudit: [],
-    };
+    return (
+      data ?? {
+        totals: {
+          players: 0,
+          verified: 0,
+          suspended: 0,
+          activeBanners: 0,
+          pendingReports: 0,
+          notifications: 0,
+        },
+        signupsLast30: [],
+        cityBreakdown: [],
+        recentAudit: [],
+      }
+    );
   });
 
 export const listPendingAdminScoreReviews = createServerFn({ method: "GET" })
