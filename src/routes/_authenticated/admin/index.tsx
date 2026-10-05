@@ -316,7 +316,7 @@ function AdminDashboard() {
           <p className="text-sm text-white/50">Nenhuma ação registrada ainda.</p>
         ) : (
           <ul className="space-y-2 text-sm">
-            {data.recentAudit.map((a) => (
+            {data.recentAudit.map((a: { id: string; created_at: string }) => (
               <li key={a.id} className="flex justify-between border-b border-white/5 pb-2">
                 <span className="font-mono text-xs text-white/70">{a.id.slice(0, 8)}</span>
                 <span className="text-xs text-white/50">{formatDateTimeBR(a.created_at)}</span>
