@@ -136,7 +136,7 @@ export const createTeam = createServerFn({ method: "POST" })
         category: z.enum(["dupla", "quarteto"]),
         gender: z.enum(["M", "F", "X"]).default("M"),
         preferred_arena_id: z.string().uuid().optional().nullable(),
-        member_profile_ids: z.array(z.string().uuid()).min(1).max(3).default([]),
+        member_profile_ids: z.array(z.string().uuid()).max(3).default([]),
       })
       .superRefine((value, ctx) => {
         const maxInvitees = value.category === "quarteto" ? 3 : 1;
