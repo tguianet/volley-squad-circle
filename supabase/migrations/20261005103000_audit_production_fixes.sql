@@ -32,7 +32,7 @@ BEGIN
   v_capacity := CASE WHEN p_category = 'quarteto' THEN 4 ELSE 2 END;
   v_invitee_count := COALESCE(array_length(p_invitee_ids, 1), 0);
 
-  IF v_invitee_count < 1 OR v_invitee_count > v_capacity - 1 THEN
+  IF v_invitee_count > v_capacity - 1 THEN
     RAISE EXCEPTION 'Quantidade de jogadores convidados inválida para este formato';
   END IF;
 
@@ -40,7 +40,7 @@ BEGIN
   INTO v_distinct_count
   FROM unnest(p_invitee_ids) AS invitee_id;
 
-  IF v_distinct_count <> v_invitee_count OR auth.uid() = ANY(p_invitee_ids) THEN
+  IF v_distinct_count <> v_invitee_count OR (v_invitee_count > 0 AND auth.uid() = ANY(p_invitee_ids)) THEN
     RAISE EXCEPTION 'A lista de jogadores contém perfis repetidos ou inválidos';
   END IF;
 
@@ -82,8 +82,8 @@ BEGIN
     FROM public.profiles
     WHERE id = ANY(p_invitee_ids);
 
-    IF v_male_count = 0 OR v_female_count = 0 THEN
-      RAISE EXCEPTION 'Equipes mistas precisam ter jogadores dos dois gêneros';
+    IF v_invitee_count = v_capacity - 1 AND (v_male_count = 0 OR v_female_count = 0) THEN
+      RAISE EXCEPTION 'Equipes mistas completas precisam ter jogadores dos dois gêneros';
     END IF;
   END IF;
 
