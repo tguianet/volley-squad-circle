@@ -144,9 +144,10 @@ export const createTeam = createServerFn({ method: "POST" })
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             path: ["member_profile_ids"],
-            message: value.category === "quarteto"
-              ? "Quarteto aceita no máximo 3 jogadores convidados."
-              : "Dupla aceita apenas 1 jogador convidado.",
+            message:
+              value.category === "quarteto"
+                ? "Quarteto aceita no máximo 3 jogadores convidados."
+                : "Dupla aceita apenas 1 jogador convidado.",
           });
         }
       })
