@@ -307,7 +307,6 @@ DECLARE
   v_kickoff timestamptz;
   v_hours numeric;
   v_penalty integer := 0;
-  v_month date;
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Faça login para cancelar o jogo'; END IF;
   IF p_reason NOT IN ('weather','arena_unavailable','injury','personal','other') THEN
@@ -346,11 +345,7 @@ BEGIN
   END IF;
 
   IF v_penalty < 0 AND v_team_id IS NOT NULL THEN
-    v_month := date_trunc('month',v_ch.scheduled_date)::date;
     UPDATE public.teams SET points=points+v_penalty WHERE id=v_team_id;
-    INSERT INTO public.monthly_penalties(team_id,month,reason,points,challenge_id)
-    VALUES(v_team_id,v_month,'cancelled_game',v_penalty,v_ch.id)
-    ON CONFLICT (team_id,month,reason,challenge_id) DO NOTHING;
   END IF;
 
   UPDATE public.challenges
