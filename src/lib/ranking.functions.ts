@@ -596,6 +596,30 @@ export const respondToChallengeReschedule = createServerFn({ method: "POST" })
     return updated;
   });
 
+export const cancelScheduledChallenge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({
+        challengeId: z.string().uuid(),
+        reason: z.enum(["weather", "arena_unavailable", "injury", "personal", "other"]),
+        note: z.string().trim().max(500).optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: updated, error } = await untyped(context.supabase).rpc(
+      "cancel_scheduled_challenge",
+      {
+        p_challenge_id: data.challengeId,
+        p_reason: data.reason,
+        p_note: data.note ?? null,
+      },
+    );
+    if (error) throw new Error(error.message);
+    return updated;
+  });
+
 export const listMyChallenges = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -613,6 +637,8 @@ export const listMyChallenges = createServerFn({ method: "GET" })
         `
         id, status, scheduled_date, scheduled_time, arena_id, reschedule_reason, duration_minutes, created_at,
         proposed_date, proposed_time, proposed_arena_id, proposed_court_id, reschedule_proposed_by,
+        challenger_proposal_count, challenged_proposal_count,
+        cancellation_reason, cancellation_note, cancelled_by, cancelled_at, cancellation_penalty,
         score_challenger, score_challenged, score_registered_by, score_registered_at, score_confirmed_by, score_confirmed_at,
         score_admin_review_requested_by, score_admin_review_requested_at,
         score_confirmation_due_at, score_confirmation_reminder_sent_at,
