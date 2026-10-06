@@ -23,7 +23,6 @@ import {
 } from "@/lib/challenge-invite.queries";
 import {
   canChallengeTeam,
-  getChallengeEligibilityBadge,
   isTeamComplete,
   isUserTeamCaptain,
 } from "@/lib/challenge-rules";
@@ -36,7 +35,6 @@ import {
   Check,
   Clock,
   MapPin,
-  Shield,
   Trophy,
   Users,
   Volleyball,
@@ -81,7 +79,7 @@ type CourtSlot = {
   court_name: string;
 };
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type FlowStep = "team" | "opponent" | "schedule" | "sent";
 
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -106,44 +104,6 @@ function formatTeamType(team: Pick<TeamLite, "category" | "gender">) {
   return `${size} ${gender}`;
 }
 
-function StepHeader({ step }: { step: WizardStep }) {
-  const labels = ["Meu time", "Adversário", "Agendamento", "Confirmar", "Enviado"];
-  return (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1">
-      {labels.map((label, index) => {
-        const current = (index + 1) as WizardStep;
-        const active = current === step;
-        const done = current < step;
-        return (
-          <div key={label} className="flex items-center gap-2 shrink-0">
-            <div
-              className={cn(
-                "size-8 rounded-full grid place-items-center text-xs font-bold border",
-                done && "bg-primary text-primary-foreground border-primary",
-                active && "border-primary text-primary bg-primary/10",
-                !done && !active && "border-border text-muted-foreground",
-              )}
-            >
-              {done ? <Check className="size-4" /> : current}
-            </div>
-            <span
-              className={cn(
-                "text-sm font-medium",
-                active ? "text-foreground" : "text-muted-foreground",
-              )}
-            >
-              {label}
-            </span>
-            {index < labels.length - 1 ? (
-              <ArrowRight className="size-4 text-muted-foreground/40" />
-            ) : null}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function TeamAvatar({ team }: { team: TeamLite }) {
   const first = team.members?.find((member) => member.profile)?.profile;
   return (
@@ -151,6 +111,43 @@ function TeamAvatar({ team }: { team: TeamLite }) {
       {first?.avatar_url ? <AvatarImage src={first.avatar_url} /> : null}
       <AvatarFallback>{initials(team.name)}</AvatarFallback>
     </Avatar>
+  );
+}
+
+function FlowHeader({ step }: { step: FlowStep }) {
+  const items = [
+    { id: "team" as const, label: "Seu time" },
+    { id: "opponent" as const, label: "Adversário" },
+    { id: "schedule" as const, label: "Marcar jogo" },
+  ];
+
+  const stepIndex = step === "sent" ? 3 : items.findIndex((item) => item.id === step);
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {items.map((item, index) => {
+        const active = item.id === step;
+        const done = index < stepIndex || step === "sent";
+        return (
+          <div key={item.id} className="min-w-0">
+            <div
+              className={cn(
+                "h-1.5 rounded-full mb-2",
+                done || active ? "bg-primary" : "bg-muted",
+              )}
+            />
+            <div
+              className={cn(
+                "text-xs sm:text-sm font-medium truncate",
+                active ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              {index + 1}. {item.label}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -164,55 +161,41 @@ function PendingInviteCard({
   pending: boolean;
 }) {
   return (
-    <Card className="p-5 border-primary/30 bg-primary/5">
-      <div className="flex items-start gap-3">
-        <div className="size-11 rounded-full bg-primary/10 grid place-items-center shrink-0">
+    <Card className="p-4 border-primary/30 bg-primary/5">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="size-10 rounded-full bg-primary/10 grid place-items-center shrink-0">
           <Volleyball className="size-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs uppercase tracking-wide text-primary font-semibold">
-            Convite recebido
-          </p>
-          <h2 className="font-semibold text-lg mt-1">
-            {invite.challenger.name} desafiou {invite.challenged.name}
-          </h2>
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground mt-2">
-            {invite.scheduled_date ? (
-              <span className="inline-flex items-center gap-1">
-                <CalendarDays className="size-4" />
-                {formatDate(invite.scheduled_date)}
-              </span>
-            ) : null}
-            {invite.scheduled_time ? (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="size-4" />
-                {invite.scheduled_time.slice(0, 5)}
-              </span>
-            ) : null}
-            {invite.court ? (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="size-4" />
-                {invite.court.name}
-              </span>
-            ) : null}
+          <div className="text-xs uppercase tracking-wide text-primary font-semibold">
+            Você recebeu um desafio
           </div>
-          {invite.isCaptain ? (
-            <div className="flex gap-2 mt-4">
-              <Button onClick={() => onRespond("accept")} disabled={pending}>
-                <Check className="size-4 mr-2" />
-                Aceitar
-              </Button>
-              <Button variant="outline" onClick={() => onRespond("decline")} disabled={pending}>
-                <X className="size-4 mr-2" />
-                Recusar
-              </Button>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground mt-3">
-              Somente o capitão do seu time pode responder este convite.
-            </p>
-          )}
+          <div className="font-semibold mt-0.5">
+            {invite.challenger.name} x {invite.challenged.name}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            {invite.scheduled_date ? formatDate(invite.scheduled_date) : ""}
+            {invite.scheduled_time ? ` · ${invite.scheduled_time.slice(0, 5)}` : ""}
+            {invite.court ? ` · ${invite.court.name}` : ""}
+          </div>
         </div>
+        {invite.isCaptain ? (
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => onRespond("accept")} disabled={pending}>
+              <Check className="size-4 mr-1.5" />
+              Aceitar
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onRespond("decline")}
+              disabled={pending}
+            >
+              <X className="size-4 mr-1.5" />
+              Recusar
+            </Button>
+          </div>
+        ) : null}
       </div>
     </Card>
   );
@@ -221,7 +204,7 @@ function PendingInviteCard({
 function DesafiosPage() {
   const qc = useQueryClient();
   const [userId, setUserId] = useState<string | null>(null);
-  const [step, setStep] = useState<WizardStep>(1);
+  const [step, setStep] = useState<FlowStep>("team");
   const [myTeamId, setMyTeamId] = useState("");
   const [opponentId, setOpponentId] = useState("");
   const [date, setDate] = useState("");
@@ -245,16 +228,19 @@ function DesafiosPage() {
     queryFn: () => fetchMyTeams(),
     enabled: !!userId,
   });
+
   const teamsQ = useQuery({
     queryKey: ["teams"],
     queryFn: () => fetchTeams(),
     enabled: !!userId,
   });
+
   const arenasQ = useQuery({
     queryKey: ["arenas"],
     queryFn: () => fetchArenas(),
     enabled: !!userId,
   });
+
   const pendingInviteQ = useQuery({
     queryKey: ["pending-challenge-invite", userId],
     queryFn: () => fetchPendingChallengeInvite(userId!),
@@ -264,7 +250,7 @@ function DesafiosPage() {
   const allMyTeams = (myTeamsQ.data ?? []) as TeamLite[];
   const allTeams = (teamsQ.data ?? []) as TeamLite[];
 
-  const selectableTeams = useMemo(() => {
+  const readyTeams = useMemo(() => {
     return allMyTeams.filter((team) => {
       const memberCount = team.members?.length ?? 0;
       return (
@@ -275,22 +261,27 @@ function DesafiosPage() {
     });
   }, [allMyTeams, userId]);
 
-  const incompleteTeams = useMemo(() => {
-    return allMyTeams.filter(
-      (team) =>
-        isUserTeamCaptain(team, userId) && !selectableTeams.some((ready) => ready.id === team.id),
-    );
-  }, [allMyTeams, selectableTeams, userId]);
+  const incompleteTeams = useMemo(
+    () =>
+      allMyTeams.filter(
+        (team) => isUserTeamCaptain(team, userId) && !readyTeams.some((ready) => ready.id === team.id),
+      ),
+    [allMyTeams, readyTeams, userId],
+  );
 
   useEffect(() => {
-    if (selectableTeams.length === 1 && !myTeamId) setMyTeamId(selectableTeams[0].id);
-  }, [selectableTeams, myTeamId]);
+    if (readyTeams.length === 1 && !myTeamId) {
+      setMyTeamId(readyTeams[0].id);
+      setStep("opponent");
+    }
+  }, [readyTeams, myTeamId]);
 
-  const myTeam = selectableTeams.find((team) => team.id === myTeamId) ?? null;
+  const myTeam = readyTeams.find((team) => team.id === myTeamId) ?? null;
 
   const candidates = useMemo(() => {
     if (!myTeam || myTeam.rank_position == null) return [];
     const required = requiredTeamMemberCount(myTeam.category);
+
     return allTeams
       .filter((team) => {
         if (team.id === myTeam.id) return false;
@@ -332,7 +323,6 @@ function DesafiosPage() {
   const availableCourts = ((courtsQ.data ?? []) as CourtSlot[]).sort(
     (a, b) => a.court_number - b.court_number,
   );
-  const selectedCourt = availableCourts.find((court) => court.court_id === courtId) ?? null;
 
   const respondM = useMutation({
     mutationFn: (action: "accept" | "decline") =>
@@ -344,7 +334,7 @@ function DesafiosPage() {
       }),
     onSuccess: (_, action) => {
       toast.success(
-        action === "accept" ? "Desafio confirmado! Jogo marcado." : "Desafio recusado.",
+        action === "accept" ? "Desafio confirmado. O jogo está marcado!" : "Desafio recusado.",
       );
       qc.invalidateQueries({ queryKey: ["pending-challenge-invite"] });
       qc.invalidateQueries({ queryKey: ["my-challenges"] });
@@ -367,22 +357,27 @@ function DesafiosPage() {
     onSuccess: () => {
       toast.success("Convite enviado para o capitão do outro time.");
       qc.invalidateQueries({ queryKey: ["my-challenges"] });
-      setStep(5);
+      setStep("sent");
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
-  const resetAfterTeam = () => {
-    setOpponentId("");
+  const clearSchedule = () => {
     setDate("");
     setTime("");
     setCourtId("");
   };
 
+  const startOver = () => {
+    setStep(readyTeams.length === 1 ? "opponent" : "team");
+    setOpponentId("");
+    clearSchedule();
+  };
+
   if (!userId) {
     return (
       <AppLayout>
-        <div className="max-w-4xl mx-auto px-4 py-10 text-sm text-muted-foreground">
+        <div className="max-w-3xl mx-auto px-4 py-10 text-sm text-muted-foreground">
           Carregando…
         </div>
       </AppLayout>
@@ -391,14 +386,14 @@ function DesafiosPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-5 sm:py-8 space-y-5">
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 py-5 sm:py-8 space-y-4">
         <header>
-          <div className="flex items-center gap-2 text-primary">
-            <Trophy className="size-6" />
-            <h1 className="text-2xl sm:text-3xl font-bold">Desafios</h1>
+          <div className="flex items-center gap-2">
+            <Trophy className="size-6 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-bold">Desafiar um time</h1>
           </div>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            Monte seu time, escolha um adversário do ranking e marque o jogo.
+          <p className="text-sm text-muted-foreground mt-1">
+            Escolha o adversário, marque o jogo e envie o convite.
           </p>
         </header>
 
@@ -411,38 +406,40 @@ function DesafiosPage() {
         ) : null}
 
         <Card className="p-4 sm:p-6 space-y-6">
-          <StepHeader step={step} />
+          <FlowHeader step={step} />
 
-          {step === 1 ? (
+          {step === "team" ? (
             <div className="space-y-4">
-              <div>
-                <h2 className="text-xl font-semibold">1. Escolha seu time</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Para desafiar alguém, seu time precisa estar completo e no ranking.
-                </p>
-              </div>
-
-              {selectableTeams.length === 0 ? (
-                <div className="rounded-2xl border border-dashed p-6 text-center">
-                  <Users className="size-10 mx-auto text-primary mb-3" />
-                  <h3 className="font-semibold text-lg">
+              {readyTeams.length === 0 ? (
+                <div className="py-8 text-center">
+                  <div className="size-14 rounded-full bg-primary/10 grid place-items-center mx-auto mb-3">
+                    <Users className="size-7 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-semibold">
+                    {incompleteTeams.length > 0 ? "Complete seu time" : "Monte seu time"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
                     {incompleteTeams.length > 0
-                      ? "Complete seu time primeiro"
-                      : "Monte seu time primeiro"}
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-1 mb-4">
-                    {incompleteTeams.length > 0
-                      ? "Seu time ainda não está completo para entrar nos desafios."
-                      : "Você ainda não tem um time pronto para disputar o ranking."}
+                      ? "Seu time ainda precisa ficar completo e entrar no ranking antes de desafiar outro time."
+                      : "Você precisa ter um time completo no ranking para começar um desafio."}
                   </p>
-                  <Button asChild>
-                    <Link to="/perfil">Montar meu time</Link>
+                  <Button asChild className="mt-5">
+                    <Link to="/perfil">
+                      {incompleteTeams.length > 0 ? "Completar meu time" : "Montar meu time"}
+                    </Link>
                   </Button>
                 </div>
               ) : (
                 <>
+                  <div>
+                    <h2 className="text-xl font-semibold">Qual time vai jogar?</h2>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Escolha seu time para ver somente quem ele pode desafiar.
+                    </p>
+                  </div>
+
                   <div className="grid gap-3">
-                    {selectableTeams.map((team) => {
+                    {readyTeams.map((team) => {
                       const selected = myTeamId === team.id;
                       return (
                         <button
@@ -450,10 +447,11 @@ function DesafiosPage() {
                           type="button"
                           onClick={() => {
                             setMyTeamId(team.id);
-                            resetAfterTeam();
+                            setOpponentId("");
+                            clearSchedule();
                           }}
                           className={cn(
-                            "w-full text-left rounded-2xl border p-4 transition-colors",
+                            "w-full rounded-2xl border p-4 text-left transition-colors",
                             selected ? "border-primary bg-primary/5" : "hover:border-primary/40",
                           )}
                         >
@@ -465,63 +463,69 @@ function DesafiosPage() {
                                 {formatTeamType(team)}
                               </div>
                             </div>
-                            <Badge variant={selected ? "default" : "secondary"}>
-                              #{team.rank_position}
-                            </Badge>
+                            <Badge>#{team.rank_position}</Badge>
                           </div>
                         </button>
                       );
                     })}
                   </div>
-                  <div className="flex justify-end">
-                    <Button disabled={!myTeamId} onClick={() => setStep(2)}>
-                      Ver quem posso desafiar
-                      <ArrowRight className="size-4 ml-2" />
-                    </Button>
-                  </div>
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    disabled={!myTeamId}
+                    onClick={() => setStep("opponent")}
+                  >
+                    Escolher adversário
+                    <ArrowRight className="size-4 ml-2" />
+                  </Button>
                 </>
               )}
             </div>
           ) : null}
 
-          {step === 2 && myTeam ? (
+          {step === "opponent" && myTeam ? (
             <div className="space-y-4">
-              <div>
-                <Button variant="ghost" size="sm" className="-ml-2 mb-2" onClick={() => setStep(1)}>
+              {readyTeams.length > 1 ? (
+                <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setStep("team")}>
                   <ArrowLeft className="size-4 mr-1" />
-                  Voltar
+                  Trocar meu time
                 </Button>
-                <h2 className="text-xl font-semibold">2. Quem você pode desafiar</h2>
+              ) : null}
+
+              <div className="rounded-xl bg-secondary/50 px-4 py-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-xs text-muted-foreground">Seu time</div>
+                  <div className="font-semibold truncate">{myTeam.name}</div>
+                </div>
+                <Badge>#{myTeam.rank_position}</Badge>
+              </div>
+
+              <div>
+                <h2 className="text-xl font-semibold">Quem você quer desafiar?</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Você está em <strong>#{myTeam.rank_position}</strong>. Abaixo aparecem somente os
-                  times permitidos pelas regras do ranking.
+                  Aqui aparecem somente os times que você pode desafiar pelas regras do ranking.
                 </p>
               </div>
 
               {candidates.length === 0 ? (
                 <div className="rounded-2xl border border-dashed p-6 text-center text-sm text-muted-foreground">
-                  Nenhum adversário disponível para este time no momento.
+                  Nenhum time disponível para desafio neste momento.
                 </div>
               ) : (
                 <div className="grid gap-3">
                   {candidates.map((team) => {
                     const selected = opponentId === team.id;
-                    const badge = getChallengeEligibilityBadge(
-                      myTeam.rank_position!,
-                      team.rank_position!,
-                    );
                     return (
                       <button
                         key={team.id}
                         type="button"
                         onClick={() => {
                           setOpponentId(team.id);
-                          setDate("");
-                          setTime("");
-                          setCourtId("");
+                          clearSchedule();
                         }}
                         className={cn(
-                          "w-full text-left rounded-2xl border p-4 transition-colors",
+                          "w-full rounded-2xl border p-4 text-left transition-colors",
                           selected ? "border-primary bg-primary/5" : "hover:border-primary/40",
                         )}
                       >
@@ -533,16 +537,9 @@ function DesafiosPage() {
                               {formatTeamType(team)}
                             </div>
                           </div>
-                          <div className="text-right">
-                            <Badge>#{team.rank_position}</Badge>
-                            <div className="text-[11px] text-muted-foreground mt-1">
-                              {badge === "above"
-                                ? "subir no ranking"
-                                : badge === "top5"
-                                  ? "TOP 5"
-                                  : "defender posição"}
-                            </div>
-                          </div>
+                          <Badge variant={selected ? "default" : "secondary"}>
+                            #{team.rank_position}
+                          </Badge>
                         </div>
                       </button>
                     );
@@ -550,25 +547,41 @@ function DesafiosPage() {
                 </div>
               )}
 
-              <div className="flex justify-end">
-                <Button disabled={!opponentId} onClick={() => setStep(3)}>
-                  Marcar o jogo
-                  <ArrowRight className="size-4 ml-2" />
-                </Button>
-              </div>
+              <Button
+                className="w-full"
+                size="lg"
+                disabled={!opponentId}
+                onClick={() => setStep("schedule")}
+              >
+                Marcar jogo
+                <ArrowRight className="size-4 ml-2" />
+              </Button>
             </div>
           ) : null}
 
-          {step === 3 && myTeam && opponent ? (
+          {step === "schedule" && myTeam && opponent ? (
             <div className="space-y-5">
+              <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setStep("opponent")}>
+                <ArrowLeft className="size-4 mr-1" />
+                Trocar adversário
+              </Button>
+
+              <div className="rounded-xl border p-4 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">
+                    {myTeam.name} <span className="text-muted-foreground">x</span> {opponent.name}
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    #{myTeam.rank_position} x #{opponent.rank_position}
+                  </div>
+                </div>
+                <Volleyball className="size-5 text-primary shrink-0" />
+              </div>
+
               <div>
-                <Button variant="ghost" size="sm" className="-ml-2 mb-2" onClick={() => setStep(2)}>
-                  <ArrowLeft className="size-4 mr-1" />
-                  Voltar
-                </Button>
-                <h2 className="text-xl font-semibold">3. Marque data, horário e quadra</h2>
+                <h2 className="text-xl font-semibold">Quando vai ser o jogo?</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Mostramos somente horários em que os dois times informaram disponibilidade.
+                  Escolha uma data em que os dois times estejam disponíveis.
                 </p>
               </div>
 
@@ -578,10 +591,10 @@ function DesafiosPage() {
                   Data
                 </div>
                 {commonSundaysQ.isLoading ? (
-                  <p className="text-sm text-muted-foreground">Buscando datas em comum…</p>
+                  <p className="text-sm text-muted-foreground">Buscando datas disponíveis…</p>
                 ) : commonSundays.length === 0 ? (
                   <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">
-                    Os dois times ainda não possuem uma data disponível em comum.
+                    Não existe uma data em comum entre os dois times ainda.
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
@@ -633,7 +646,7 @@ function DesafiosPage() {
                     <MapPin className="size-4 text-primary" />
                     Quadra
                   </div>
-                  <p className="text-xs text-muted-foreground mb-2">{arenaName}</p>
+                  <div className="text-xs text-muted-foreground mb-2">{arenaName}</div>
                   {courtsQ.isLoading ? (
                     <p className="text-sm text-muted-foreground">Buscando quadras livres…</p>
                   ) : availableCourts.length === 0 ? (
@@ -659,98 +672,30 @@ function DesafiosPage() {
                 </div>
               ) : null}
 
-              <div className="flex justify-end">
-                <Button disabled={!date || !time || !courtId} onClick={() => setStep(4)}>
-                  Revisar convite
-                  <ArrowRight className="size-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          ) : null}
-
-          {step === 4 && myTeam && opponent && selectedCourt ? (
-            <div className="space-y-5">
-              <div>
-                <Button variant="ghost" size="sm" className="-ml-2 mb-2" onClick={() => setStep(3)}>
-                  <ArrowLeft className="size-4 mr-1" />
-                  Voltar
-                </Button>
-                <h2 className="text-xl font-semibold">4. Confirme e envie</h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  O outro capitão receberá este convite para aceitar ou recusar.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border p-5 space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Seu time</div>
-                    <div className="font-semibold">{myTeam.name}</div>
-                  </div>
-                  <Badge>#{myTeam.rank_position}</Badge>
-                </div>
-                <div className="flex items-center justify-center text-muted-foreground text-sm">
-                  x
-                </div>
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-xs text-muted-foreground">Adversário</div>
-                    <div className="font-semibold">{opponent.name}</div>
-                  </div>
-                  <Badge>#{opponent.rank_position}</Badge>
-                </div>
-                <div className="border-t pt-4 grid sm:grid-cols-3 gap-3 text-sm">
-                  <div>
-                    <div className="text-muted-foreground">Data</div>
-                    <div className="font-medium">{formatDate(date)}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Horário</div>
-                    <div className="font-medium">{time}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Quadra</div>
-                    <div className="font-medium">{selectedCourt.court_name}</div>
-                  </div>
-                </div>
-              </div>
-
               <Button
-                className="w-full sm:w-auto"
+                className="w-full"
                 size="lg"
+                disabled={!date || !time || !courtId || createM.isPending}
                 onClick={() => createM.mutate()}
-                disabled={createM.isPending}
               >
-                <Shield className="size-4 mr-2" />
-                {createM.isPending ? "Enviando convite…" : "Enviar desafio"}
+                {createM.isPending ? "Enviando convite…" : "Enviar convite para o outro time"}
               </Button>
             </div>
           ) : null}
 
-          {step === 5 ? (
-            <div className="py-6 text-center">
+          {step === "sent" ? (
+            <div className="py-8 text-center">
               <div className="size-16 mx-auto rounded-full bg-green-500/10 grid place-items-center mb-4">
                 <Check className="size-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold">Convite enviado!</h2>
+              <h2 className="text-xl font-semibold">Convite enviado</h2>
               <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Agora o capitão do outro time precisa confirmar. Quando ele aceitar, o jogo fica
-                marcado.
+                Agora é só aguardar o capitão do outro time confirmar. Quando ele aceitar, o jogo
+                fica marcado.
               </p>
-              <div className="flex justify-center gap-2 mt-5">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setStep(1);
-                    setOpponentId("");
-                    setDate("");
-                    setTime("");
-                    setCourtId("");
-                  }}
-                >
-                  Criar outro desafio
-                </Button>
-              </div>
+              <Button variant="outline" className="mt-5" onClick={startOver}>
+                Fazer outro desafio
+              </Button>
             </div>
           ) : null}
         </Card>
