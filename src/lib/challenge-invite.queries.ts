@@ -82,7 +82,7 @@ export async function fetchPendingChallengeInvite(
       challenged:teams!challenges_challenged_team_id_fkey(
         id, name, rank_position, category, gender, captain_id
       ),
-      arena:arenas(id, name, city),
+      arena:arenas!challenges_arena_id_fkey(id, name, city),
       court:courts(id, number, name)
     `,
     )
