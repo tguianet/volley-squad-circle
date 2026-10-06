@@ -530,6 +530,9 @@ function DesafiosPage() {
                             <div className="text-sm text-muted-foreground">
                               {formatTeamType(team)}
                             </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Vitória +20 pts · 2x0 +25 pts · derrota +5 pts
+                            </div>
                           </div>
                           <Badge variant={selected ? "default" : "secondary"}>
                             #{team.rank_position}
