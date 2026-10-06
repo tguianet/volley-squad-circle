@@ -9,10 +9,8 @@ AS $$
     _my_pos IS NOT NULL
     AND _opponent_pos IS NOT NULL
     AND _my_pos <> _opponent_pos
-    AND (
-      (_my_pos BETWEEN 1 AND 5 AND _opponent_pos BETWEEN 1 AND 5)
-      OR (_opponent_pos >= _my_pos - 5 AND _opponent_pos <= _my_pos + 2)
-    );
+    AND _opponent_pos >= _my_pos - 5
+    AND _opponent_pos <= _my_pos + 2;
 $$;
 
 CREATE OR REPLACE FUNCTION public.team_confirmed_member_count(_team_id UUID)
