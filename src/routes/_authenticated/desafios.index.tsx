@@ -21,11 +21,7 @@ import {
   fetchPendingChallengeInvite,
   type PendingChallengeInvite,
 } from "@/lib/challenge-invite.queries";
-import {
-  canChallengeTeam,
-  isTeamComplete,
-  isUserTeamCaptain,
-} from "@/lib/challenge-rules";
+import { canChallengeTeam, isTeamComplete, isUserTeamCaptain } from "@/lib/challenge-rules";
 import { requiredTeamMemberCount } from "@/lib/team-format";
 import { hourlyStartsWithinWindow } from "@/lib/challenge-scheduling";
 import {
@@ -247,8 +243,8 @@ function DesafiosPage() {
     enabled: !!userId,
   });
 
-  const allMyTeams = (myTeamsQ.data ?? []) as TeamLite[];
-  const allTeams = (teamsQ.data ?? []) as TeamLite[];
+  const allMyTeams = useMemo(() => (myTeamsQ.data ?? []) as TeamLite[], [myTeamsQ.data]);
+  const allTeams = useMemo(() => (teamsQ.data ?? []) as TeamLite[], [teamsQ.data]);
 
   const readyTeams = useMemo(() => {
     return allMyTeams.filter((team) => {
@@ -264,7 +260,8 @@ function DesafiosPage() {
   const incompleteTeams = useMemo(
     () =>
       allMyTeams.filter(
-        (team) => isUserTeamCaptain(team, userId) && !readyTeams.some((ready) => ready.id === team.id),
+        (team) =>
+          isUserTeamCaptain(team, userId) && !readyTeams.some((ready) => ready.id === team.id),
       ),
     [allMyTeams, readyTeams, userId],
   );
@@ -561,7 +558,12 @@ function DesafiosPage() {
 
           {step === "schedule" && myTeam && opponent ? (
             <div className="space-y-5">
-              <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setStep("opponent")}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="-ml-2"
+                onClick={() => setStep("opponent")}
+              >
                 <ArrowLeft className="size-4 mr-1" />
                 Trocar adversário
               </Button>
