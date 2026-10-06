@@ -83,7 +83,7 @@ export async function fetchPendingChallengeInvite(
         id, name, rank_position, category, gender, captain_id
       ),
       arena:arenas!challenges_arena_id_fkey(id, name, city),
-      court:courts(id, number, name)
+      court:courts!challenges_court_id_fkey(id, number, name)
     `,
     )
     .eq("status", "pending")
