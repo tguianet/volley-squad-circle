@@ -127,10 +127,7 @@ function FlowHeader({ step }: { step: FlowStep }) {
         return (
           <div key={item.id} className="min-w-0">
             <div
-              className={cn(
-                "h-1.5 rounded-full mb-2",
-                done || active ? "bg-primary" : "bg-muted",
-              )}
+              className={cn("h-1.5 rounded-full mb-2", done || active ? "bg-primary" : "bg-muted")}
             />
             <div
               className={cn(
