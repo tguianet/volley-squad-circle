@@ -126,10 +126,17 @@ function StepHeader({ step }: { step: WizardStep }) {
             >
               {done ? <Check className="size-4" /> : current}
             </div>
-            <span className={cn("text-sm font-medium", active ? "text-foreground" : "text-muted-foreground")}>
+            <span
+              className={cn(
+                "text-sm font-medium",
+                active ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
               {label}
             </span>
-            {index < labels.length - 1 ? <ArrowRight className="size-4 text-muted-foreground/40" /> : null}
+            {index < labels.length - 1 ? (
+              <ArrowRight className="size-4 text-muted-foreground/40" />
+            ) : null}
           </div>
         );
       })}
@@ -163,7 +170,9 @@ function PendingInviteCard({
           <Volleyball className="size-5 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs uppercase tracking-wide text-primary font-semibold">Convite recebido</p>
+          <p className="text-xs uppercase tracking-wide text-primary font-semibold">
+            Convite recebido
+          </p>
           <h2 className="font-semibold text-lg mt-1">
             {invite.challenger.name} desafiou {invite.challenged.name}
           </h2>
@@ -267,7 +276,10 @@ function DesafiosPage() {
   }, [allMyTeams, userId]);
 
   const incompleteTeams = useMemo(() => {
-    return allMyTeams.filter((team) => isUserTeamCaptain(team, userId) && !selectableTeams.some((ready) => ready.id === team.id));
+    return allMyTeams.filter(
+      (team) =>
+        isUserTeamCaptain(team, userId) && !selectableTeams.some((ready) => ready.id === team.id),
+    );
   }, [allMyTeams, selectableTeams, userId]);
 
   useEffect(() => {
@@ -331,7 +343,9 @@ function DesafiosPage() {
         },
       }),
     onSuccess: (_, action) => {
-      toast.success(action === "accept" ? "Desafio confirmado! Jogo marcado." : "Desafio recusado.");
+      toast.success(
+        action === "accept" ? "Desafio confirmado! Jogo marcado." : "Desafio recusado.",
+      );
       qc.invalidateQueries({ queryKey: ["pending-challenge-invite"] });
       qc.invalidateQueries({ queryKey: ["my-challenges"] });
     },
@@ -368,7 +382,9 @@ function DesafiosPage() {
   if (!userId) {
     return (
       <AppLayout>
-        <div className="max-w-4xl mx-auto px-4 py-10 text-sm text-muted-foreground">Carregando…</div>
+        <div className="max-w-4xl mx-auto px-4 py-10 text-sm text-muted-foreground">
+          Carregando…
+        </div>
       </AppLayout>
     );
   }
@@ -410,7 +426,9 @@ function DesafiosPage() {
                 <div className="rounded-2xl border border-dashed p-6 text-center">
                   <Users className="size-10 mx-auto text-primary mb-3" />
                   <h3 className="font-semibold text-lg">
-                    {incompleteTeams.length > 0 ? "Complete seu time primeiro" : "Monte seu time primeiro"}
+                    {incompleteTeams.length > 0
+                      ? "Complete seu time primeiro"
+                      : "Monte seu time primeiro"}
                   </h3>
                   <p className="text-sm text-muted-foreground mt-1 mb-4">
                     {incompleteTeams.length > 0
@@ -475,7 +493,8 @@ function DesafiosPage() {
                 </Button>
                 <h2 className="text-xl font-semibold">2. Quem você pode desafiar</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Você está em <strong>#{myTeam.rank_position}</strong>. Abaixo aparecem somente os times permitidos pelas regras do ranking.
+                  Você está em <strong>#{myTeam.rank_position}</strong>. Abaixo aparecem somente os
+                  times permitidos pelas regras do ranking.
                 </p>
               </div>
 
@@ -487,7 +506,10 @@ function DesafiosPage() {
                 <div className="grid gap-3">
                   {candidates.map((team) => {
                     const selected = opponentId === team.id;
-                    const badge = getChallengeEligibilityBadge(myTeam.rank_position!, team.rank_position!);
+                    const badge = getChallengeEligibilityBadge(
+                      myTeam.rank_position!,
+                      team.rank_position!,
+                    );
                     return (
                       <button
                         key={team.id}
@@ -514,7 +536,11 @@ function DesafiosPage() {
                           <div className="text-right">
                             <Badge>#{team.rank_position}</Badge>
                             <div className="text-[11px] text-muted-foreground mt-1">
-                              {badge === "above" ? "subir no ranking" : badge === "top5" ? "TOP 5" : "defender posição"}
+                              {badge === "above"
+                                ? "subir no ranking"
+                                : badge === "top5"
+                                  ? "TOP 5"
+                                  : "defender posição"}
                             </div>
                           </div>
                         </div>
@@ -663,7 +689,9 @@ function DesafiosPage() {
                   </div>
                   <Badge>#{myTeam.rank_position}</Badge>
                 </div>
-                <div className="flex items-center justify-center text-muted-foreground text-sm">x</div>
+                <div className="flex items-center justify-center text-muted-foreground text-sm">
+                  x
+                </div>
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-xs text-muted-foreground">Adversário</div>
@@ -687,7 +715,12 @@ function DesafiosPage() {
                 </div>
               </div>
 
-              <Button className="w-full sm:w-auto" size="lg" onClick={() => createM.mutate()} disabled={createM.isPending}>
+              <Button
+                className="w-full sm:w-auto"
+                size="lg"
+                onClick={() => createM.mutate()}
+                disabled={createM.isPending}
+              >
                 <Shield className="size-4 mr-2" />
                 {createM.isPending ? "Enviando convite…" : "Enviar desafio"}
               </Button>
@@ -701,7 +734,8 @@ function DesafiosPage() {
               </div>
               <h2 className="text-xl font-semibold">Convite enviado!</h2>
               <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-                Agora o capitão do outro time precisa confirmar. Quando ele aceitar, o jogo fica marcado.
+                Agora o capitão do outro time precisa confirmar. Quando ele aceitar, o jogo fica
+                marcado.
               </p>
               <div className="flex justify-center gap-2 mt-5">
                 <Button
