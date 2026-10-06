@@ -133,7 +133,7 @@ BEGIN
   IF v_challenger.rank_position IS NULL OR v_challenged.rank_position IS NULL
      OR (v_challenger.rank_position <= 5 AND v_challenged.rank_position > 5)
      OR (v_challenger.rank_position > 5 AND (
-       v_challenged.rank_position < v_challenger.rank_position - 3
+       v_challenged.rank_position < v_challenger.rank_position - 5
        OR v_challenged.rank_position > v_challenger.rank_position + 2
      )) THEN
     RAISE EXCEPTION 'Desafio inválido pelas regras do ranking';
