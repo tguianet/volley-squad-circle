@@ -14,8 +14,7 @@ AS $function$
     WHEN my_position = opponent_position THEN false
     ELSE opponent_position >= my_position - 5 AND opponent_position <= my_position + 2
   END;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.create_challenge_with_hold(p_challenger_team_id uuid, p_challenged_team_id uuid, p_scheduled_date date, p_scheduled_time time without time zone, p_arena_id uuid, p_court_id uuid)
  RETURNS challenges
@@ -129,8 +128,7 @@ EXCEPTION
   WHEN unique_violation THEN
     RAISE EXCEPTION 'A quadra ou uma das equipes já possui um desafio ativo nesse período';
 END;
-$function$
-
+$function$;
 
 CREATE OR REPLACE FUNCTION public.handle_challenge_status_change()
  RETURNS trigger
@@ -266,7 +264,6 @@ BEGIN
 
   RETURN NEW;
 END;
-$function$
-
+$function$;
 
 NOTIFY pgrst, 'reload schema';
