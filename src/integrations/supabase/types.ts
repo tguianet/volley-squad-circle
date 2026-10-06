@@ -161,20 +161,29 @@ export type Database = {
           created_at: string
           created_by: string
           duration_minutes: number
+          held_at: string | null
           id: string
+          invitation_expires_at: string | null
           loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
           reschedule_reason: string | null
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           score_challenged: number | null
           score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
-          score_admin_review_requested_at: string | null
-          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -187,14 +196,25 @@ export type Database = {
           created_at?: string
           created_by: string
           duration_minutes?: number
+          held_at?: string | null
           id?: string
+          invitation_expires_at?: string | null
           loser_team_id?: string | null
+          proposed_arena_id?: string | null
+          proposed_court_id?: string | null
+          proposed_date?: string | null
+          proposed_time?: string | null
+          reschedule_proposed_by?: string | null
           reschedule_reason?: string | null
           responded_at?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
+          score_admin_review_requested_at?: string | null
+          score_admin_review_requested_by?: string | null
           score_challenged?: number | null
           score_challenger?: number | null
+          score_confirmation_due_at?: string | null
+          score_confirmation_reminder_sent_at?: string | null
           score_confirmed_at?: string | null
           score_confirmed_by?: string | null
           score_registered_at?: string | null
@@ -211,14 +231,25 @@ export type Database = {
           created_at?: string
           created_by?: string
           duration_minutes?: number
+          held_at?: string | null
           id?: string
+          invitation_expires_at?: string | null
           loser_team_id?: string | null
+          proposed_arena_id?: string | null
+          proposed_court_id?: string | null
+          proposed_date?: string | null
+          proposed_time?: string | null
+          reschedule_proposed_by?: string | null
           reschedule_reason?: string | null
           responded_at?: string | null
           scheduled_date?: string | null
           scheduled_time?: string | null
+          score_admin_review_requested_at?: string | null
+          score_admin_review_requested_by?: string | null
           score_challenged?: number | null
           score_challenger?: number | null
+          score_confirmation_due_at?: string | null
+          score_confirmation_reminder_sent_at?: string | null
           score_confirmed_at?: string | null
           score_confirmed_by?: string | null
           score_registered_at?: string | null
@@ -268,6 +299,34 @@ export type Database = {
             columns: ["loser_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_proposed_arena_id_fkey"
+            columns: ["proposed_arena_id"]
+            isOneToOne: false
+            referencedRelation: "arenas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_proposed_court_id_fkey"
+            columns: ["proposed_court_id"]
+            isOneToOne: false
+            referencedRelation: "courts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_reschedule_proposed_by_fkey"
+            columns: ["reschedule_proposed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenges_score_admin_review_requested_by_fkey"
+            columns: ["score_admin_review_requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1143,10 +1202,86 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _has_court_conflict: {
+        Args: {
+          p_arena_id: string
+          p_court_number: number
+          p_end_time: string
+          p_match_date: string
+          p_start_time: string
+        }
+        Returns: boolean
+      }
+      _match_effective_end: {
+        Args: { p_end: string; p_start: string }
+        Returns: string
+      }
+      admin_broadcast_notification: {
+        Args: {
+          p_body: string
+          p_city: string
+          p_link_url: string
+          p_title: string
+        }
+        Returns: number
+      }
+      admin_correct_challenge_score: {
+        Args: {
+          p_challenge_id: string
+          p_score_challenged: number
+          p_score_challenger: number
+        }
+        Returns: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          court_id: string | null
+          created_at: string
+          created_by: string
+          duration_minutes: number
+          held_at: string | null
+          id: string
+          invitation_expires_at: string | null
+          loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      admin_dashboard_stats: { Args: never; Returns: Json }
       apply_monthly_penalties: { Args: { _month: string }; Returns: number }
       apply_previous_month_penalties: { Args: never; Returns: number }
       can_challenge_by_rank: {
         Args: { my_position: number; opponent_position: number }
+        Returns: boolean
+      }
+      challenge_has_started: {
+        Args: { p_scheduled_date: string; p_scheduled_time: string }
         Returns: boolean
       }
       check_court_availability: {
@@ -1169,20 +1304,29 @@ export type Database = {
           created_at: string
           created_by: string
           duration_minutes: number
+          held_at: string | null
           id: string
+          invitation_expires_at: string | null
           loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
           reschedule_reason: string | null
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           score_challenged: number | null
           score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
-          score_admin_review_requested_at: string | null
-          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1204,9 +1348,92 @@ export type Database = {
           slot_time: string
         }[]
       }
+      create_challenge_with_hold: {
+        Args: {
+          p_arena_id: string
+          p_challenged_team_id: string
+          p_challenger_team_id: string
+          p_court_id: string
+          p_scheduled_date: string
+          p_scheduled_time: string
+        }
+        Returns: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          court_id: string | null
+          created_at: string
+          created_by: string
+          duration_minutes: number
+          held_at: string | null
+          id: string
+          invitation_expires_at: string | null
+          loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_team_from_social_profile: {
+        Args: {
+          p_category: Database["public"]["Enums"]["team_category"]
+          p_gender: Database["public"]["Enums"]["team_gender"]
+          p_invitee_id: string
+          p_name: string
+        }
+        Returns: string
+      }
+      create_team_safely: {
+        Args: {
+          p_category: Database["public"]["Enums"]["team_category"]
+          p_gender: Database["public"]["Enums"]["team_gender"]
+          p_invitee_ids: string[]
+          p_name: string
+          p_preferred_arena_id: string
+        }
+        Returns: string
+      }
+      expire_pending_challenge_holds: { Args: never; Returns: number }
       follow_profile: { Args: { p_profile_id: string }; Returns: Json }
       generate_current_month_availability: { Args: never; Returns: number }
       generate_month_availability: { Args: { _month: string }; Returns: number }
+      get_available_courts: {
+        Args: {
+          p_arena_id: string
+          p_end_time: string
+          p_match_date: string
+          p_start_time: string
+        }
+        Returns: {
+          court_name: string
+          court_number: number
+        }[]
+      }
       get_available_sundays: {
         Args: { p_arena_id?: string }
         Returns: {
@@ -1219,6 +1446,10 @@ export type Database = {
         Returns: Json
       }
       get_profile_follow_status: {
+        Args: { p_profile_id: string }
+        Returns: Json
+      }
+      get_public_profile_by_id: {
         Args: { p_profile_id: string }
         Returns: Json
       }
@@ -1260,6 +1491,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      invite_profile_to_team: {
+        Args: { p_invitee_id: string; p_team_id: string }
+        Returns: string
+      }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
       is_team_captain: {
         Args: { _team_id: string; _user_id: string }
@@ -1298,6 +1533,17 @@ export type Database = {
           username: string
         }[]
       }
+      list_my_incomplete_teams_for_invite: {
+        Args: never
+        Returns: {
+          category: Database["public"]["Enums"]["team_category"]
+          confirmed_count: number
+          gender: Database["public"]["Enums"]["team_gender"]
+          id: string
+          name: string
+          pending_invitee_ids: string[]
+        }[]
+      }
       list_my_profile_links: {
         Args: never
         Returns: {
@@ -1326,7 +1572,7 @@ export type Database = {
           requester_username: string
         }[]
       }
-      list_public_profile_follows: {
+      list_public_profile_followers: {
         Args: { p_limit?: number; p_profile_id: string }
         Returns: {
           apelido: string
@@ -1337,7 +1583,7 @@ export type Database = {
           username: string
         }[]
       }
-      list_public_profile_followers: {
+      list_public_profile_follows: {
         Args: { p_limit?: number; p_profile_id: string }
         Returns: {
           apelido: string
@@ -1383,6 +1629,62 @@ export type Database = {
           scheduled_time: string
         }[]
       }
+      prepare_team_month_availability: {
+        Args: { p_month: string; p_team_id: string }
+        Returns: number
+      }
+      process_challenge_score_deadlines: { Args: never; Returns: Json }
+      propose_challenge_reschedule: {
+        Args: {
+          p_challenge_id: string
+          p_proposed_arena_id: string
+          p_proposed_court_id: string
+          p_proposed_date: string
+          p_proposed_time: string
+          p_reason: string
+        }
+        Returns: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          court_id: string | null
+          created_at: string
+          created_by: string
+          duration_minutes: number
+          held_at: string | null
+          id: string
+          invitation_expires_at: string | null
+          loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       recompute_ranks_below_podium: {
         Args: {
           _category: Database["public"]["Enums"]["team_category"]
@@ -1405,20 +1707,29 @@ export type Database = {
           created_at: string
           created_by: string
           duration_minutes: number
+          held_at: string | null
           id: string
+          invitation_expires_at: string | null
           loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
           reschedule_reason: string | null
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           score_challenged: number | null
           score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
-          score_admin_review_requested_at: string | null
-          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1440,20 +1751,117 @@ export type Database = {
           created_at: string
           created_by: string
           duration_minutes: number
+          held_at: string | null
           id: string
+          invitation_expires_at: string | null
           loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
           reschedule_reason: string | null
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           score_challenged: number | null
           score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      respond_to_challenge_invitation: {
+        Args: { p_action: string; p_challenge_id: string; p_reason?: string }
+        Returns: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          court_id: string | null
+          created_at: string
+          created_by: string
+          duration_minutes: number
+          held_at: string | null
+          id: string
+          invitation_expires_at: string | null
+          loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
           score_admin_review_requested_at: string | null
           score_admin_review_requested_by: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
+          status: Database["public"]["Enums"]["challenge_status"]
+          updated_at: string
+          winner_team_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "challenges"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      respond_to_challenge_reschedule: {
+        Args: { p_action: string; p_challenge_id: string }
+        Returns: {
+          arena_id: string | null
+          challenged_team_id: string
+          challenger_team_id: string
+          court_id: string | null
+          created_at: string
+          created_by: string
+          duration_minutes: number
+          held_at: string | null
+          id: string
+          invitation_expires_at: string | null
+          loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
+          reschedule_reason: string | null
+          responded_at: string | null
+          scheduled_date: string | null
+          scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
+          score_challenged: number | null
+          score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
+          score_confirmed_at: string | null
+          score_confirmed_by: string | null
+          score_registered_at: string | null
+          score_registered_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1487,20 +1895,29 @@ export type Database = {
           created_at: string
           created_by: string
           duration_minutes: number
+          held_at: string | null
           id: string
+          invitation_expires_at: string | null
           loser_team_id: string | null
+          proposed_arena_id: string | null
+          proposed_court_id: string | null
+          proposed_date: string | null
+          proposed_time: string | null
+          reschedule_proposed_by: string | null
           reschedule_reason: string | null
           responded_at: string | null
           scheduled_date: string | null
           scheduled_time: string | null
+          score_admin_review_requested_at: string | null
+          score_admin_review_requested_by: string | null
           score_challenged: number | null
           score_challenger: number | null
+          score_confirmation_due_at: string | null
+          score_confirmation_reminder_sent_at: string | null
           score_confirmed_at: string | null
           score_confirmed_by: string | null
           score_registered_at: string | null
           score_registered_by: string | null
-          score_admin_review_requested_at: string | null
-          score_admin_review_requested_by: string | null
           status: Database["public"]["Enums"]["challenge_status"]
           updated_at: string
           winner_team_id: string | null
@@ -1541,6 +1958,8 @@ export type Database = {
         | "wo"
         | "awaiting_schedule"
         | "awaiting_confirmation"
+        | "expired"
+        | "cancelled"
       link_status: "pending" | "accepted" | "rejected"
       match_modality: "beach_volley" | "indoor_volley" | "futevolei"
       match_player_status: "confirmed" | "waiting" | "cancelled"
@@ -1574,12 +1993,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1603,11 +2022,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1628,11 +2047,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1653,11 +2072,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1670,11 +2089,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -1696,6 +2115,8 @@ export const Constants = {
         "wo",
         "awaiting_schedule",
         "awaiting_confirmation",
+        "expired",
+        "cancelled",
       ],
       link_status: ["pending", "accepted", "rejected"],
       match_modality: ["beach_volley", "indoor_volley", "futevolei"],
