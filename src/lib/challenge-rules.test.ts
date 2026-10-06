@@ -39,30 +39,23 @@ describe("canChallengeTeam", () => {
     expect(canChallengeTeam(7, 7)).toBe(false);
   });
 
-  it("libera qualquer confronto dentro do top 5", () => {
-    expect(canChallengeTeam(1, 5)).toBe(true);
-    expect(canChallengeTeam(5, 1)).toBe(true);
-    expect(canChallengeTeam(2, 4)).toBe(true);
-  });
-
-  it("permite até 3 posições acima e 2 abaixo fora do top 5", () => {
-    expect(canChallengeTeam(10, 7)).toBe(true);
+  it("permite até 5 posições acima e 2 abaixo", () => {
+    expect(canChallengeTeam(10, 5)).toBe(true);
     expect(canChallengeTeam(10, 12)).toBe(true);
+    expect(canChallengeTeam(4, 1)).toBe(true);
+    expect(canChallengeTeam(1, 3)).toBe(true);
   });
 
   it("bloqueia fora da janela permitida", () => {
-    expect(canChallengeTeam(10, 6)).toBe(false);
+    expect(canChallengeTeam(10, 4)).toBe(false);
     expect(canChallengeTeam(10, 13)).toBe(false);
+    expect(canChallengeTeam(1, 4)).toBe(false);
   });
 });
 
 describe("getChallengeEligibilityBadge", () => {
   it("retorna null quando o desafio é inválido", () => {
     expect(getChallengeEligibilityBadge(10, 20)).toBeNull();
-  });
-
-  it("marca confrontos internos do top 5", () => {
-    expect(getChallengeEligibilityBadge(2, 5)).toBe("top5");
   });
 
   it("diferencia adversário acima e abaixo", () => {
