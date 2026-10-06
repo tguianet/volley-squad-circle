@@ -220,7 +220,7 @@ LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = public
-AS $
+AS $$
 DECLARE
   v_result jsonb;
 BEGIN
@@ -279,7 +279,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$;
+$$;
 
 REVOKE ALL ON FUNCTION public.admin_dashboard_stats() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_dashboard_stats() TO authenticated;
