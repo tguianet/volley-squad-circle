@@ -1,14 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AsyncQueryState } from "@/components/ui/async-query-state";
-import { listPublicProfileFollowers, listPublicProfileFollows } from "@/lib/ranking.functions";
 import type { PublicProfileConnection } from "@/lib/profile-follow.types";
 import { profileRoute } from "@/lib/profile-follow.utils";
 import { useAvatarUrl } from "@/components/avatar-thumb";
 import { UserCheck, Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type ConnectionCardProps = {
   connection: PublicProfileConnection;
@@ -108,20 +107,29 @@ export function PublicProfileConnectionsPanel({
   profileId,
   compact,
 }: PublicProfileConnectionsPanelProps) {
-  const fetchFollowing = useServerFn(listPublicProfileFollows);
-  const fetchFollowers = useServerFn(listPublicProfileFollowers);
-
-  const followingQ = useQuery({
+  const followingQ = useQuery<PublicProfileConnection[]>({
     queryKey: ["public-profile-following", profileId],
+    enabled: !!profileId,
     queryFn: async () => {
-      return fetchFollowing({ data: { profileId, limit: 12 } });
+      const { data, error } = await supabase.rpc("list_public_profile_follows", {
+        p_profile_id: profileId,
+        p_limit: 12,
+      });
+      if (error) throw error;
+      return (data ?? []) as PublicProfileConnection[];
     },
   });
 
-  const followersQ = useQuery({
+  const followersQ = useQuery<PublicProfileConnection[]>({
     queryKey: ["public-profile-followers", profileId],
+    enabled: !!profileId,
     queryFn: async () => {
-      return fetchFollowers({ data: { profileId, limit: 12 } });
+      const { data, error } = await supabase.rpc("list_public_profile_followers", {
+        p_profile_id: profileId,
+        p_limit: 12,
+      });
+      if (error) throw error;
+      return (data ?? []) as PublicProfileConnection[];
     },
   });
 
