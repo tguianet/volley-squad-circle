@@ -12,7 +12,6 @@ AS $function$
   SELECT CASE
     WHEN my_position IS NULL OR opponent_position IS NULL THEN false
     WHEN my_position = opponent_position THEN false
-    WHEN my_position BETWEEN 1 AND 5 AND opponent_position BETWEEN 1 AND 5 THEN true
     ELSE opponent_position >= my_position - 5 AND opponent_position <= my_position + 2
   END;
 $function$
@@ -54,11 +53,10 @@ BEGIN
     RAISE EXCEPTION 'Desafio inválido pelas regras do ranking';
   END IF;
   IF v_challenger.rank_position IS NULL OR v_challenged.rank_position IS NULL
-     OR (v_challenger.rank_position <= 5 AND v_challenged.rank_position > 5)
-     OR (v_challenger.rank_position > 5 AND (
-       v_challenged.rank_position < v_challenger.rank_position - 5
-       OR v_challenged.rank_position > v_challenger.rank_position + 2
-     )) THEN
+     OR NOT public.can_challenge_by_rank(
+       v_challenger.rank_position,
+       v_challenged.rank_position
+     ) THEN
     RAISE EXCEPTION 'Desafio inválido pelas regras do ranking';
   END IF;
   v_required_members := CASE WHEN v_challenger.category = 'dupla' THEN 2 ELSE 4 END;
